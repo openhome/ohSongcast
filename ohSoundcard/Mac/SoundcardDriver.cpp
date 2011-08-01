@@ -9,6 +9,8 @@
 
 #include <sys/utsname.h>
 #include <IOKit/IOKitLib.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <CoreAudio/CoreAudio.h>
 
 
 namespace OpenHome {
@@ -27,7 +29,16 @@ private:
     virtual void SetTtl(TUint aValue);
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
 
+    AudioDeviceID iDeviceSoundcard;
+    AudioDeviceID iDevicePrevious;
+
+    io_service_t iDriver;
     io_connect_t iHandle;
+    TBool iHandleOpen;
+
+    Endpoint iEndpoint;
+    TBool iActive;
+    TUint iTtl;
 };
 
 
@@ -42,77 +53,134 @@ using namespace OpenHome::Net;
 
 
 OhmSenderDriverMac::OhmSenderDriverMac()
+    : iHandleOpen(false)
+    , iEndpoint()
+    , iActive(false)
+    , iTtl(4)
 {
-    // find the service
-    io_service_t service;
-    service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(AudioDeviceName));
-    if (service == 0) {
-        printf("+++++++++++++++++++++++ error1 \n");
+    // get the list of audio devices
+    const int MAX_AUDIO_DEVICES = 32;
+    AudioDeviceID deviceIds[MAX_AUDIO_DEVICES];
+    UInt32 propBytes = MAX_AUDIO_DEVICES * sizeof(AudioDeviceID);
+    if (AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &propBytes, &deviceIds) != 0) {
+        THROW(SoundcardError);
+    }
+    UInt32 deviceCount = propBytes / sizeof(AudioDeviceID);
+
+
+    // look for the ohSoundcard device
+    CFStringRef ohDriverName = CFStringCreateWithCString(NULL, "OpenHome Songcast Driver", kCFStringEncodingMacRoman);
+
+    bool found = false;
+    for (UInt32 i=0 ; i<deviceCount ; i++)
+    {
+        // get the name of the device
+        CFStringRef name;
+        propBytes = sizeof(CFStringRef);
+        AudioDeviceGetProperty(deviceIds[i], 0, false, kAudioObjectPropertyName, &propBytes, &name);
+
+        found = (CFStringCompare(name, ohDriverName, 0) == kCFCompareEqualTo);
+        CFRelease(name);
+
+        if (found)
+        {
+            iDeviceSoundcard = deviceIds[i];
+            break;
+        }
+    }
+
+    // clean up
+    CFRelease(ohDriverName);
+
+    if (!found) {
         THROW(SoundcardError);
     }
 
-    // open the service
-    kern_return_t res;
-    res = IOServiceOpen(service, mach_task_self(), 0, &iHandle);
-    if (res != KERN_SUCCESS) {
-        printf("+++++++++++++++++++++++ error2 \n");
+
+    // find the service for the driver
+    iDriver = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(AudioDeviceName));
+    if (iDriver == 0) {
         THROW(SoundcardError);
     }
-
-
-    res = IOConnectCallScalarMethod(iHandle, eOpen, 0, 0, 0, 0);
-
-//    uint64_t args[2];
-//    args[0] = 32;
-//    res = IOConnectCallScalarMethod(iHandle, eSetEnabled, args, 1, 0, 0);
-//    args[0] = 36;
-//    res = IOConnectCallScalarMethod(handle, eSetTtl, args, 1, 0, 0);
-
-//    res = IOConnectCallScalarMethod(handle, eClose, 0, 0, 0, 0);
-
-
-    // close the service
-//    res = IOServiceClose(handle);
 }
 
 // IOhmSenderDriver
 void OhmSenderDriverMac::SetEnabled(TBool aValue)
 {
-    printf(aValue ? "OhmSenderDriverMac: Enabled\n" : "OhmSenderDriverMac: Disabled\n");
+    if ((iHandleOpen && aValue) || (!iHandleOpen && !aValue)) {
+        return;
+    }
+
+    UInt32 propBytes = sizeof(AudioDeviceID);
+    kern_return_t res;
+
+    if (aValue)
+    {
+        // get a handle to the driver
+        res = IOServiceOpen(iDriver, mach_task_self(), 0, &iHandle);
+        if (res != KERN_SUCCESS) {
+            THROW(SoundcardError);
+        }
+
+        // open - is this necessary?
+        IOConnectCallScalarMethod(iHandle, eOpen, 0, 0, 0, 0);
+        SetEndpoint(iEndpoint);
+        SetTtl(iTtl);
+        SetActive(iActive);
+
+        // change the current audio output device to be the ohSoundcard driver
+        AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &propBytes, &iDevicePrevious);
+        AudioHardwareSetProperty(kAudioHardwarePropertyDefaultOutputDevice, propBytes, &iDeviceSoundcard);
+
+        iHandleOpen = true;
+    }
+    else
+    {
+        // change the current audio output device to be what it was previously
+        AudioHardwareSetProperty(kAudioHardwarePropertyDefaultOutputDevice, propBytes, &iDevicePrevious);
+
+        // close the handle to the driver
+        IOServiceClose(iHandle);
+
+        iHandleOpen = false;
+    }
 }
 
 void OhmSenderDriverMac::SetEndpoint(const Endpoint& aEndpoint)
 {
-    printf("OhmSenderDriverMac: Endpoint %8x:%d\n", aEndpoint.Address(), aEndpoint.Port());
+    iEndpoint = aEndpoint;
 
-    uint64_t args[2];
-    args[0] = aEndpoint.Address();
-    args[1] = aEndpoint.Port();
-    kern_return_t res = IOConnectCallScalarMethod(iHandle, eSetEndpoint, args, 2, 0, 0);
-    if (res)
+    if (iHandleOpen)
     {
+        uint64_t args[2];
+        args[0] = aEndpoint.Address();
+        args[1] = aEndpoint.Port();
+        IOConnectCallScalarMethod(iHandle, eSetEndpoint, args, 2, 0, 0);
     }
 }
 
 void OhmSenderDriverMac::SetActive(TBool aValue)
 {
-    printf(aValue ? "OhmSenderDriverMac: Active\n" : "OhmSenderDriverMac: Inactive\n");
+    iActive = aValue;
 
-    uint64_t arg = aValue ? 1 : 0;
-    kern_return_t res = IOConnectCallScalarMethod(iHandle, eSetActive, &arg, 1, 0, 0);
-    if (res)
+    if (iHandleOpen)
     {
+        uint64_t arg = aValue ? 1 : 0;
+        IOConnectCallScalarMethod(iHandle, eSetActive, &arg, 1, 0, 0);
     }
 }
 
 void OhmSenderDriverMac::SetTtl(TUint aValue)
 {
-    printf("OhmSenderDriverMac: TTL %d\n", aValue);
+    iTtl = aValue;
+
+    if (iHandleOpen)
+    {
+    }
 }
 
 void OhmSenderDriverMac::SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal)
 {
-    printf("OhmSenderDriverMac: TrackPosition %llu %llu\n", aSampleStart, aSamplesTotal);
 }
 
 

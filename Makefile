@@ -14,7 +14,7 @@ endif
 MACHINE = $(shell uname -s)
 ifeq ($(MACHINE), Darwin)
 platform_cflags = -DPLATFORM_MACOSX_GNU -arch x86_64 -mmacosx-version-min=10.4
-platform_linkflags = -arch x86_64 -framework IOKit
+platform_linkflags = -arch x86_64 -framework IOKit -framework CoreFoundation -framework CoreAudio
 platform_include = -I/System/Library/Frameworks/IOKit.framework/Headers/
 osdir = Mac
 else
