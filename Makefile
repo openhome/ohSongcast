@@ -15,11 +15,13 @@ MACHINE = $(shell uname -s)
 ifeq ($(MACHINE), Darwin)
 platform_cflags = -DPLATFORM_MACOSX_GNU -arch x86_64 -mmacosx-version-min=10.4
 platform_linkflags = -arch x86_64 -framework IOKit -framework CoreFoundation -framework CoreAudio
+platform_dllflags = -install_name @executable_path/$(@F)
 platform_include = -I/System/Library/Frameworks/IOKit.framework/Headers/
 osdir = Mac
 else
 platform_cflags = -Wno-psabi
 platform_linkflags = 
+platform_dllflags = 
 platform_include = 
 osdir = Posix
 endif
@@ -42,7 +44,7 @@ link = ${CROSS_COMPILE}g++ -lpthread $(platform_linkflags)
 linkoutput = -o 
 dllprefix = lib
 dllext = so
-link_dll = ${CROSS_COMPILE}g++ -lpthread $(platform_linkflags) -shared -shared-libgcc --whole-archive
+link_dll = ${CROSS_COMPILE}g++ -lpthread $(platform_linkflags) $(platform_dllflags) -shared -shared-libgcc --whole-archive
 csharp = gmcs /nologo
 dirsep = /
 
