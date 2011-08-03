@@ -1,0 +1,16 @@
+
+/* Menu item 1 - soundcard status is on */
+"MenuStatusOn" = "ohSoundcard: On";
+
+/* Menu item 1 - soundcard status is off */
+"MenuStatusOff" = "ohSoundcard: Off";
+
+/* Menu item 2 - turn soundcard off */
+"MenuTurnOff" = "Turn ohSoundcard Off";
+
+/* Menu item 2 - turn soundcard on */
+"MenuTurnOn" = "Turn ohSoundcard On";
+
+/* Menu item 3 - Open preferences */
+"MenuPreferences" = "Open ohSoundcard Preferences...";
+
