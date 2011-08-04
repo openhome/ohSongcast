@@ -1,3 +1,7 @@
 
 /* App name for the preference pane */
 "PreferencePaneName" = "/System/Library/PreferencePanes/Sound.prefPane";
+
+/* Reverse DNS format app name that the preferences will use */
+"PreferencesAppId" = "org.openhome.ohSoundcard";
+
