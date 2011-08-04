@@ -5,11 +5,15 @@
 @interface PrefReceiver : NSObject
 {
     NSString* udn;
+    NSString* room;
+    NSString* group;
     NSString* name;
     bool available;
 }
 
 @property (assign) NSString* udn;
+@property (assign) NSString* room;
+@property (assign) NSString* group;
 @property (assign) NSString* name;
 @property (assign) bool available;
 

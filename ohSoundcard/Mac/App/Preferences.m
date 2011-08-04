@@ -5,6 +5,8 @@
 @implementation PrefReceiver
 
 @synthesize udn;
+@synthesize room;
+@synthesize group;
 @synthesize name;
 @synthesize available;
 
@@ -14,6 +16,8 @@
     [super init];
 
     udn = [[aDict objectForKey:@"Udn"] retain];
+    room = [[aDict objectForKey:@"Room"] retain];
+    group = [[aDict objectForKey:@"Group"] retain];
     name = [[aDict objectForKey:@"Name"] retain];
     available = [[aDict objectForKey:@"Available"] boolValue];
     
@@ -25,6 +29,8 @@
 {
     return [NSDictionary dictionaryWithObjectsAndKeys:
             udn, @"Udn",
+            room, @"Room",
+            group, @"Group",
             name, @"Name",
             [NSNumber numberWithBool:available], @"Available", nil];
 }

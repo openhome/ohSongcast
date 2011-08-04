@@ -13,11 +13,15 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 @interface Receiver : NSObject
 {
     NSString* udn;
+    NSString* room;
+    NSString* group;
     NSString* name;
     void* iPtr;
 }
 
 @property (assign) NSString* udn;
+@property (assign) NSString* room;
+@property (assign) NSString* group;
 @property (assign) NSString* name;
 
 - (id) initWithPtr:(void*)aPtr;
@@ -237,6 +241,8 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
 @implementation Receiver
 
 @synthesize udn;
+@synthesize room;
+@synthesize group;
 @synthesize name;
 
 
@@ -248,6 +254,8 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
     ReceiverAddRef(iPtr);
 
     udn = [[NSString alloc] initWithUTF8String:ReceiverUdn(iPtr)];
+    room = [[NSString alloc] initWithUTF8String:ReceiverRoom(iPtr)];
+    group = [[NSString alloc] initWithUTF8String:ReceiverGroup(iPtr)];
     name = [[NSString alloc] initWithUTF8String:ReceiverName(iPtr)];    
     
     return self;
@@ -261,6 +269,8 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
     iPtr = nil;
     
     udn = [[aPref udn] retain];
+    room = [[aPref room] retain];
+    group = [[aPref group] retain];
     name = [[aPref name] retain];
     
     return self;
@@ -282,8 +292,12 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
     if (aPtr)
     {
         [udn release];
+        [room release];
+        [group release];
         [name release];
         udn = [[NSString alloc] initWithUTF8String:ReceiverUdn(iPtr)];
+        room = [[NSString alloc] initWithUTF8String:ReceiverRoom(iPtr)];
+        group = [[NSString alloc] initWithUTF8String:ReceiverGroup(iPtr)];
         name = [[NSString alloc] initWithUTF8String:ReceiverName(iPtr)];
     }
 }
@@ -294,6 +308,8 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
     PrefReceiver* pref = [[[PrefReceiver alloc] init] autorelease];
     
     [pref setUdn:udn];
+    [pref setRoom:room];
+    [pref setGroup:group];
     [pref setName:name];
     [pref setAvailable:(iPtr != nil)];
     
