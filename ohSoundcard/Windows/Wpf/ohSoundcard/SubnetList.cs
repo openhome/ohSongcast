@@ -103,6 +103,11 @@ namespace OpenHome.Soundcard
             {
                 CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, subnet));
             }
+
+            if (CountChanged != null)
+            {
+                CountChanged(this, EventArgs.Empty);
+            }
         }
 
         public void SubnetChanged(ISubnet aSubnet)
@@ -129,6 +134,11 @@ namespace OpenHome.Soundcard
 
         internal void Removed(ISubnet aSubnet)
         {
+            /* Do nothing on subnet removal
+             *  - probably better to present users with a list of all the subnets they have had around since turning on
+             *  - definitely better on closing down - all subnets are removed but we don't want the combobox to end up setting our configured subnet to 0 in the process
+             */
+            /*  
             int index = 0;
 
             foreach (Subnet subnet in iList)
@@ -142,11 +152,17 @@ namespace OpenHome.Soundcard
                         CollectionChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, subnet, index));
                     }
 
+                    if (CountChanged != null)
+                    {
+                        CountChanged(this, EventArgs.Empty);
+                    }
+
                     return;
                 }
 
                 index++;
             }
+            */
         }
 
         public System.Collections.IEnumerator GetEnumerator()
@@ -154,10 +170,20 @@ namespace OpenHome.Soundcard
             return (iList.GetEnumerator());
         }
 
+        public int Count
+        {
+            get
+            {
+                return (iList.Count);
+            }
+        }
 
         public event NotifyCollectionChangedEventHandler CollectionChanged;
 
+        public EventHandler<EventArgs> CountChanged;
+
         Dispatcher iDispatcher;
+
         List<Subnet> iList;
     }
 

@@ -10,5 +10,15 @@ namespace OpenHome.Soundcard
     /// </summary>
     public partial class App : Application
     {
+        protected override void OnDeactivated(EventArgs e)
+        {
+            Console.WriteLine("Application deactivated");
+
+            base.OnDeactivated(e);
+
+            MainWindow main = MainWindow as MainWindow;
+
+            main.ApplicationDeactivated();
+        }        
     }
 }

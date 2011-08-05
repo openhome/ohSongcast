@@ -45,8 +45,8 @@ namespace OpenHome.Soundcard
             InitializeComponent();
 
             iExtendedNotifyIcon = new ExtendedNotifyIcon(Properties.Resources.Icon);
-            iExtendedNotifyIcon.Hide += EventNotifyIconHide;
-            iExtendedNotifyIcon.Show += EventNotifyIconShow;
+            iExtendedNotifyIcon.Click += EventNotifyIconClick;
+            iExtendedNotifyIcon.RightClick += EventNotifyIconRightClick;
 
             System.Windows.Forms.ContextMenu menu = new System.Windows.Forms.ContextMenu();
 
@@ -76,7 +76,7 @@ namespace OpenHome.Soundcard
             iStoryBoardFadeOut = (Storyboard)TryFindResource("storyBoardFadeOut");
             iStoryBoardFadeOut.Completed += new EventHandler(EventStoryBoardFadeOutCompleted);
 
-            this.Closing += new System.ComponentModel.CancelEventHandler(EventWindowClosing);
+            this.Closing += EventWindowClosing;
 
             try
             {
@@ -103,6 +103,10 @@ namespace OpenHome.Soundcard
             Power.Click += new RoutedEventHandler(EventPowerClick);
             Settings.Click += new RoutedEventHandler(EventSettingsClick);
             Receivers.Click += new RoutedEventHandler(EventReceiversClick);
+
+            this.Topmost = true;
+            iConfigurationWindow.Topmost = true;
+            iMediaPlayerWindow.Topmost = true;
         }
 
         public void Refresh()
@@ -137,11 +141,6 @@ namespace OpenHome.Soundcard
             iSoundcard.SetPreset(iConfigurationWindow.Preset);
         }
 
-        private void EventContextMenuOpen(object sender, EventArgs e)
-        {
-            EventNotifyIconShow();
-        }
-
         private void EventContextMenuExit(object sender, EventArgs e)
         {
             this.Close();
@@ -162,10 +161,8 @@ namespace OpenHome.Soundcard
             if (enabled)
             {
                 iConfigurationWindow.Visibility = Visibility.Visible;
-                iConfigurationWindow.Activate();
-
-                Receivers.IsChecked = false;
                 iMediaPlayerWindow.Visibility = Visibility.Collapsed;
+                Receivers.IsChecked = false;
             }
             else
             {
@@ -180,10 +177,8 @@ namespace OpenHome.Soundcard
             if (enabled)
             {
                 iMediaPlayerWindow.Visibility = Visibility.Visible;
-                iMediaPlayerWindow.Activate();
-
-                Settings.IsChecked = false;
                 iConfigurationWindow.Visibility = Visibility.Collapsed;
+                Settings.IsChecked = false;
             }
             else
             {
@@ -213,9 +208,33 @@ namespace OpenHome.Soundcard
             this.Visibility = Visibility.Collapsed;
         }
 
-        private void EventNotifyIconShow()
+        void EventNotifyIconClick(object sender, EventArgs e)
         {
-            this.Visibility = Visibility.Visible;
+            if (Visibility == Visibility.Visible)
+            {
+                HideOurselves();
+            }
+            else
+            {
+                ShowOurselves();
+            }
+        }
+
+        private void EventContextMenuOpen(object sender, EventArgs e)
+        {
+            ShowOurselves();
+        }
+
+        void HideOurselves()
+        {
+            iConfigurationWindow.Visibility = Visibility.Collapsed;
+            iMediaPlayerWindow.Visibility = Visibility.Collapsed;
+            this.Visibility = Visibility.Collapsed;
+        }
+
+        void ShowOurselves()
+        {
+            Visibility = Visibility.Visible;
 
             Activate();
 
@@ -232,23 +251,24 @@ namespace OpenHome.Soundcard
             }
         }
 
-        private void EventNotifyIconHide()
+        void EventNotifyIconRightClick(object sender, EventArgs e)
         {
             /*
-            iSettingsWindow.Visibility = Visibility.Collapsed;
-            iReceiversWindow.Visibility = Visibility.Collapsed;
-            this.Visibility = Visibility.Collapsed;
-            */
+            if (Visibility == Visibility.Visible)
+            {
+                HideOurselves();
+            }
+             */
         }
 
-        protected override void OnDeactivated(EventArgs e)
+        public void ApplicationDeactivated()
         {
-            base.OnDeactivated(e);
-
-            if (!iExtendedNotifyIcon.Active && !iConfigurationWindow.IsActive && !iMediaPlayerWindow.IsActive)
+            if (iExtendedNotifyIcon.IsMouseOver)
             {
-                EventNotifyIconHide();
+                return;
             }
+
+            HideOurselves();
         }
     }
 }

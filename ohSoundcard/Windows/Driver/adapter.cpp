@@ -21,6 +21,7 @@ Abstract:
 
 #include <msvad.h>
 #include "common.h"
+#include "drmsimp\drmsimp.h"
 
 //-----------------------------------------------------------------------------
 // Defines                                                                    
@@ -280,70 +281,58 @@ Return Value:
                     MiniportClassId
                 );
         }
-    }
 
-    // Init the port driver and miniport in one go.
-    //
-    if (NT_SUCCESS(ntStatus))
-    {
-        ntStatus = 
-            port->Init
-            ( 
-                DeviceObject,
-                Irp,
-                miniport,
-                UnknownAdapter,
-                ResourceList 
-            );
+		// Init the port driver and miniport in one go.
+		//
+		if (NT_SUCCESS(ntStatus))
+		{
+			ntStatus = 
+				port->Init
+				( 
+					DeviceObject,
+					Irp,
+					miniport,
+					UnknownAdapter,
+					ResourceList 
+				);
 
-        if (NT_SUCCESS(ntStatus) && Register)
-        {
-            // Register the subdevice (port/miniport combination).
-            //
-            ntStatus = 
-                PcRegisterSubdevice
-                ( 
-                    DeviceObject,
-                    Name,
-                    port 
-                );
-        }
+			if (NT_SUCCESS(ntStatus) && Register)
+			{
+				// Register the subdevice (port/miniport combination).
+				//
+				ntStatus = 
+					PcRegisterSubdevice
+					( 
+						DeviceObject,
+						Name,
+						port 
+					);
+			}
 
-        // We don't need the miniport any more.  Either the port has it,
-        // or we've failed, and it should be deleted.
-        //
-        miniport->Release();
-    }
+			// We don't need the miniport any more.  Either the port has it,
+			// or we've failed, and it should be deleted.
+			//
+			miniport->Release();
+		}
 
-    // Deposit the port interfaces if it's needed.
-    //
-    if (NT_SUCCESS(ntStatus))
-    {
         if (OutPortUnknown)
         {
-            ntStatus = 
-                port->QueryInterface
-                ( 
-                    IID_IUnknown,
-                    (PVOID *)OutPortUnknown 
-                );
+            port->QueryInterface( 
+                IID_IUnknown,
+                (PVOID*)OutPortUnknown 
+            );
         }
 
         if (OutPortInterface)
         {
-            ntStatus = 
-                port->QueryInterface
-                ( 
-                    PortInterfaceId,
-                    (PVOID *) OutPortInterface 
-                );
+            port->QueryInterface( 
+                PortInterfaceId,
+                (PVOID*)OutPortInterface 
+            );
         }
-    }
 
-    if (port)
-    {
         port->Release();
-    }
+	}
 
     return ntStatus;
 } // InstallSubDevice
@@ -448,8 +437,6 @@ Return Value:
 		);
     }
 
-	pAdapterCommon->SetWavePortDriverDest(unknownTopology);
-
 	// install MSVAD wavecyclic miniport.
     
 	if (NT_SUCCESS(ntStatus))
@@ -466,11 +453,17 @@ Return Value:
 			IID_IPortWaveCyclic,
 			pAdapterCommon->WavePortDriverDest(),
 			&unknownWave,
-			false // don't register because this is a dynamic device that registers later
+			true // do register because we are no longer having this as a dynamic device
 		);
 	}
 
-	pAdapterCommon->SetWavePortDriverDest(unknownWave);
+	PcRegisterPhysicalConnection ( 
+        DeviceObject,
+        unknownWave,
+        KSPIN_WAVE_RENDER_SOURCE,
+        unknownTopology,
+        KSPIN_TOPO_WAVEOUT_SOURCE
+    );
 
 	// Release the adapter common object.  It either has other references,
     // or we need to delete it anyway.
@@ -488,6 +481,11 @@ Return Value:
     if (unknownTopology)
     {
         unknownTopology->Release();
+    }
+
+    if (unknownWave)
+    {
+        unknownWave->Release();
     }
 
     return ntStatus;

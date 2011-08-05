@@ -84,7 +84,7 @@ namespace OpenHome.Soundcard
 
         private string iPath;
 
-        [XmlElement("Network")]
+        [XmlElement("Subnet")]
 
         public uint Subnet
         {

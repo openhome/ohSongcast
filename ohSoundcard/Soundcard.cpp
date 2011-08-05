@@ -295,7 +295,7 @@ Soundcard::Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMult
 	, iSubnetCallback(aSubnetCallback)
 	, iSubnetPtr(aSubnetPtr)
 {
-	Debug::SetLevel(Debug::kMedia);
+	//Debug::SetLevel(Debug::kMedia);
 
 	Bws<kMaxUdnBytes> udn;
 	Bws<kMaxUdnBytes + 1> friendly;

@@ -170,12 +170,14 @@ PCCONNECTION_DESCRIPTOR MiniportConnections[] =
 static
 PCPROPERTY_ITEM PropertiesTopoFilter[] =
 {
+	/* No longer a dynamic device
     {
         &KSPROPSETID_Jack,
         KSPROPERTY_JACK_DESCRIPTION,
         KSPROPERTY_TYPE_GET | KSPROPERTY_TYPE_BASICSUPPORT,
         PropertyHandler_Jack
     },
+	*/
     {
         &KSPROPSETID_Private,
         KSPROPERTY_OHSOUNDCARD_VERSION,

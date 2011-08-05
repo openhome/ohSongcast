@@ -23,7 +23,7 @@
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Foreground="Black" FontFamily="Arial Black" FontSize="12" Text="{Binding Path=Description}" />
+                                <TextBlock Foreground="Black" FontFamily="Arial Black" FontSize="14" Text="{Binding Path=Description}" />
                             </StackPanel>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>

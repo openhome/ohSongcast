@@ -40,7 +40,6 @@ public:
 
 	void CreateWaveMiniport();
 	void DestroyWaveMiniport();
-
 };
 
 typedef CMiniportTopology *PCMiniportTopology;

@@ -45,6 +45,7 @@ CSocketOhm* Socket;
 void SocketInitialised(void* aContext);
 void WskInitialised(void* aContext);
 void MpusStop();
+void MpusStopLocked();
 void MpusSend(UCHAR* aBuffer, UINT aBytes);
 void MpusSetFormat(UINT aSampleRate, UINT aBitRate, UINT aBitDepth, UINT aChannels);
 
@@ -748,10 +749,39 @@ void MpusStop()
 
 	if (MpusActive && MpusEnabled)
 	{
-		Socket->Send(&MpusAddress, (UCHAR*) 0, 0, 1, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels);
+		MpusStopLocked();
 	}
 
 	ExReleaseFastMutex(&MpusFastMutex);
+}
+
+//=============================================================================
+// MpusStop
+//=============================================================================
+
+void MpusStopLocked()
+{
+	Socket->Send(&MpusAddress, (UCHAR*) 0, 0, 1, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels);
+
+	MpusSendFormat = 1;
+}
+
+
+//=============================================================================
+// MpusUpdateEndpointLocked
+//=============================================================================
+
+void MpusUpdateEndpointLocked()
+{
+	CWinsock::Initialise(&MpusAddress, MpusAddr, MpusPort);
+}
+
+//=============================================================================
+// MpusUpdateTtlLocked
+//=============================================================================
+
+void MpusUpdateTtlLocked()
+{
 }
 
 //=============================================================================
@@ -767,6 +797,7 @@ void MpusSend(UCHAR* aBuffer, UINT aBytes)
 		if (MpusSendFormat)
 		{
 			MpusSendFormat = 0;
+
 			Socket->Send(&MpusAddress, (UCHAR*)0, 0, 0, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels);
 		}
 

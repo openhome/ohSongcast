@@ -53,12 +53,6 @@ DECLARE_INTERFACE_(IAdapterCommon, IUnknown)
         THIS 
     ) PURE;
 
-    STDMETHOD_(VOID,            SetWavePortDriverDest) 
-    ( 
-        THIS_
-        IN PUNKNOWN             WavePort 
-    ) PURE;
-
     STDMETHOD_(BOOL,            bDevSpecificRead)
     (
         THIS_

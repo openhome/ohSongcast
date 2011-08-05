@@ -19,6 +19,9 @@ public:
 private:    
 	TBool FindDriver();
 	TBool InstallDriver();
+	TBool FindEndpoint();
+	void SetDefaultAudioPlaybackDevice();
+	void SetEndpointEnabled(TBool aValue);
 
 	// IOhmSenderDriver
 	virtual void SetEnabled(TBool aValue);
@@ -29,6 +32,8 @@ private:
 
 private:
 	HANDLE iHandle;
+	WCHAR iEndpointId[100];
+
 };
 
 } // namespace Net

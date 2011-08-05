@@ -61,11 +61,6 @@ class CAdapterCommon :
 
         STDMETHODIMP_(PUNKNOWN *)       WavePortDriverDest(void);
 
-        STDMETHODIMP_(void)     SetWavePortDriverDest
-		(
-            IN  PUNKNOWN        WavePort
-		);
-
 		STDMETHODIMP_(void)     SetWaveServiceGroup
         (   
             IN  PSERVICEGROUP   ServiceGroup
@@ -415,30 +410,6 @@ Return Value:
 } // SetWaveServiceGroup
 
 //=============================================================================
-STDMETHODIMP_(void)
-CAdapterCommon::SetWavePortDriverDest
-( 
-    IN PUNKNOWN WavePort 
-)
-/*++
-
-Routine Description:
-
-  Set the wave port.
-
-Arguments:
-
-  PUNKNOWN : pointer to waveport
-
---*/
-{
-    PAGED_CODE();
-
-    m_pPortWave = WavePort;
-} // WavePortDriverDest
-
-
-//=============================================================================
 STDMETHODIMP_(PUNKNOWN *)
 CAdapterCommon::WavePortDriverDest
 ( 
@@ -459,8 +430,7 @@ Return Value:
 --*/
 {
     PAGED_CODE();
-
-    return (PUNKNOWN *)&m_pPortWave;
+    return &m_pPortWave;
 } // WavePortDriverDest
 
 #pragma code_seg()

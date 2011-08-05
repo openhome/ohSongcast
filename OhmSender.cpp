@@ -157,7 +157,7 @@ void ProviderSender::TimerAudioPresentExpired()
     SetPropertyAudio(false);
 }
 
-// OhmSenderDriver
+// OHM SENDER DRIVER
 
 OhmSenderDriver::OhmSenderDriver()
     : iMutex("OHMD")
@@ -332,6 +332,8 @@ OhmSender::OhmSender(DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aN
     iProvider = new ProviderSender(iDevice);
  
     iDriver.SetTtl(iTtl);
+
+	LOG(kMedia, "OHM SENDER DRIVER TTL %d\n", iTtl);
        
     iThreadMulticast = new ThreadFunctor("MTXM", MakeFunctor(*this, &OhmSender::RunMulticast), kThreadPriorityNetwork, kThreadStackBytesNetwork);
     iThreadMulticast->Start();
@@ -453,11 +455,13 @@ void OhmSender::SetTtl(TUint aValue)
 			Stop();
 			iTtl = aValue;
 			iDriver.SetTtl(iTtl);
+			LOG(kMedia, "OHM SENDER DRIVER TTL %d\n", iTtl);
 			Start();
 		}
 		else {
 			iTtl = aValue;
 			iDriver.SetTtl(iTtl);
+			LOG(kMedia, "OHM SENDER DRIVER TTL %d\n", iTtl);
 		}
 	}
     
@@ -491,7 +495,9 @@ void OhmSender::SetEnabled(TBool aValue)
 	if (iEnabled != aValue) {
 		iEnabled = aValue;
 
-		iDriver.SetEnabled(aValue);
+		iDriver.SetEnabled(iEnabled);
+
+		LOG(kMedia, "OHM SENDER DRIVER ENABLED %d\n", aValue);
     
 		if (iEnabled) {
 			iProvider->SetStatusEnabled();
@@ -531,11 +537,16 @@ void OhmSender::Start()
 void OhmSender::Stop()
 {
     if (iStarted) {
+		LOG(kMedia, "STOP INTERRUPT\n");
         iSocketOhm.ReadInterrupt();
+		LOG(kMedia, "STOP WAIT\n");
         iNetworkDeactivated.Wait();
+		LOG(kMedia, "STOP CLOSE\n");
         iSocketOhm.Close();
         iStarted = false;
+		LOG(kMedia, "STOP UPDATE\n");
         UpdateUri();
+		LOG(kMedia, "STOP DONE\n");
     }
 }
 
@@ -602,9 +613,11 @@ OhmSender::~OhmSender()
 
     LOG(kMedia, "OhmSender::~OhmSender stopped\n");
 
+	iEnabled = false;
+
 	iDriver.SetEnabled(false);
 
-    LOG(kMedia, "OhmSender::~OhmSender driver disabled\n");
+	LOG(kMedia, "OHM SENDER DRIVER ENABLED %d\n", iEnabled);
 
 	delete iThreadZone;
 
@@ -641,6 +654,8 @@ void OhmSender::RunMulticast()
         
 		iDriver.SetEndpoint(iTargetEndpoint);
 
+		LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x\n", iTargetEndpoint);
+
         try {
             for (;;) {
                 try {
@@ -660,6 +675,7 @@ void OhmSender::RunMulticast()
 						if (!iActive) {
 							iActive = true;
 	                        iDriver.SetActive(true);
+							LOG(kMedia, "OHM SENDER DRIVER ACTIVE %d\n", iActive);
 						}
                         
 						iAliveJoined = true;
@@ -688,6 +704,7 @@ void OhmSender::RunMulticast()
 							if (iActive) {
 								iActive = false;
 								iDriver.SetActive(false);
+								LOG(kMedia, "OHM SENDER DRIVER ACTIVE %d\n", iActive);
 							} 
 
 							iAliveBlocked = true;
@@ -710,7 +727,7 @@ void OhmSender::RunMulticast()
             }
         }
         catch (ReaderError&) {
-            LOG(kMedia, "OPhmSender::RunMulticast reader error\n");
+            LOG(kMedia, "OhmSender::RunMulticast reader error\n");
         }
 
         iRxBuffer.ReadFlush();
@@ -723,6 +740,7 @@ void OhmSender::RunMulticast()
         if (iActive) {
             iActive = false;
             iDriver.SetActive(false);
+			LOG(kMedia, "OHM SENDER DRIVER ACTIVE %d\n", iActive);
         } 
 
         iAliveJoined = false;
@@ -773,6 +791,8 @@ void OhmSender::RunUnicast()
                 iTargetEndpoint.Replace(iSocketOhm.Sender());
 
 				iDriver.SetEndpoint(iTargetEndpoint);
+
+				LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x\n", iTargetEndpoint);
         
 				SendTrack();
                 SendMetatext();
@@ -785,6 +805,8 @@ void OhmSender::RunUnicast()
                 iAliveJoined = true;
 
                 iDriver.SetActive(true);
+
+				LOG(kMedia, "OHM SENDER DRIVER ACTIVE %d\n", true);
 
                 iMutexActive.Signal();
                 
@@ -876,14 +898,22 @@ void OhmSender::RunUnicast()
                                 }
                                 else {
                                     iMutexActive.Wait();
-                                    SendLeave(sender);
-                                    iTargetEndpoint.Replace(iSlaveList[--iSlaveCount]);
-                                    iTimerExpiry.FireAt(iSlaveExpiry[iSlaveCount]);
-                                    if (iSlaveCount > 0) {
+                                    
+									SendLeave(sender);
+                                    
+									iTargetEndpoint.Replace(iSlaveList[--iSlaveCount]);
+                                    
+									iTimerExpiry.FireAt(iSlaveExpiry[iSlaveCount]);
+                                    
+									if (iSlaveCount > 0) {
                                         SendSlaveList();
                                     }
-                                    iDriver.SetEndpoint(iTargetEndpoint);
-                                    iMutexActive.Signal();
+                                    
+									iDriver.SetEndpoint(iTargetEndpoint);
+
+									LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x\n", iTargetEndpoint);
+                                    
+									iMutexActive.Signal();
                                 }
                             }
                             else {
@@ -909,32 +939,39 @@ void OhmSender::RunUnicast()
 
                 iMutexActive.Wait();
                 iActive = false;
-                iAliveJoined = false;               
-                iDriver.SetActive(false);
-                iMutexActive.Signal();
+                
+
+				iAliveJoined = false;               
+
+				iDriver.SetActive(false);
+
+				LOG(kMedia, "OHM SENDER DRIVER ACTIVE %d\n", iActive);
+                
+				iMutexActive.Signal();
             }
         }
         catch (ReaderError&) {
             LOG(kMedia, "OhmSender::RunUnicast reader error\n");
         }
 
-        iRxBuffer.ReadFlush();
+		iRxBuffer.ReadFlush();
 
-        iTimerExpiry.Cancel();
+		iTimerExpiry.Cancel();
 
-        iMutexActive.Wait();
+		iMutexActive.Wait();
 
         if (iActive) {
             iActive = false;
-            iDriver.SetActive(false);
+
+			iDriver.SetActive(false);
+			
+			LOG(kMedia, "OHM SENDER DRIVER ACTIVE %d\n", iActive);
         } 
 
         iAliveJoined = false;
         iAliveBlocked = false;
-
         iMutexActive.Signal();
-        
-        iNetworkDeactivated.Signal();
+		iNetworkDeactivated.Signal();
         
         LOG(kMedia, "OhmSender::RunUnicast stop\n");
     }
