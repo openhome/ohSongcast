@@ -32,6 +32,7 @@
 - (id) initWithBundle:(NSBundle*)aBundle;
 - (bool) enabled;
 - (void) setEnabled:(bool)aEnabled;
+- (void) addObserverEnabled:(id)aObserver selector:(SEL)aSelector;
 - (NSArray*) receiverList;
 - (void) setReceiverList:(NSArray*)aReceiverList;
 - (void) synchronize;

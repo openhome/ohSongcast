@@ -73,6 +73,7 @@
 
 - (void) setEnabled:(bool)aEnabled
 {
+    // set the new preference value
     if (aEnabled)
     {
         CFPreferencesSetAppValue(CFSTR("Enabled"), kCFBooleanTrue, appId);
@@ -80,8 +81,21 @@
     else
     {
         CFPreferencesSetAppValue(CFSTR("Enabled"), kCFBooleanFalse, appId);
-    }    
+    }
+    
+    // flush the preferences
     CFPreferencesAppSynchronize(appId);
+
+    // send notification that this has changed
+    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterPostNotification(centre, CFSTR("PreferenceEnabledChanged"), appId, NULL, TRUE);
+}
+
+
+- (void) addObserverEnabled:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"PreferenceEnabledChanged" object:(NSString*)appId];
 }
 
 
@@ -121,6 +135,7 @@
 
 - (void) setReceiverList:(NSArray*)aReceiverList
 {
+    // construct the list in the format required for preferences
     NSMutableArray* list = [NSMutableArray arrayWithCapacity:0];
 
     for (uint i=0 ; i<[aReceiverList count] ; i++)
@@ -128,8 +143,13 @@
         [list addObject:[[aReceiverList objectAtIndex:i] convertToDict]];
     }
 
+    // set the preference and flush
     CFPreferencesSetAppValue(CFSTR("ReceiverList"), list, appId);
     CFPreferencesAppSynchronize(appId);
+    
+    // send notification that this has changed
+    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterPostNotification(centre, CFSTR("PreferenceReceiverListChanged"), appId, NULL, TRUE);
 }
 
 

@@ -22,11 +22,14 @@
     [buttonOnOff setTitle:[NSString stringWithFormat:[buttonOnOff title], appName]];
     [buttonOnOff setAlternateTitle:[NSString stringWithFormat:[buttonOnOff alternateTitle], appName]];
     [textDescription setStringValue:[NSString stringWithFormat:[textDescription stringValue], appName]];
-    [buttonShowInStatusBar setTitle:[NSString stringWithFormat:[buttonShowInStatusBar title], appName]];
+    [buttonShowInStatusBar setTitle:[NSString stringWithFormat:[buttonShowInStatusBar title], appName]];    
     
     // create the preferences object
     iPreferences = [[Preferences alloc] initWithBundle:[self bundle]];    
     [iPreferences synchronize];
+
+    // register for notifications from app
+    [iPreferences addObserverEnabled:self selector:@selector(preferenceEnabledChanged:)];
 
     // initialise UI from preferences
     [self updateButtonOnOff];
@@ -44,6 +47,13 @@
 - (IBAction) buttonOnOffClicked:(id)aSender
 {
     [iPreferences setEnabled:([buttonOnOff state] == NSOnState)];
+}
+
+
+- (void) preferenceEnabledChanged:(NSNotification*)aNotification
+{
+    [iPreferences synchronize];
+    [self updateButtonOnOff];
 }
 
 
