@@ -29,6 +29,9 @@
     CFStringRef appId;
 }
 
+- (id) initWithBundle:(NSBundle*)aBundle;
+- (bool) enabled;
+- (void) setEnabled:(bool)aEnabled;
 - (NSArray*) receiverList;
 - (void) setReceiverList:(NSArray*)aReceiverList;
 - (void) synchronize;

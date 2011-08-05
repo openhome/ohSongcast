@@ -5,7 +5,6 @@
 
 @interface Model : NSObject
 {
-    bool iEnabled;
     void* iSoundcard;
     Preferences* iPreferences;
     NSMutableArray* iReceiverList;

@@ -1,5 +1,6 @@
 
 #import <PreferencePanes/PreferencePanes.h>
+#import "Preferences.h"
 
 
 @interface ohSoundcardPref : NSPreferencePane 
@@ -10,6 +11,8 @@
     IBOutlet NSTextField* textDescription;
     IBOutlet NSButton* buttonShowInStatusBar;
     IBOutlet NSButton* buttonHelp;
+
+    Preferences* iPreferences;
 }
 
 @property (assign) NSImageView* icon;
@@ -20,5 +23,7 @@
 @property (assign) NSButton* buttonHelp;
 
 - (void) mainViewDidLoad;
+- (void) updateButtonOnOff;
+- (IBAction) buttonOnOffClicked:(id)aSender;
 
 @end

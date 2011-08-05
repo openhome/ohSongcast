@@ -41,7 +41,6 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 {
     [super init];
     
-    iEnabled = FALSE;
     iSoundcard = nil;
     iPreferences = nil;
     iReceiverList = nil;
@@ -53,7 +52,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 - (void) start
 {
     // create the preferences object
-    iPreferences = [[Preferences alloc] init];
+    iPreferences = [[Preferences alloc] initWithBundle:[NSBundle mainBundle]];
     [iPreferences synchronize];
 
     // create an empty receiver list
@@ -66,14 +65,16 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
         [iReceiverList addObject:[[[Receiver alloc] initWithPref:pref] autorelease]];
     }
 
+    // check the enabled preference
+    bool enabled = [iPreferences enabled];
+    
     // create the soundcard object
     uint32_t subnet = 0;
     uint32_t channel = 0;
     uint32_t ttl = 4;
     uint32_t multicast = 0;
-    uint32_t enabled = 0;
     uint32_t preset = 0;
-    iSoundcard = SoundcardCreate(subnet, channel, ttl, multicast, enabled, preset, ModelReceiverCallback, self, ModelSubnetCallback, self);
+    iSoundcard = SoundcardCreate(subnet, channel, ttl, multicast, enabled ? 1 : 0, preset, ModelReceiverCallback, self, ModelSubnetCallback, self);
 }
 
 
@@ -89,14 +90,14 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 
 - (bool) enabled
 {
-    return iEnabled;
+    return [iPreferences enabled];
 }
 
 
 - (void) setEnabled:(bool)aValue
 {
     SoundcardSetEnabled(iSoundcard, aValue ? 1 : 0);
-    iEnabled = aValue;
+    [iPreferences setEnabled:aValue];
 }
 
 

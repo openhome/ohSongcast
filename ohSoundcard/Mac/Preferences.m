@@ -42,13 +42,46 @@
 @implementation Preferences
 
 
-- (id) init
+- (id) initWithBundle:(NSBundle*)aBundle
 {
-    [super init];
+    self = [super init];
     
-    appId = (CFStringRef)[NSLocalizedStringFromTable(@"PreferencesAppId", @"NonLocalizable", @"") retain];
+    appId = (CFStringRef)[NSLocalizedStringFromTableInBundle(@"PreferencesAppId", @"NonLocalizable", aBundle, @"") retain];
     
     return self;
+}
+
+
+- (bool) enabled
+{
+    CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("Enabled"), appId);
+    
+    if (pref)
+    {
+        if (CFGetTypeID(pref) == CFBooleanGetTypeID())
+        {
+            CFBooleanRef enabled = (CFBooleanRef)pref;
+            return (enabled == kCFBooleanTrue);
+        }
+        
+        CFRelease(pref);
+    }
+    
+    return false;
+}
+
+
+- (void) setEnabled:(bool)aEnabled
+{
+    if (aEnabled)
+    {
+        CFPreferencesSetAppValue(CFSTR("Enabled"), kCFBooleanTrue, appId);
+    }
+    else
+    {
+        CFPreferencesSetAppValue(CFSTR("Enabled"), kCFBooleanFalse, appId);
+    }    
+    CFPreferencesAppSynchronize(appId);
 }
 
 
@@ -96,6 +129,7 @@
     }
 
     CFPreferencesSetAppValue(CFSTR("ReceiverList"), list, appId);
+    CFPreferencesAppSynchronize(appId);
 }
 
 
