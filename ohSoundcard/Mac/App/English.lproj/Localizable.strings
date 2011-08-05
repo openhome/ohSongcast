@@ -1,16 +1,16 @@
 
-/* Menu item 1 - soundcard status is on */
-"MenuStatusOn" = "ohSoundcard: On";
+/* Menu item 1 - soundcard status is on - %@ is the name of the app */
+"MenuStatusOn" = "%@: On";
 
-/* Menu item 1 - soundcard status is off */
-"MenuStatusOff" = "ohSoundcard: Off";
+/* Menu item 1 - soundcard status is off - %@ is the name of the app */
+"MenuStatusOff" = "%@: Off";
 
-/* Menu item 2 - turn soundcard off */
-"MenuTurnOff" = "Turn ohSoundcard Off";
+/* Menu item 2 - turn soundcard off - %@ is the name of the app */
+"MenuTurnOff" = "Turn %@ Off";
 
-/* Menu item 2 - turn soundcard on */
-"MenuTurnOn" = "Turn ohSoundcard On";
+/* Menu item 2 - turn soundcard on - %@ is the name of the app */
+"MenuTurnOn" = "Turn %@ On";
 
-/* Menu item 3 - Open preferences */
-"MenuPreferences" = "Open ohSoundcard Preferences...";
+/* Menu item 3 - Open preferences - %@ is the name of the app */
+"MenuPreferences" = "Open %@ Preferences...";
 

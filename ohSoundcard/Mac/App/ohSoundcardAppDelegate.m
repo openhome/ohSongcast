@@ -18,9 +18,11 @@
     [statusItem setHighlightMode:YES];
     [statusItem setMenu:menu];
 
+    // get the bundle name from the info.plist
+    NSString* appName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
+
     // initialise menu items that do not depend on state
-    NSString* menuItemPrefsName = NSLocalizedString(@"MenuPreferences", @"");
-    [menuItemPrefs setTitle:menuItemPrefsName];
+    [menuItemPrefs setTitle:[NSString stringWithFormat:NSLocalizedString(@"MenuPreferences", @""), appName]];
 
     // create and start the model
     model = [[Model alloc] init];
@@ -60,6 +62,9 @@
 
 - (void)setMenuStatus:(bool)aOn
 {
+    // get the bundle name from the info.plist
+    NSString* appName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
+
     // get strings and image for the new status
     NSString* imageFile;
     NSString* menuItemStatusText;
@@ -83,8 +88,8 @@
     [statusItem setImage:image];
     [image release];
 
-    [menuItemStatus setTitle:menuItemStatusText];
-    [menuItemOnOff setTitle:menuItemOnOffText];
+    [menuItemStatus setTitle:[NSString stringWithFormat:menuItemStatusText, appName]];
+    [menuItemOnOff setTitle:[NSString stringWithFormat:menuItemOnOffText, appName]];
 }
 
 
