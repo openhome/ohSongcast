@@ -15,5 +15,6 @@
 - (void) stop;
 - (bool) enabled;
 - (void) setEnabled:(bool)aValue;
+- (void) preferenceEnabledChanged:(NSNotification*)aNotification;
 
 @end

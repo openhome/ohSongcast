@@ -42,7 +42,10 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     
     // create the receiver list
     iReceiverList = [[ReceiverList alloc] initWithReceivers:list];
+
+    // setup some event handlers
     [iReceiverList addObserver:self];
+    [iPreferences addObserverEnabled:self selector:@selector(preferenceEnabledChanged:)];
     
     // check the enabled preference
     bool enabled = [iPreferences enabled];
@@ -75,8 +78,18 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 
 - (void) setEnabled:(bool)aValue
 {
-    SoundcardSetEnabled(iSoundcard, aValue ? 1 : 0);
+    // just set the preference - eventing by the preference change will
+    // then cause the state of the soundcard to be updated
     [iPreferences setEnabled:aValue];
+}
+
+
+- (void) preferenceEnabledChanged:(NSNotification*)aNotification
+{
+    [iPreferences synchronize];
+    bool enabled = [iPreferences enabled];
+    
+    SoundcardSetEnabled(iSoundcard, enabled ? 1 : 0);
 }
 
 
