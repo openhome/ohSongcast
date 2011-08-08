@@ -3,33 +3,11 @@
 #include "../../Soundcard.h"
 
 
+// Declaration for soundcard receiver callback - defined in ReceiverList.mm
+extern void ReceiverListCallback(void* aPtr, ECallbackType aType, THandle aReceiver);
+
 // Forward declarations of callback functions defined below
-void ModelReceiverCallback(void* aPtr, ECallbackType aType, THandle aReceiver);
 void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
-
-
-
-// Declaration of the receiver class
-@interface Receiver : NSObject
-{
-    NSString* udn;
-    NSString* room;
-    NSString* group;
-    NSString* name;
-    void* iPtr;
-}
-
-@property (assign) NSString* udn;
-@property (assign) NSString* room;
-@property (assign) NSString* group;
-@property (assign) NSString* name;
-
-- (id) initWithPtr:(void*)aPtr;
-- (id) initWithPref:(PrefReceiver*)aPref;
-- (void) updateWithPtr:(void*)aPtr;
-- (PrefReceiver*) convertToPref;
-
-@end
 
 
 
@@ -55,16 +33,17 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     iPreferences = [[Preferences alloc] initWithBundle:[NSBundle mainBundle]];
     [iPreferences synchronize];
 
-    // create an empty receiver list
-    iReceiverList = [[NSMutableArray alloc] init];
-
-    // populate the receiver list with that stored in the preferences
-    NSArray* list = [iPreferences receiverList];
-    for (PrefReceiver* pref in list)
+    // build the initial list of receivers from the preferences
+    NSMutableArray* list = [NSMutableArray arrayWithCapacity:0];
+    for (PrefReceiver* pref in [iPreferences receiverList])
     {
-        [iReceiverList addObject:[[[Receiver alloc] initWithPref:pref] autorelease]];
+        [list addObject:[[[Receiver alloc] initWithPref:pref] autorelease]];
     }
-
+    
+    // create the receiver list
+    iReceiverList = [[ReceiverList alloc] initWithReceivers:list];
+    [iReceiverList addObserver:self];
+    
     // check the enabled preference
     bool enabled = [iPreferences enabled];
     
@@ -74,7 +53,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     uint32_t ttl = 4;
     uint32_t multicast = 0;
     uint32_t preset = 0;
-    iSoundcard = SoundcardCreate(subnet, channel, ttl, multicast, enabled ? 1 : 0, preset, ModelReceiverCallback, self, ModelSubnetCallback, self);
+    iSoundcard = SoundcardCreate(subnet, channel, ttl, multicast, enabled ? 1 : 0, preset, ReceiverListCallback, iReceiverList, ModelSubnetCallback, self);
 }
 
 
@@ -101,91 +80,18 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 }
 
 
-- (Receiver*) receiverWithUdn:(NSString*)aUdn
+- (void) receiverListChanged
 {
-    for (Receiver* receiver in iReceiverList)
-    {
-        if ([[receiver udn] compare:aUdn] == NSOrderedSame)
-        {
-            return receiver;
-        }
-    }
-    
-    return nil;
-}
-
-
-- (void) updatePrefsReceiverList
-{
+    // build a new list of receivers to store in the preferences
     NSMutableArray* list = [NSMutableArray arrayWithCapacity:0];
-
-    for (Receiver* receiver in iReceiverList)
+    
+    for (Receiver* receiver in [iReceiverList receivers])
     {
         [list addObject:[receiver convertToPref]];
     }
-    
+
+    // set - this sends notification of the change
     [iPreferences setReceiverList:list];
-    [iPreferences synchronize];
-}
-
-
-- (void) receiverAdded:(void*)aReceiver
-{
-    // look for this receiver in the current list of receivers
-    NSString* udn = [NSString stringWithUTF8String:ReceiverUdn(aReceiver)];
-
-    Receiver* receiver = [self receiverWithUdn:udn];
-
-    // update existing receivers and add new ones
-    if (receiver)
-    {
-        [receiver updateWithPtr:aReceiver];
-    }
-    else
-    {
-        receiver = [[[Receiver alloc] initWithPtr:aReceiver] autorelease];
-        [iReceiverList addObject:receiver];
-    }
-
-    // update the preferences
-    [self updatePrefsReceiverList];
-}
-
-
-- (void) receiverRemoved:(void*)aReceiver
-{
-    // look for this receiver in the current list of receivers
-    NSString* udn = [NSString stringWithUTF8String:ReceiverUdn(aReceiver)];
-    
-    Receiver* receiver = [self receiverWithUdn:udn];
-
-    if (receiver)
-    {
-        // receiver is in the list - clear the pointer
-        [receiver updateWithPtr:nil];
-
-        // update the preferences
-        [self updatePrefsReceiverList];
-    }
-}
-
-
-- (void) receiverChanged:(void*)aReceiver
-{
-    [self receiverAdded:aReceiver];
-}
-
-
-- (void) subnetAdded:(void*)aSubnet
-{
-}
-
-- (void) subnetRemoved:(void*)aSubnet
-{
-}
-
-- (void) subnetChanged:(void*)aSubnet
-{
 }
 
 
@@ -194,131 +100,9 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 
 
 // Callbacks from the ohSoundcard code
-void ModelReceiverCallback(void* aPtr, ECallbackType aType, THandle aReceiver)
-{
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-    
-    Model* model = (Model*)aPtr;
-    switch (aType)
-    {
-        case eAdded:
-            [model receiverAdded:aReceiver];
-            break;
-        case eRemoved:
-            [model receiverRemoved:aReceiver];
-            break;
-        case eChanged:
-            [model receiverChanged:aReceiver];
-            break;
-    }
-    
-    [pool drain];
-}
-
 void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
 {
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-    
-    Model* model = (Model*)aPtr;
-    switch (aType)
-    {
-        case eAdded:
-            [model subnetAdded:aSubnet];
-            break;
-        case eRemoved:
-            [model subnetRemoved:aSubnet];
-            break;
-        case eChanged:
-            [model subnetChanged:aSubnet];
-            break;
-    }
-    
-    [pool drain];
 }
-
-
-
-// Implementation of receiver class
-@implementation Receiver
-
-@synthesize udn;
-@synthesize room;
-@synthesize group;
-@synthesize name;
-
-
-- (id) initWithPtr:(void *)aPtr
-{
-    [super init];
-
-    iPtr = aPtr;
-    ReceiverAddRef(iPtr);
-
-    udn = [[NSString alloc] initWithUTF8String:ReceiverUdn(iPtr)];
-    room = [[NSString alloc] initWithUTF8String:ReceiverRoom(iPtr)];
-    group = [[NSString alloc] initWithUTF8String:ReceiverGroup(iPtr)];
-    name = [[NSString alloc] initWithUTF8String:ReceiverName(iPtr)];    
-    
-    return self;
-}
-
-
-- (id) initWithPref:(PrefReceiver*)aPref
-{
-    [super init];
-    
-    iPtr = nil;
-    
-    udn = [[aPref udn] retain];
-    room = [[aPref room] retain];
-    group = [[aPref group] retain];
-    name = [[aPref name] retain];
-    
-    return self;
-}
-
-
-- (void) updateWithPtr:(void*)aPtr
-{
-    if (iPtr != aPtr)
-    {
-        if (iPtr)
-            ReceiverRemoveRef(iPtr);
-        if (aPtr)
-            ReceiverAddRef(aPtr);
-    }
-    
-    iPtr = aPtr;
-    
-    if (aPtr)
-    {
-        [udn release];
-        [room release];
-        [group release];
-        [name release];
-        udn = [[NSString alloc] initWithUTF8String:ReceiverUdn(iPtr)];
-        room = [[NSString alloc] initWithUTF8String:ReceiverRoom(iPtr)];
-        group = [[NSString alloc] initWithUTF8String:ReceiverGroup(iPtr)];
-        name = [[NSString alloc] initWithUTF8String:ReceiverName(iPtr)];
-    }
-}
-
-
-- (PrefReceiver*) convertToPref
-{
-    PrefReceiver* pref = [[[PrefReceiver alloc] init] autorelease];
-    
-    [pref setUdn:udn];
-    [pref setRoom:room];
-    [pref setGroup:group];
-    [pref setName:name];
-    [pref setAvailable:(iPtr != nil)];
-    
-    return pref;
-}
-
-
-@end
 
 
 
