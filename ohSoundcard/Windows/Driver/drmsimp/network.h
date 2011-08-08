@@ -149,6 +149,8 @@ private:
 	ULONGLONG iSamplesTotal;
 	ULONG iSampleRate;
 	ULONG iTimestampMultiplier;
+	LARGE_INTEGER iPerformanceFrequency;
+	LARGE_INTEGER iPerformanceCounter;
 };
 
 #endif          // (NTDDI_VERSION >= NTDDI_VISTA)

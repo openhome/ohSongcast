@@ -1,5 +1,6 @@
 #include "SoundcardDriver.h"
 #include "../Soundcard.h"
+#include "PolicyConfig.h"
 
 #include <OpenHome/Private/Arch.h>
 
@@ -8,6 +9,8 @@
 #include <ksmedia.h>
 #include <initguid.h>
 #include <Shellapi.h>
+#include "Functiondiscoverykeys_devpkey.h"
+
 
 EXCEPTION(SoundcardError);
 
@@ -34,6 +37,94 @@ OhmSenderDriverWindows::OhmSenderDriverWindows()
 			THROW(SoundcardError);
 		}
 	}
+
+	if (!FindEndpoint()) {
+		THROW(SoundcardError);
+	}
+}
+
+TBool OhmSenderDriverWindows::FindEndpoint()
+{
+	HRESULT hr = CoInitialize(NULL);
+
+	if (SUCCEEDED(hr))
+	{
+		IMMDeviceEnumerator *pEnum = NULL;
+		// Create a multimedia device enumerator.
+		hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pEnum);
+		
+		if (SUCCEEDED(hr))
+		{
+			IMMDeviceCollection *pDevices;
+		
+			// Enumerate the output devices.
+			
+			hr = pEnum->EnumAudioEndpoints(eRender, DEVICE_STATEMASK_ALL, &pDevices);
+			
+			if (SUCCEEDED(hr))
+			{
+				UINT count;
+			
+				pDevices->GetCount(&count);
+				
+				if (SUCCEEDED(hr))
+				{
+					for (unsigned i = 0; i < count; i++)
+					{
+						IMMDevice *pDevice;
+				
+						hr = pDevices->Item(i, &pDevice);
+						
+						if (SUCCEEDED(hr))
+						{
+							LPWSTR wstrID = NULL;
+						
+							hr = pDevice->GetId(&wstrID);
+							
+							if (SUCCEEDED(hr))
+							{
+								IPropertyStore *pStore;
+							
+								hr = pDevice->OpenPropertyStore(STGM_READ, &pStore);
+								
+								if (SUCCEEDED(hr))
+								{
+									PROPVARIANT friendlyName;
+								
+									PropVariantInit(&friendlyName);
+									
+									hr = pStore->GetValue(PKEY_Device_FriendlyName, &friendlyName);
+									
+									if (SUCCEEDED(hr))
+									{
+										if (!wcscmp(friendlyName.pwszVal, L"Speakers (ohSoundcard)"))
+										{
+											wcscpy(iEndpointId, wstrID);
+											PropVariantClear(&friendlyName);
+											pStore->Release();
+											pDevice->Release();
+											pDevices->Release();
+											pEnum->Release();
+											return (true);
+										}
+
+										PropVariantClear(&friendlyName);
+									}
+
+									pStore->Release();
+								}
+							}
+							pDevice->Release();
+						}
+					}
+				}
+				pDevices->Release();
+			}
+			pEnum->Release();
+		}
+	}
+
+	return (false);
 }
 
 TBool OhmSenderDriverWindows::InstallDriver()
@@ -55,13 +146,11 @@ TBool OhmSenderDriverWindows::InstallDriver()
 	int ret = (int)shellExecuteInfo.hInstApp;
 
 	if (ret <= 32) {
-		printf("Error %d\n", ret);
 		return (false);
 	}
 
 	if (shellExecuteInfo.hProcess ==NULL)
 	{
-		printf("No process\n", ret);
 		return (false);
 	}
 
@@ -70,6 +159,52 @@ TBool OhmSenderDriverWindows::InstallDriver()
     CloseHandle(shellExecuteInfo.hProcess);
 
 	return (true);
+}
+
+void OhmSenderDriverWindows::SetDefaultAudioPlaybackDevice()
+{	
+    printf("Defaulting %ws\n", iEndpointId);
+
+	IPolicyConfigVista *pPolicyConfig;
+	
+    HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
+
+	if (SUCCEEDED(hr))
+	{
+		hr = pPolicyConfig->SetDefaultEndpoint(iEndpointId, eConsole);
+		pPolicyConfig->Release();
+	}
+
+    printf("failed\n");
+}
+
+void OhmSenderDriverWindows::SetEndpointEnabled(TBool aValue)
+{	
+	HRESULT hr;
+	
+	// The following works if we are on vista ...
+
+	IPolicyConfigVista *pPolicyConfig;
+	
+    hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
+
+	if (SUCCEEDED(hr))
+	{
+		pPolicyConfig->SetEndpointVisibility(iEndpointId, aValue ? 1 : 0);
+		pPolicyConfig->Release();
+	}
+
+	// ... and the following works if we are on Windows 7
+
+	IPolicyConfig *pPolicyConfig2;
+	
+    hr = CoCreateInstance(__uuidof(CPolicyConfigClient), NULL, CLSCTX_ALL, __uuidof(IPolicyConfig), (LPVOID *)&pPolicyConfig2);
+
+	if (SUCCEEDED(hr))
+	{
+		pPolicyConfig2->SetEndpointVisibility(iEndpointId, aValue ? 1 : 0);
+		pPolicyConfig2->Release();
+	}
 }
 
 TBool OhmSenderDriverWindows::FindDriver()
@@ -106,6 +241,8 @@ TBool OhmSenderDriverWindows::FindDriver()
 		{
 			try
 			{
+				printf("%s\n", deviceInterfaceDetailData->DevicePath);
+
 				iHandle = CreateFile(deviceInterfaceDetailData->DevicePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, 0, 0);
 
                 KSPROPERTY prop;
@@ -155,11 +292,18 @@ void OhmSenderDriverWindows::SetEnabled(TBool aValue)
 	DWORD value = aValue ? 1 : 0;
 
     DeviceIoControl(iHandle, IOCTL_KS_PROPERTY, &prop, sizeof(KSPROPERTY), &value, sizeof(value), &bytes, 0);
+
+	SetEndpointEnabled(aValue);
+
+	if (aValue)
+	{
+		SetDefaultAudioPlaybackDevice();
+	}
 }
 
 void OhmSenderDriverWindows::SetActive(TBool  aValue)
 {
-    KSPROPERTY prop;
+	KSPROPERTY prop;
 				
 	prop.Set = OHSOUNDCARD_GUID;
     prop.Id = KSPROPERTY_OHSOUNDCARD_ACTIVE;
@@ -169,7 +313,7 @@ void OhmSenderDriverWindows::SetActive(TBool  aValue)
 
 	DWORD value = aValue ? 1 : 0;
 
-    DeviceIoControl(iHandle, IOCTL_KS_PROPERTY, &prop, sizeof(KSPROPERTY), &value, sizeof(value), &bytes, 0);
+	DeviceIoControl(iHandle, IOCTL_KS_PROPERTY, &prop, sizeof(KSPROPERTY), &value, sizeof(value), &bytes, 0);
 }
 
 void OhmSenderDriverWindows::SetEndpoint(const Endpoint& aEndpoint)

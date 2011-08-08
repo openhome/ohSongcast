@@ -29,7 +29,7 @@ namespace OpenHome.Soundcard
 
             iSubnetList = new SubnetList(this.Dispatcher);
 
-            iSubnetList.CollectionChanged += new System.Collections.Specialized.NotifyCollectionChangedEventHandler(EventSubnetListCollectionChanged);
+            iSubnetList.CountChanged += EventSubnetListCountChanged;
 
             comboBoxNetwork.ItemsSource = iSubnetList;
 
@@ -49,8 +49,17 @@ namespace OpenHome.Soundcard
             comboBoxNetwork.SelectionChanged += EventComboBoxNetworkSelectionChanged;
         }
 
-        void EventSubnetListCollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        void EventSubnetListCountChanged(object sender, EventArgs e)
         {
+            if (iConfiguration.Subnet == 0)
+            {
+                if (iSubnetList.Count > 0)
+                {
+                    comboBoxNetwork.SelectedIndex = 0;
+                    return;
+                }
+            }
+
             int index = 0;
 
             foreach (Subnet subnet in iSubnetList)
@@ -62,6 +71,12 @@ namespace OpenHome.Soundcard
                 }
 
                 index++;
+            }
+
+            if (iSubnetList.Count > 0)
+            {
+                comboBoxNetwork.SelectedIndex = 0;
+                return;
             }
 
             comboBoxNetwork.SelectedIndex = -1;
@@ -147,9 +162,7 @@ namespace OpenHome.Soundcard
 
             if (index >= 0)
             {
-                Subnet subnet = iSubnetList.SubnetAt(index);
-                
-                uint address = subnet.Address;
+                uint address = iSubnetList.SubnetAt(index).Address;
 
                 if (iConfiguration.Subnet != address)
                 {
@@ -158,7 +171,6 @@ namespace OpenHome.Soundcard
                     InformListeners(SubnetChanged);
                 }
             }
-
         }
 
         public Action DefaultAutoplayChanged;

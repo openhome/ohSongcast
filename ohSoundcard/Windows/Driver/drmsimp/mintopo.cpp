@@ -16,10 +16,15 @@ Abstract:
 
 #include <msvad.h>
 #include <common.h>
+#include <stdio.h>
 #include "drmsimp.h"
 #include "minwave.h"
 #include "mintopo.h"
 #include "toptable.h"
+
+extern void MpusStopLocked();
+extern void MpusUpdateEndpointLocked();
+extern void MpusUpdateTtlLocked();
 
 FAST_MUTEX MpusFastMutex;
 
@@ -326,35 +331,38 @@ CMiniportTopology::CreateWaveMiniport()
 { 
     PAGED_CODE();
 
-	MpusEnabled = 1;
-	JackDescSpeakers.IsConnected = true;
-
     DPF_ENTER(("[CreateWaveMiniport]"));
-
-	PUNKNOWN* waveport = m_AdapterCommon->WavePortDriverDest();
-	
-	if (!*waveport) {
-		return;
-	}
 
 	PDEVICE_OBJECT device = m_AdapterCommon->GetDeviceObject();
 
-    // Register the subdevice (port/miniport combination).
-    
-	PcRegisterSubdevice (
-        device,
-        L"Wave",
-        *waveport 
-    );
+	PUNKNOWN* pWavePort = m_AdapterCommon->WavePortDriverDest();
+	
+	if (!*pWavePort) {
+		return;
+	}
 
     // register wave <=> topology connections
 
-    PcRegisterPhysicalConnection ( 
+	(*pWavePort)->AddRef();
+
+	m_Port->AddRef();
+
+	PcRegisterPhysicalConnection ( 
         device,
-        *waveport,
+        *pWavePort,
         KSPIN_WAVE_RENDER_SOURCE,
         m_Port,
         KSPIN_TOPO_WAVEOUT_SOURCE
+    );
+
+    // Register the subdevice (port/miniport combination).
+    
+	(*pWavePort)->AddRef();
+
+	PcRegisterSubdevice (
+        device,
+        L"Wave",
+        *pWavePort 
     );
 }
 
@@ -366,34 +374,15 @@ CMiniportTopology::DestroyWaveMiniport()
 {
     PAGED_CODE();
 
-	MpusEnabled = 0;
-	JackDescSpeakers.IsConnected = false;
+	DPF_ENTER(("[DestroyWaveMiniport]"));
 
-    DPF_ENTER(("[DestroyWaveMiniport]"));
-
-	PUNKNOWN* waveport = m_AdapterCommon->WavePortDriverDest();
+	PUNKNOWN* pWavePort = m_AdapterCommon->WavePortDriverDest();
 	
-	if (!*waveport) {
+	if (!*pWavePort) {
 		return;
 	}
 
 	PDEVICE_OBJECT device = m_AdapterCommon->GetDeviceObject();
-
-    // Unregister wave <=> topology connections
-
-	IUnregisterPhysicalConnection* unregisterPhysicalConnection;
-
-	m_Port->QueryInterface(IID_IUnregisterPhysicalConnection, (PVOID*)&unregisterPhysicalConnection);
-
-	unregisterPhysicalConnection->UnregisterPhysicalConnection ( 
-        device,
-        *waveport,
-        KSPIN_WAVE_RENDER_SOURCE,
-        m_Port,
-        KSPIN_TOPO_WAVEOUT_SOURCE
-    );
-
-	unregisterPhysicalConnection->Release();
 
     // Unregister the subdevice (port/miniport combination).
     
@@ -401,18 +390,34 @@ CMiniportTopology::DestroyWaveMiniport()
 
 	m_Port->QueryInterface(IID_IUnregisterSubdevice, (PVOID*)&unregisterSubdevice);
 
+	(*pWavePort)->AddRef();
+
 	unregisterSubdevice->UnregisterSubdevice (
         device,
-        *waveport 
+        *pWavePort
     );
 
 	unregisterSubdevice->Release();
 
-	//TODO - when disabled
-	//if (MpusActive) {
-	//	Socket->Send(&MpusAddress, (UCHAR*)0, 0, 1, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels);
-	//}
-	//MpusSendFormat = 1;
+    // Unregister wave <=> topology connections
+
+	IUnregisterPhysicalConnection* unregisterPhysicalConnection;
+
+	m_Port->QueryInterface(IID_IUnregisterPhysicalConnection, (PVOID*)&unregisterPhysicalConnection);
+
+	(*pWavePort)->AddRef();
+
+	m_Port->AddRef();
+
+	unregisterPhysicalConnection->UnregisterPhysicalConnection ( 
+        device,
+        *pWavePort,
+        KSPIN_WAVE_RENDER_SOURCE,
+        m_Port,
+        KSPIN_TOPO_WAVEOUT_SOURCE
+    );
+
+	unregisterPhysicalConnection->Release();
 }
 
 //=============================================================================
@@ -445,6 +450,7 @@ Return Value:
 
     NTSTATUS            ntStatus = STATUS_INVALID_DEVICE_REQUEST;
 
+	/*
     if (IsEqualGUIDAligned(*PropertyRequest->PropertyItem->Set, KSPROPSETID_Jack))
 	{
 		if (PropertyRequest->PropertyItem->Id == KSPROPERTY_JACK_DESCRIPTION)
@@ -495,6 +501,7 @@ Return Value:
 			}
 		}
     }
+	*/
 
     return ntStatus;
 } // PropertyHandler_TopoFilter
@@ -554,16 +561,27 @@ PropertyHandler_Wave
 
 				UINT enabled = *pValue;
 
-				PCMiniportTopology  pMiniport = (PCMiniportTopology)PropertyRequest->MajorTarget;
+				if (enabled != 0) {
+					enabled = 1;
+				}
+
+				// PCMiniportTopology  pMiniport = (PCMiniportTopology)PropertyRequest->MajorTarget;
 
 				ExAcquireFastMutex(&MpusFastMutex);
 
 				if (MpusEnabled != enabled) {
 					if (enabled) {
-						pMiniport->CreateWaveMiniport();
+						MpusEnabled = 1;
+						JackDescSpeakers.IsConnected = true;
+						//pMiniport->CreateWaveMiniport(); Not doing dynamic device any more
 					}
 					else {
-						pMiniport->DestroyWaveMiniport();
+						MpusEnabled = 0;
+						JackDescSpeakers.IsConnected = false;
+						if (MpusActive) {
+							MpusStopLocked();
+						}
+						//pMiniport->DestroyWaveMiniport(); Not doing dynamic device any more
 					}
 				}
 
@@ -581,20 +599,21 @@ PropertyHandler_Wave
 
 				UINT active = *pValue;
 
+				if (active != 0) {
+					active = 1;
+				}
+
 				ExAcquireFastMutex(&MpusFastMutex);
 
 				if (MpusActive != active) {
 					if (active) {
 						MpusActive = 1;
-						//TODO - when activated
 					}
 					else {
 						MpusActive = 0;
-						//TODO when deactivated
-						//if (MpusEnabled) {
-						//	Socket->Send(&MpusAddress, (UCHAR*)0, 0, 1, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels);
-						//}
-						//MpusSendFormat = 1;
+						if (MpusEnabled) {
+							MpusStopLocked();
+						}
 					}
 				}
 
@@ -618,8 +637,7 @@ PropertyHandler_Wave
 				if (MpusAddr != addr || MpusPort != port) {
 					MpusAddr = addr;
 					MpusPort = port;
-					//TODO when endpoint changes
-					//CWinsock::Initialise(&MpusAddress, MpusAddr, MpusPort);
+					MpusUpdateEndpointLocked();
 				}
 
 				ExReleaseFastMutex(&MpusFastMutex);
@@ -640,8 +658,7 @@ PropertyHandler_Wave
 
 				if (MpusTtl != ttl) {
 					MpusTtl = *pValue;
-					//TODO when ttl changes
-					//Socket->SetTtl(MpusTtl);
+					MpusUpdateTtlLocked();
 				}
 
 				ExReleaseFastMutex(&MpusFastMutex);

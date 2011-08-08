@@ -69,8 +69,6 @@
 
     <Property Id="WixShellExecTarget" Value="[#ohSoundcard1]" />
 
-    <CustomAction Id="LaunchApplication" BinaryKey="WixCA" DllEntry="WixShellExec" Impersonate="yes" />
-
     <CustomAction Id="LaunchInstall" FileKey="ohSoundcard4" ExeCommand="" Execute="immediate" Impersonate="yes" Return="check" />
     <CustomAction Id="LaunchApplication" FileKey="ohSoundcard1" ExeCommand="" Execute="immediate" Impersonate="yes" Return="asyncNoWait" />
     
@@ -97,11 +95,9 @@
       <!-- Hook the new welcome dialog to the next one in the stack-->
       <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="PrepareDlg">1</Publish>
 
-      <Publish Dialog="MyInstallDialog" Control="Finish" Event="DoAction" Value="LaunchInstall">LAUNCHAPPONEXIT</Publish>
-      <Publish Dialog="ExitDialog" Control="Finish" Order="1" Event="DoAction" Value="LaunchApplication">LAUNCHAPPONEXIT</Publish>
+      <Publish Dialog="ExitDialog" Control="Finish" Order="1" Event="DoAction" Value="LaunchInstall">LAUNCHAPPONEXIT</Publish>
+      <Publish Dialog="ExitDialog" Control="Finish" Order="2" Event="DoAction" Value="LaunchApplication">LAUNCHAPPONEXIT</Publish>
       <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
-
-      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication">Installed</Publish>
 
       <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
 
