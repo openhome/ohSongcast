@@ -41,6 +41,7 @@
 
 - (NSArray*) receiverList;
 - (void) setReceiverList:(NSArray*)aReceiverList;
+- (void) addObserverReceiverList:(id)aObserver selector:(SEL)aSelector;
 
 - (void) synchronize;
 

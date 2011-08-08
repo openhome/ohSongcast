@@ -3,6 +3,24 @@
 #import "Preferences.h"
 
 
+// Receiver class for data displayed in the table view
+@interface Receiver : NSObject
+{
+    NSString* udn;
+    NSString* title;
+    bool selected;
+}
+
+@property (assign) NSString* udn;
+@property (assign) NSString* title;
+@property (assign) bool selected;
+
+- (id) initWithPref:(PrefReceiver*)aPref uniqueInRoom:(bool)aUnique;
+
+@end
+
+
+// Main class for the preference pane
 @interface ohSoundcardPref : NSPreferencePane 
 {
     IBOutlet NSImageView* icon;
@@ -11,8 +29,10 @@
     IBOutlet NSTextField* textDescription;
     IBOutlet NSButton* buttonShowInStatusBar;
     IBOutlet NSButton* buttonHelp;
+    IBOutlet NSTableView* tableViewReceiverList;
 
     Preferences* iPreferences;
+    NSArray* iReceiverList;
 }
 
 @property (assign) NSImageView* icon;
@@ -28,5 +48,6 @@
 - (IBAction) buttonShowInStatusBarClicked:(id)aSender;
 - (IBAction) buttonHelpClicked:(id)aSender;
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;
+- (void) preferenceReceiverListChanged:(NSNotification*)aNotification;
 
 @end

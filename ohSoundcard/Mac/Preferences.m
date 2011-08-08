@@ -200,6 +200,13 @@
 }
 
 
+- (void) addObserverReceiverList:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"PreferenceReceiverListChanged" object:(NSString*)appId];
+}
+
+
 - (void) synchronize
 {
     CFPreferencesAppSynchronize(appId);
