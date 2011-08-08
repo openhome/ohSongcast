@@ -4,17 +4,31 @@
 #import "ReceiverList.h"
 
 
+@protocol IModelObserver
+
+- (void) enabledChanged;
+- (void) iconVisibleChanged;
+
+@end
+
+
 @interface Model : NSObject<IReceiverListObserver>
 {
     void* iSoundcard;
     Preferences* iPreferences;
     ReceiverList* iReceiverList;
+    id<IModelObserver> iObserver;
 }
 
 - (void) start;
 - (void) stop;
+- (void) setObserver:(id<IModelObserver>)aObserver;
+
+- (bool) iconVisible;
 - (bool) enabled;
 - (void) setEnabled:(bool)aValue;
+
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;
+- (void) preferenceIconVisibleChanged:(NSNotification*)aNotification;
 
 @end

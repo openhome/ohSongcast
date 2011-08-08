@@ -52,6 +52,53 @@
 }
 
 
+- (bool) iconVisible
+{
+    CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("IconVisible"), appId);
+    
+    if (pref)
+    {
+        if (CFGetTypeID(pref) == CFBooleanGetTypeID())
+        {
+            CFBooleanRef visible = (CFBooleanRef)pref;
+            return (visible == kCFBooleanTrue);
+        }
+        
+        CFRelease(pref);
+    }
+    
+    return true;
+}
+
+
+- (void) setIconVisible:(bool)aVisible
+{
+    // set the new preference value
+    if (aVisible)
+    {
+        CFPreferencesSetAppValue(CFSTR("IconVisible"), kCFBooleanTrue, appId);
+    }
+    else
+    {
+        CFPreferencesSetAppValue(CFSTR("IconVisible"), kCFBooleanFalse, appId);
+    }
+    
+    // flush the preferences
+    CFPreferencesAppSynchronize(appId);
+    
+    // send notification that this has changed
+    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterPostNotification(centre, CFSTR("PreferenceIconVisibleChanged"), appId, NULL, TRUE);
+}
+
+
+- (void) addObserverIconVisible:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"PreferenceIconVisibleChanged" object:(NSString*)appId];
+}
+
+
 - (bool) enabled
 {
     CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("Enabled"), appId);

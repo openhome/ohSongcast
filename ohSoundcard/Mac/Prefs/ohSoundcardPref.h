@@ -25,6 +25,8 @@
 - (void) mainViewDidLoad;
 - (void) updateButtonOnOff;
 - (IBAction) buttonOnOffClicked:(id)aSender;
+- (IBAction) buttonShowInStatusBarClicked:(id)aSender;
+- (IBAction) buttonHelpClicked:(id)aSender;
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;
 
 @end

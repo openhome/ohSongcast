@@ -33,6 +33,7 @@
 
     // initialise UI from preferences
     [self updateButtonOnOff];
+    [buttonShowInStatusBar setState:([iPreferences iconVisible] ? NSOnState : NSOffState)];
 }
 
 
@@ -47,6 +48,17 @@
 - (IBAction) buttonOnOffClicked:(id)aSender
 {
     [iPreferences setEnabled:([buttonOnOff state] == NSOnState)];
+}
+
+
+- (IBAction) buttonShowInStatusBarClicked:(id)aSender
+{
+    [iPreferences setIconVisible:([buttonShowInStatusBar state] == NSOnState)];
+}
+
+
+- (IBAction) buttonHelpClicked:(id)aSender
+{
 }
 
 

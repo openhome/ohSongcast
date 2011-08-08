@@ -22,6 +22,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     iSoundcard = nil;
     iPreferences = nil;
     iReceiverList = nil;
+    iObserver = nil;
 
     return self;
 }
@@ -46,6 +47,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     // setup some event handlers
     [iReceiverList addObserver:self];
     [iPreferences addObserverEnabled:self selector:@selector(preferenceEnabledChanged:)];
+    [iPreferences addObserverIconVisible:self selector:@selector(preferenceIconVisibleChanged:)];
     
     // check the enabled preference
     bool enabled = [iPreferences enabled];
@@ -70,6 +72,18 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 }
 
 
+- (void) setObserver:(id<IModelObserver>)aObserver
+{
+    iObserver = aObserver;
+}
+
+
+- (bool) iconVisible
+{
+    return [iPreferences iconVisible];
+}
+
+
 - (bool) enabled
 {
     return [iPreferences enabled];
@@ -86,10 +100,24 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification
 {
+    // refresh cached preferences
     [iPreferences synchronize];
-    bool enabled = [iPreferences enabled];
+
+    // enable/disable the soundcard
+    SoundcardSetEnabled(iSoundcard, [iPreferences enabled] ? 1 : 0);
     
-    SoundcardSetEnabled(iSoundcard, enabled ? 1 : 0);
+    // notify UI
+    [iObserver enabledChanged];
+}
+
+
+- (void) preferenceIconVisibleChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences
+    [iPreferences synchronize];
+    
+    // notify UI
+    [iObserver iconVisibleChanged];
 }
 
 

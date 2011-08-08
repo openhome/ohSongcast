@@ -30,11 +30,18 @@
 }
 
 - (id) initWithBundle:(NSBundle*)aBundle;
+
+- (bool) iconVisible;
+- (void) setIconVisible:(bool)aVisible;
+- (void) addObserverIconVisible:(id)aObserver selector:(SEL)aSelector;
+
 - (bool) enabled;
 - (void) setEnabled:(bool)aEnabled;
 - (void) addObserverEnabled:(id)aObserver selector:(SEL)aSelector;
+
 - (NSArray*) receiverList;
 - (void) setReceiverList:(NSArray*)aReceiverList;
+
 - (void) synchronize;
 
 @end

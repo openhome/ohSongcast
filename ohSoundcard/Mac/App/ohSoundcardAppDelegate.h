@@ -3,7 +3,7 @@
 #import "Model.h"
 
 
-@interface ohSoundcardAppDelegate : NSObject <NSApplicationDelegate>
+@interface ohSoundcardAppDelegate : NSObject <NSApplicationDelegate, IModelObserver>
 {
     IBOutlet NSMenu* menu;
     IBOutlet NSMenuItem* menuItemStatus;
@@ -21,6 +21,5 @@
 
 - (IBAction)menuItemOnOffClicked:(id)aSender;
 - (IBAction)menuItemPrefsClicked:(id)aSender;
-- (void)setMenuStatus:(bool)aOn;
 
 @end
