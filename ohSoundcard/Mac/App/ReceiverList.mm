@@ -4,6 +4,21 @@
 
 
 
+// Definition for a class used to pass arguments across
+// the soundcard-main thread boundary
+@interface CallbackArg : NSObject
+{
+    void* ptr;
+}
+
+@property (readonly) void* ptr;
+
+- (id) initWithPtr:(void*)aPtr;
+
+@end
+
+
+
 // Implementation of receiver class
 @implementation Receiver
 
@@ -129,33 +144,38 @@
 }
 
 
-- (void) receiverAdded:(void*)aReceiver
+- (void) receiverAdded:(CallbackArg*)aArg
 {
     // look for this receiver in the current list of receivers
-    NSString* udn = [NSString stringWithUTF8String:ReceiverUdn(aReceiver)];
+    NSString* udn = [NSString stringWithUTF8String:ReceiverUdn([aArg ptr])];
     
     Receiver* receiver = [self receiverWithUdn:udn];
     
     // update existing receivers and add new ones
     if (receiver)
     {
-        [receiver updateWithPtr:aReceiver];
+        [receiver updateWithPtr:[aArg ptr]];
     }
     else
     {
-        receiver = [[[Receiver alloc] initWithPtr:aReceiver] autorelease];
+        receiver = [[[Receiver alloc] initWithPtr:[aArg ptr]] autorelease];
         [iList addObject:receiver];
     }
     
     // notify of changes
     [iObserver receiverListChanged];
+    
+    // the ref count of the passed in arg can now be decremented - this is to match
+    // the add ref call in the C-style callback method that is called which dispatches
+    // this method call to the main thread (ReceiverListCallback, below)
+    ReceiverRemoveRef([aArg ptr]);
 }
 
 
-- (void) receiverRemoved:(void*)aReceiver
+- (void) receiverRemoved:(CallbackArg*)aArg
 {
     // look for this receiver in the current list of receivers
-    NSString* udn = [NSString stringWithUTF8String:ReceiverUdn(aReceiver)];
+    NSString* udn = [NSString stringWithUTF8String:ReceiverUdn([aArg ptr])];
     
     Receiver* receiver = [self receiverWithUdn:udn];
     
@@ -167,14 +187,35 @@
         // notify of changes
         [iObserver receiverListChanged];
     }
+    
+    // the ref count of the passed in arg can now be decremented - this is to match
+    // the add ref call in the C-style callback method that is called which dispatches
+    // this method call to the main thread (ReceiverListCallback, below)
+    ReceiverRemoveRef([aArg ptr]);
 }
 
 
-- (void) receiverChanged:(void*)aReceiver
+- (void) receiverChanged:(CallbackArg*)aArg
 {
-    [self receiverAdded:aReceiver];
+    [self receiverAdded:aArg];
 }
 
+
+@end
+
+
+
+// Implementation of the callback arg class
+@implementation CallbackArg
+
+@synthesize ptr;
+
+- (id) initWithPtr:(void*)aPtr
+{
+    self = [super init];
+    ptr = aPtr;
+    return self;
+}
 
 @end
 
@@ -186,16 +227,21 @@ void ReceiverListCallback(void* aPtr, ECallbackType aType, THandle aReceiver)
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     
     ReceiverList* receiverList = (ReceiverList*)aPtr;
+
+    // The receiver is passed asynchronously to the main thread - add a ref that gets decremented
+    // in the main thread functions
+    ReceiverAddRef(aReceiver);
+
     switch (aType)
     {
         case eAdded:
-            [receiverList receiverAdded:aReceiver];
+            [receiverList performSelectorOnMainThread:@selector(receiverAdded:) withObject:[[[CallbackArg alloc] initWithPtr:aReceiver] autorelease] waitUntilDone:FALSE];
             break;
         case eRemoved:
-            [receiverList receiverRemoved:aReceiver];
+            [receiverList performSelectorOnMainThread:@selector(receiverRemoved:) withObject:[[[CallbackArg alloc] initWithPtr:aReceiver] autorelease] waitUntilDone:FALSE];
             break;
         case eChanged:
-            [receiverList receiverChanged:aReceiver];
+            [receiverList performSelectorOnMainThread:@selector(receiverChanged:) withObject:[[[CallbackArg alloc] initWithPtr:aReceiver] autorelease] waitUntilDone:FALSE];
             break;
     }
     
