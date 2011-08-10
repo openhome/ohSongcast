@@ -21,7 +21,9 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     
     iSoundcard = nil;
     iPreferences = nil;
+    iEnabled = false;
     iReceiverList = nil;
+    iSelectedUdnList = nil;
     iObserver = nil;
 
     return self;
@@ -42,7 +44,11 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     }
     
     // create the receiver list
-    iReceiverList = [[ReceiverList alloc] initWithReceivers:list];
+    iReceiverList = [[ReceiverList alloc] initWithReceivers:list];    
+    
+    // get other preference data
+    iEnabled = [iPreferences enabled];
+    iSelectedUdnList = [[iPreferences selectedUdnList] retain];
 
     // setup some event handlers
     [iReceiverList addObserver:self];
@@ -50,16 +56,13 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     [iPreferences addObserverIconVisible:self selector:@selector(preferenceIconVisibleChanged:)];
     [iPreferences addObserverSelectedUdnList:self selector:@selector(preferenceSelectedUdnListChanged:)];
     
-    // check the enabled preference
-    bool enabled = [iPreferences enabled];
-    
     // create the soundcard object
     uint32_t subnet = 0;
     uint32_t channel = 0;
     uint32_t ttl = 4;
     uint32_t multicast = 0;
     uint32_t preset = 0;
-    iSoundcard = SoundcardCreate(subnet, channel, ttl, multicast, enabled ? 1 : 0, preset, ReceiverListCallback, iReceiverList, ModelSubnetCallback, self);
+    iSoundcard = SoundcardCreate(subnet, channel, ttl, multicast, iEnabled ? 1 : 0, preset, ReceiverListCallback, iReceiverList, ModelSubnetCallback, self);
 }
 
 
@@ -67,7 +70,8 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 {
     SoundcardDestroy(iSoundcard);
     iSoundcard = NULL;
-    
+
+    [iSelectedUdnList release];
     [iReceiverList release];
     [iPreferences release];
 }
@@ -87,7 +91,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 
 - (bool) enabled
 {
-    return [iPreferences enabled];
+    return iEnabled;
 }
 
 
@@ -101,9 +105,10 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification
 {
-    // refresh cached preferences
+    // refresh cached preferences and update the local copy
     [iPreferences synchronize];
-
+    iEnabled = [iPreferences enabled];
+    
     // enable/disable the soundcard
     SoundcardSetEnabled(iSoundcard, [iPreferences enabled] ? 1 : 0);
     
@@ -124,8 +129,10 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 
 - (void) preferenceSelectedUdnListChanged:(NSNotification*)aNotification
 {
-    // refresh cached preferences
+    // refresh cached preferences and update the local copy
     [iPreferences synchronize];
+    [iSelectedUdnList release];
+    iSelectedUdnList = [iPreferences selectedUdnList];
 }
 
 

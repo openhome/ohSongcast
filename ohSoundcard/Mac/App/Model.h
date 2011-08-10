@@ -16,7 +16,9 @@
 {
     void* iSoundcard;
     Preferences* iPreferences;
+    bool iEnabled;
     ReceiverList* iReceiverList;
+    NSArray* iSelectedUdnList;
     id<IModelObserver> iObserver;
 }
 
