@@ -116,6 +116,18 @@
         [iReceiverList release];
     }
     iReceiverList = [[NSArray alloc] initWithArray:receivers];
+
+    // update the selected flags for the data
+    for (NSString* udn in [iPreferences selectedUdnList])
+    {
+        for (Receiver* receiver in iReceiverList)
+        {
+            if ([udn compare:[receiver udn]] == NSOrderedSame)
+            {
+                [receiver setSelected:[NSNumber numberWithBool:true]];
+            }
+        }
+    }
     
     // refresh the table view
     [tableViewReceiverList reloadData];
@@ -142,9 +154,34 @@
     
     if ([checkColumn compare:[aColumn identifier]] == NSOrderedSame)
     {
+        return [NSNumber numberWithInteger:([receiver selected] ? NSOnState : NSOffState)];
     }
     
     return nil;
+}
+
+
+- (void) tableView:(NSTableView*)aTableView setObjectValue:(id)aValue forTableColumn:(NSTableColumn*)aColumn row:(NSInteger)aRow
+{
+    NSString* checkColumn = [NSString stringWithUTF8String:"selected"];
+
+    if ([checkColumn compare:[aColumn identifier]] == NSOrderedSame)
+    {
+        // set selection value of the clicked row
+        Receiver* receiver = [iReceiverList objectAtIndex:aRow];
+        [receiver setSelected:[aValue boolValue]];
+        
+        // update the preferences
+        NSMutableArray* list = [NSMutableArray arrayWithCapacity:0];
+        for (Receiver* receiver in iReceiverList)
+        {
+            if ([receiver selected])
+            {
+                [list addObject:[receiver udn]];
+            }
+        }
+        [iPreferences setSelectedUdnList:list];
+    }
 }
 
 

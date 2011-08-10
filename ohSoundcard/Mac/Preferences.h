@@ -43,6 +43,10 @@
 - (void) setReceiverList:(NSArray*)aReceiverList;
 - (void) addObserverReceiverList:(id)aObserver selector:(SEL)aSelector;
 
+- (NSArray*) selectedUdnList;
+- (void) setSelectedUdnList:(NSArray*)aSelectedUdnList;
+- (void) addObserverSelectedUdnList:(id)aObserver selector:(SEL)aSelector;
+
 - (void) synchronize;
 
 @end

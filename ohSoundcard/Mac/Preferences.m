@@ -207,6 +207,58 @@
 }
 
 
+- (NSArray*) selectedUdnList
+{
+    // create a temporary mutable array for building the list
+    NSMutableArray* udnList = [NSMutableArray arrayWithCapacity:0];
+    
+    CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("SelectedUdnList"), appId);
+    
+    if (pref)
+    {
+        if (CFGetTypeID(pref) == CFArrayGetTypeID())
+        {
+            CFArrayRef list = (CFArrayRef)pref;
+            
+            for (CFIndex i=0 ; i<CFArrayGetCount(list) ; i++)
+            {
+                const void* item = CFArrayGetValueAtIndex(list, i);
+                
+                if (item && CFGetTypeID(item) == CFStringGetTypeID())
+                {
+                    NSString* udn = (NSString*)item;                    
+                    [udnList addObject:udn];                    
+                }
+            }
+        }
+        
+        CFRelease(pref);
+    }
+    
+    // return a new immutable array of udns
+    return [NSArray arrayWithArray:udnList];
+}
+
+
+- (void) setSelectedUdnList:(NSArray*)aSelectedUdnList
+{
+    // set the preference and flush
+    CFPreferencesSetAppValue(CFSTR("SelectedUdnList"), aSelectedUdnList, appId);
+    CFPreferencesAppSynchronize(appId);
+    
+    // send notification that this has changed
+    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterPostNotification(centre, CFSTR("PreferenceSelectedUdnListChanged"), appId, NULL, TRUE);
+}
+
+
+- (void) addObserverSelectedUdnList:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"PreferenceSelectedUdnListChanged" object:(NSString*)appId];
+}
+
+
 - (void) synchronize
 {
     CFPreferencesAppSynchronize(appId);
