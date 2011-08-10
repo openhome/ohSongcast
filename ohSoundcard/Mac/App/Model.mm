@@ -48,6 +48,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     [iReceiverList addObserver:self];
     [iPreferences addObserverEnabled:self selector:@selector(preferenceEnabledChanged:)];
     [iPreferences addObserverIconVisible:self selector:@selector(preferenceIconVisibleChanged:)];
+    [iPreferences addObserverSelectedUdnList:self selector:@selector(preferenceSelectedUdnListChanged:)];
     
     // check the enabled preference
     bool enabled = [iPreferences enabled];
@@ -118,6 +119,13 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     
     // notify UI
     [iObserver iconVisibleChanged];
+}
+
+
+- (void) preferenceSelectedUdnListChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences
+    [iPreferences synchronize];
 }
 
 

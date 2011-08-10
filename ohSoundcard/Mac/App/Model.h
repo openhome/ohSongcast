@@ -30,5 +30,6 @@
 
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;
 - (void) preferenceIconVisibleChanged:(NSNotification*)aNotification;
+- (void) preferenceSelectedUdnListChanged:(NSNotification*)aNotification;
 
 @end
