@@ -9,11 +9,13 @@
 @interface CallbackArg : NSObject
 {
     void* ptr;
+    ECallbackType callbackType;
 }
 
 @property (readonly) void* ptr;
+@property (readonly) ECallbackType callbackType;
 
-- (id) initWithPtr:(void*)aPtr;
+- (id) initWithPtr:(void*)aPtr callbackType:(ECallbackType)aCallbackType;
 
 @end
 
@@ -46,74 +48,63 @@
 }
 
 
-- (Receiver*) receiverWithUdn:(NSString*)aUdn
+- (void) receiverCallback:(CallbackArg*)aArg
 {
-    for (Receiver* receiver in iList)
+    // look for this receiver in the current list of receivers
+    NSString* udn = [NSString stringWithUTF8String:ReceiverUdn([aArg ptr])];    
+    Receiver* receiver = nil;
+    for (Receiver* r in iList)
     {
-        if ([[receiver udn] compare:aUdn] == NSOrderedSame)
+        if ([[r udn] compare:udn] == NSOrderedSame)
         {
-            return receiver;
+            receiver = r;
+            break;
         }
     }
     
-    return nil;
-}
-
-
-- (void) receiverAdded:(CallbackArg*)aArg
-{
-    // look for this receiver in the current list of receivers
-    NSString* udn = [NSString stringWithUTF8String:ReceiverUdn([aArg ptr])];
-    
-    Receiver* receiver = [self receiverWithUdn:udn];
-    
-    // update existing receivers and add new ones
-    if (receiver)
+    // handle different callback types
+    switch ([aArg callbackType])
     {
-        [receiver updateWithPtr:[aArg ptr]];
+        case eAdded:
+            if (receiver)
+            {
+                // receiver already in the list - update with the new ptr
+                [receiver updateWithPtr:[aArg ptr]];
+            }
+            else
+            {
+                // receiver not in list - create a new one
+                receiver = [[[Receiver alloc] initWithPtr:[aArg ptr]] autorelease];
+                [iList addObject:receiver];
+            }
+
+            // send notification
+            [iObserver receiverAdded:receiver];
+            break;
+
+        case eRemoved:
+            if (receiver)
+            {
+                // clear the ptr for this receiver and send notification
+                [receiver updateWithPtr:nil];
+                [iObserver receiverRemoved:receiver];
+            }
+            break;
+
+        case eChanged:
+            if (receiver)
+            {
+                // update the existing receiver and send notification
+                [receiver updateWithPtr:[aArg ptr]];
+                [iObserver receiverChanged:receiver];
+            }
+            break;
     }
-    else
-    {
-        receiver = [[[Receiver alloc] initWithPtr:[aArg ptr]] autorelease];
-        [iList addObject:receiver];
-    }
-    
-    // notify of changes
-    [iObserver receiverListChanged];
-    
-    // the ref count of the passed in arg can now be decremented - this is to match
-    // the add ref call in the C-style callback method that is called which dispatches
-    // this method call to the main thread (ReceiverListCallback, below)
-    ReceiverRemoveRef([aArg ptr]);
-}
-
-
-- (void) receiverRemoved:(CallbackArg*)aArg
-{
-    // look for this receiver in the current list of receivers
-    NSString* udn = [NSString stringWithUTF8String:ReceiverUdn([aArg ptr])];
-    
-    Receiver* receiver = [self receiverWithUdn:udn];
-    
-    if (receiver)
-    {
-        // receiver is in the list - clear the pointer
-        [receiver updateWithPtr:nil];
         
-        // notify of changes
-        [iObserver receiverListChanged];
-    }
-    
-    // the ref count of the passed in arg can now be decremented - this is to match
+    // the ref count of the passed in arg ptr can now be decremented - this is to match
     // the add ref call in the C-style callback method that is called which dispatches
     // this method call to the main thread (ReceiverListCallback, below)
     ReceiverRemoveRef([aArg ptr]);
-}
-
-
-- (void) receiverChanged:(CallbackArg*)aArg
-{
-    [self receiverAdded:aArg];
 }
 
 
@@ -125,11 +116,13 @@
 @implementation CallbackArg
 
 @synthesize ptr;
+@synthesize callbackType;
 
-- (id) initWithPtr:(void*)aPtr
+- (id) initWithPtr:(void*)aPtr callbackType:(ECallbackType)aCallbackType
 {
     self = [super init];
     ptr = aPtr;
+    callbackType = aCallbackType;
     return self;
 }
 
@@ -148,18 +141,8 @@ void ReceiverListCallback(void* aPtr, ECallbackType aType, THandle aReceiver)
     // in the main thread functions
     ReceiverAddRef(aReceiver);
 
-    switch (aType)
-    {
-        case eAdded:
-            [receiverList performSelectorOnMainThread:@selector(receiverAdded:) withObject:[[[CallbackArg alloc] initWithPtr:aReceiver] autorelease] waitUntilDone:FALSE];
-            break;
-        case eRemoved:
-            [receiverList performSelectorOnMainThread:@selector(receiverRemoved:) withObject:[[[CallbackArg alloc] initWithPtr:aReceiver] autorelease] waitUntilDone:FALSE];
-            break;
-        case eChanged:
-            [receiverList performSelectorOnMainThread:@selector(receiverChanged:) withObject:[[[CallbackArg alloc] initWithPtr:aReceiver] autorelease] waitUntilDone:FALSE];
-            break;
-    }
+    // Post to the main thread
+    [receiverList performSelectorOnMainThread:@selector(receiverCallback:) withObject:[[[CallbackArg alloc] initWithPtr:aReceiver callbackType:aType] autorelease] waitUntilDone:FALSE];
     
     [pool drain];
 }

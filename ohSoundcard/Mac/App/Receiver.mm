@@ -82,6 +82,53 @@
 }
 
 
+- (EReceiverState) status
+{
+    if (iPtr)
+    {
+        switch (ReceiverStatus(iPtr))
+        {
+            case eDisconnected:
+                return eReceiverStateDisconnected;
+            case eConnecting:
+                return eReceiverStateConnecting;
+            case eConnected:
+                return eReceiverStateConnected;
+            default:
+                return eReceiverStateOffline;
+        };
+    }
+    else
+    {
+        return eReceiverStateOffline;
+    }
+}
+
+
+- (void) play
+{
+    if (iPtr) {
+        ReceiverPlay(iPtr);
+    }
+}
+
+
+- (void) stop
+{
+    if (iPtr) {
+        ReceiverStop(iPtr);
+    }
+}
+
+
+- (void) standby
+{
+    if (iPtr) {
+        ReceiverStandby(iPtr);
+    }
+}
+
+
 @end
 
 

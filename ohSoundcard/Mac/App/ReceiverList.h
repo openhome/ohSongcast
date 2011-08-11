@@ -1,11 +1,14 @@
 
 #import <Cocoa/Cocoa.h>
+#import "Receiver.h"
 
 
 // Declaration of protocol for receiver list changes
 @protocol IReceiverListObserver
 
-- (void) receiverListChanged;
+- (void) receiverAdded:(Receiver*)aReceiver;
+- (void) receiverRemoved:(Receiver*)aReceiver;
+- (void) receiverChanged:(Receiver*)aReceiver;
 
 @end
 

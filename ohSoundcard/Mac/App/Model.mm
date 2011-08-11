@@ -137,7 +137,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 }
 
 
-- (void) receiverListChanged
+- (void) updatePreferenceReceiverList
 {
     // build a new list of receivers to store in the preferences
     NSMutableArray* list = [NSMutableArray arrayWithCapacity:0];
@@ -146,9 +146,27 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     {
         [list addObject:[receiver convertToPref]];
     }
-
+    
     // set - this sends notification of the change
     [iPreferences setReceiverList:list];
+}
+
+
+- (void) receiverAdded:(Receiver *)aReceiver
+{
+    [self updatePreferenceReceiverList];
+}
+
+
+- (void) receiverRemoved:(Receiver *)aReceiver
+{
+    [self updatePreferenceReceiverList];
+}
+
+
+- (void) receiverChanged:(Receiver *)aReceiver
+{
+    [self updatePreferenceReceiverList];
 }
 
 
