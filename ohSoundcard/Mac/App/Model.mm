@@ -23,6 +23,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     iSoundcard = nil;
     iPreferences = nil;
     iEnabled = false;
+    iAutoplay = true;
     iReceiverList = nil;
     iSelectedUdnList = nil;
     iObserver = nil;
@@ -67,8 +68,32 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 }
 
 
+- (void) stopReceivers
+{
+    // Receivers are stopped and put into standby if:
+    //  - they are selected
+    //  - they are connected
+    // If a selected receiver is disconnected, this implies there has been some sort
+    // of interaction with that receiver from another control point, e.g. change of
+    // source, so these receivers are not tampered with
+    for (Receiver* receiver in [iReceiverList receivers])
+    {
+        if ([iSelectedUdnList containsObject:[receiver udn]] &&
+            ([receiver status] == eReceiverStateConnected || [receiver status] == eReceiverStateConnecting))
+        {
+            [receiver stop];
+            [receiver standby];
+        }
+    }
+}
+
+
 - (void) stop
 {
+    // soundcard app shutting down - stop receivers before destroying soundcard
+    [self stopReceivers];
+
+    // shutdown the soundcard
     SoundcardDestroy(iSoundcard);
     iSoundcard = NULL;
 
@@ -109,12 +134,36 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     // refresh cached preferences and update the local copy
     [iPreferences synchronize];
     iEnabled = [iPreferences enabled];
-    
+
+    // stop receivers before disabling soundcard
+    if (!iEnabled)
+    {
+        [self stopReceivers];
+    }
+
     // enable/disable the soundcard
-    SoundcardSetEnabled(iSoundcard, [iPreferences enabled] ? 1 : 0);
+    SoundcardSetEnabled(iSoundcard, iEnabled ? 1 : 0);
+
+    // start receivers after soundcard is enabled
+    if (iEnabled)
+    {
+        // On switching on the soundcard, if autoplay is enabled, all disconnected receivers
+        // are played. If autoplay is disabled, nothing happens.
+        if (iAutoplay)
+        {
+            for (Receiver* receiver in [iReceiverList receivers])
+            {
+                if ([iSelectedUdnList containsObject:[receiver udn]] &&
+                    [receiver status] == eReceiverStateDisconnected)
+                {
+                    [receiver play];
+                }
+            }
+        }
+    }
     
     // notify UI
-    [iObserver enabledChanged];
+    [iObserver enabledChanged];    
 }
 
 
@@ -155,6 +204,19 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 - (void) receiverAdded:(Receiver *)aReceiver
 {
     [self updatePreferenceReceiverList];
+
+    // the receiver has just appeared on the network - start playing if required i.e.
+    //  - autoplay option is enabled
+    //  - soundcard is switched on
+    //  - receiver is selected
+    //  - receiver is currently disconnected
+    if (iAutoplay &&
+        iEnabled &&
+        [iSelectedUdnList containsObject:[aReceiver udn]] &&
+        [aReceiver status] == eReceiverStateDisconnected)
+    {
+        [aReceiver play];
+    }
 }
 
 
