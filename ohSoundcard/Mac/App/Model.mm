@@ -1,5 +1,6 @@
 
 #import "Model.h"
+#import "Receiver.h"
 #include "../../Soundcard.h"
 
 
