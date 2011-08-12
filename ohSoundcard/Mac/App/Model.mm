@@ -68,21 +68,38 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 }
 
 
-- (void) stopReceivers
+- (void) playReceiver:(Receiver*)aReceiver
 {
-    // Receivers are stopped and put into standby if:
-    //  - they are selected
-    //  - they are connected
-    // If a selected receiver is disconnected, this implies there has been some sort
+    // Start playing a receiver only if it is currently disconnected
+    if ([aReceiver status] == eReceiverStateDisconnected)
+    {
+        [aReceiver play];
+    }
+}
+
+
+- (void) stopReceiver:(Receiver*)aReceiver
+{
+    // A receiver is stopped and put into standby only if it is connected to this soundcard
+    // If the receiver is disconnected, this implies there has been some sort
     // of interaction with that receiver from another control point, e.g. change of
     // source, so these receivers are not tampered with
+    if ([aReceiver status] == eReceiverStateConnected || [aReceiver status] == eReceiverStateConnecting)
+    {
+        [aReceiver stop];
+//        [aReceiver standby];
+    }
+}
+
+
+- (void) stopReceivers
+{
+    // Only stop receivers that are in the selected list
     for (Receiver* receiver in [iReceiverList receivers])
     {
-        if ([iSelectedUdnList containsObject:[receiver udn]] &&
-            ([receiver status] == eReceiverStateConnected || [receiver status] == eReceiverStateConnecting))
+        if ([iSelectedUdnList containsObject:[receiver udn]])
         {
-            [receiver stop];
-//            [receiver standby];
+            [self stopReceiver:receiver];
         }
     }
 }
@@ -153,10 +170,9 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
         {
             for (Receiver* receiver in [iReceiverList receivers])
             {
-                if ([iSelectedUdnList containsObject:[receiver udn]] &&
-                    [receiver status] == eReceiverStateDisconnected)
+                if ([iSelectedUdnList containsObject:[receiver udn]])
                 {
-                    [receiver play];
+                    [self playReceiver:receiver];
                 }
             }
         }
@@ -179,10 +195,53 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 
 - (void) preferenceSelectedUdnListChanged:(NSNotification*)aNotification
 {
-    // refresh cached preferences and update the local copy
+    // refresh cached preferences
     [iPreferences synchronize];
+
+    // get the new list of selected receivers in order to determine changes in the list
+    NSArray* newSelectedUdnList = [[iPreferences selectedUdnList] retain];
+
+    // if the soundcard is enabled, need to play/stop receivers that have been
+    // selected/deselected
+    if (iEnabled)
+    {
+        // build the list of receivers that have just been deselected
+        NSMutableArray* deselected = [NSMutableArray arrayWithCapacity:0];
+        for (NSString* udn in iSelectedUdnList)
+        {
+            if (![newSelectedUdnList containsObject:udn])
+            {
+                [deselected addObject:udn];
+            }
+        }
+    
+        // build the list of receivers that have just been selected
+        NSMutableArray* selected = [NSMutableArray arrayWithCapacity:0];
+        for (NSString* udn in newSelectedUdnList)
+        {
+            if (![iSelectedUdnList containsObject:udn])
+            {
+                [selected addObject:udn];
+            }
+        }
+        
+        // now play and stop the relevant receivers
+        for (Receiver* receiver in [iReceiverList receivers])
+        {
+            if ([deselected containsObject:[receiver udn]])
+            {
+                [self stopReceiver:receiver];
+            }
+            else if ([selected containsObject:[receiver udn]])
+            {
+                [self playReceiver:receiver];
+            }
+        }
+    }
+    
+    // now discard the old list
     [iSelectedUdnList release];
-    iSelectedUdnList = [iPreferences selectedUdnList];
+    iSelectedUdnList = newSelectedUdnList;
 }
 
 
@@ -209,13 +268,11 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     //  - autoplay option is enabled
     //  - soundcard is switched on
     //  - receiver is selected
-    //  - receiver is currently disconnected
     if (iAutoplay &&
         iEnabled &&
-        [iSelectedUdnList containsObject:[aReceiver udn]] &&
-        [aReceiver status] == eReceiverStateDisconnected)
+        [iSelectedUdnList containsObject:[aReceiver udn]])
     {
-        [aReceiver play];
+        [self playReceiver:aReceiver];
     }
 }
 
