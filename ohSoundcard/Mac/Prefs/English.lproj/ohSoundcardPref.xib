@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="6"/>
+			<integer value="107"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -393,7 +393,6 @@
 													<int key="NSvFlags">-2147483392</int>
 													<string key="NSFrame">{{1, 119}, {223, 15}}</string>
 													<reference key="NSSuperview" ref="390934257"/>
-													<bool key="NSEnabled">YES</bool>
 													<int key="NSsFlags">1</int>
 													<reference key="NSTarget" ref="390934257"/>
 													<string key="NSAction">_doScroller:</string>
@@ -403,7 +402,7 @@
 											<string key="NSFrame">{{294, 180}, {327, 185}}</string>
 											<reference key="NSSuperview" ref="227962976"/>
 											<reference key="NSNextKeyView" ref="1006198458"/>
-											<int key="NSsFlags">690</int>
+											<int key="NSsFlags">562</int>
 											<reference key="NSVScroller" ref="139610237"/>
 											<reference key="NSHScroller" ref="1048803995"/>
 											<reference key="NSContentView" ref="1006198458"/>
@@ -647,6 +646,22 @@
 						<reference key="destination" ref="1030121117"/>
 					</object>
 					<int key="connectionID">136</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">buttonAutoplayClicked:</string>
+						<reference key="source" ref="294453543"/>
+						<reference key="destination" ref="288468695"/>
+					</object>
+					<int key="connectionID">152</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">buttonAutoplay</string>
+						<reference key="source" ref="294453543"/>
+						<reference key="destination" ref="288468695"/>
+					</object>
+					<int key="connectionID">153</int>
 				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -1096,7 +1111,7 @@
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">151</int>
+			<int key="maxID">153</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -1132,12 +1147,14 @@
 						<bool key="EncodedWithXMLCoder">YES</bool>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>buttonAutoplayClicked:</string>
 							<string>buttonHelpClicked:</string>
 							<string>buttonOnOffClicked:</string>
 							<string>buttonShowInStatusBarClicked:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -1147,12 +1164,17 @@
 						<bool key="EncodedWithXMLCoder">YES</bool>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>buttonAutoplayClicked:</string>
 							<string>buttonHelpClicked:</string>
 							<string>buttonOnOffClicked:</string>
 							<string>buttonShowInStatusBarClicked:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<object class="IBActionInfo">
+								<string key="name">buttonAutoplayClicked:</string>
+								<string key="candidateClassName">id</string>
+							</object>
 							<object class="IBActionInfo">
 								<string key="name">buttonHelpClicked:</string>
 								<string key="candidateClassName">id</string>
@@ -1171,6 +1193,7 @@
 						<bool key="EncodedWithXMLCoder">YES</bool>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>buttonAutoplay</string>
 							<string>buttonHelp</string>
 							<string>buttonOnOff</string>
 							<string>buttonShowInStatusBar</string>
@@ -1181,6 +1204,7 @@
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSButton</string>
@@ -1194,6 +1218,7 @@
 						<bool key="EncodedWithXMLCoder">YES</bool>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>buttonAutoplay</string>
 							<string>buttonHelp</string>
 							<string>buttonOnOff</string>
 							<string>buttonShowInStatusBar</string>
@@ -1204,6 +1229,10 @@
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<object class="IBToOneOutletInfo">
+								<string key="name">buttonAutoplay</string>
+								<string key="candidateClassName">NSButton</string>
+							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">buttonHelp</string>
 								<string key="candidateClassName">NSButton</string>

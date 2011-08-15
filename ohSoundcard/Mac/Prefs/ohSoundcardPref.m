@@ -25,6 +25,7 @@
 @synthesize icon;
 @synthesize textSenderName;
 @synthesize buttonOnOff;
+@synthesize buttonAutoplay;
 @synthesize textDescription;
 @synthesize buttonShowInStatusBar;
 @synthesize buttonHelp;
@@ -56,7 +57,8 @@
 
     // initialise UI from preferences
     [self updateButtonOnOff];
-    [buttonShowInStatusBar setState:([iPreferences iconVisible] ? NSOnState : NSOffState)];    
+    [buttonShowInStatusBar setState:([iPreferences iconVisible] ? NSOnState : NSOffState)];
+    [buttonAutoplay setState:([iPreferences autoplayReceivers] ? NSOnState : NSOffState)];
 }
 
 
@@ -71,6 +73,12 @@
 - (IBAction) buttonOnOffClicked:(id)aSender
 {
     [iPreferences setEnabled:([buttonOnOff state] == NSOnState)];
+}
+
+
+- (IBAction) buttonAutoplayClicked:(id)aSender
+{
+    [iPreferences setAutoplayReceivers:([buttonAutoplay state] == NSOnState)];
 }
 
 

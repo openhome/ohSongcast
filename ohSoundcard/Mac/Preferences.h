@@ -47,6 +47,10 @@ typedef enum
 - (void) setIconVisible:(bool)aVisible;
 - (void) addObserverIconVisible:(id)aObserver selector:(SEL)aSelector;
 
+- (bool) autoplayReceivers;
+- (void) setAutoplayReceivers:(bool)aAutoplayReceivers;
+- (void) addObserverAutoplayReceivers:(id)aObserver selector:(SEL)aSelector;
+
 - (bool) enabled;
 - (void) setEnabled:(bool)aEnabled;
 - (void) addObserverEnabled:(id)aObserver selector:(SEL)aSelector;

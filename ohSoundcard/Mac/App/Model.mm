@@ -50,6 +50,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     
     // get other preference data
     iEnabled = [iPreferences enabled];
+    iAutoplay = [iPreferences autoplayReceivers];
     iSelectedUdnList = [[iPreferences selectedUdnList] retain];
 
     // setup some event handlers
@@ -57,6 +58,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     [iPreferences addObserverEnabled:self selector:@selector(preferenceEnabledChanged:)];
     [iPreferences addObserverIconVisible:self selector:@selector(preferenceIconVisibleChanged:)];
     [iPreferences addObserverSelectedUdnList:self selector:@selector(preferenceSelectedUdnListChanged:)];
+    [iPreferences addObserverAutoplayReceivers:self selector:@selector(preferenceAutoplayReceiversChanged:)];
     
     // create the soundcard object
     uint32_t subnet = 0;
@@ -242,6 +244,14 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     // now discard the old list
     [iSelectedUdnList release];
     iSelectedUdnList = newSelectedUdnList;
+}
+
+
+- (void) preferenceAutoplayReceiversChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences and update the local copy
+    [iPreferences synchronize];
+    iAutoplay = [iPreferences autoplayReceivers];
 }
 
 

@@ -99,6 +99,53 @@
 }
 
 
+- (bool) autoplayReceivers
+{
+    CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("AutoplayReceivers"), appId);
+    
+    if (pref)
+    {
+        if (CFGetTypeID(pref) == CFBooleanGetTypeID())
+        {
+            CFBooleanRef visible = (CFBooleanRef)pref;
+            return (visible == kCFBooleanTrue);
+        }
+        
+        CFRelease(pref);
+    }
+    
+    return true;
+}
+
+
+- (void) setAutoplayReceivers:(bool)aAutoplayReceivers
+{
+    // set the new preference value
+    if (aAutoplayReceivers)
+    {
+        CFPreferencesSetAppValue(CFSTR("AutoplayReceivers"), kCFBooleanTrue, appId);
+    }
+    else
+    {
+        CFPreferencesSetAppValue(CFSTR("AutoplayReceivers"), kCFBooleanFalse, appId);
+    }
+    
+    // flush the preferences
+    CFPreferencesAppSynchronize(appId);
+    
+    // send notification that this has changed
+    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterPostNotification(centre, CFSTR("PreferenceAutoplayReceiversChanged"), appId, NULL, TRUE);
+}
+
+
+- (void) addObserverAutoplayReceivers:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"PreferenceAutoplayReceiversChanged" object:(NSString*)appId];
+}
+
+
 - (bool) enabled
 {
     CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("Enabled"), appId);
