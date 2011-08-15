@@ -35,5 +35,7 @@
 - (void) preferenceIconVisibleChanged:(NSNotification*)aNotification;
 - (void) preferenceSelectedUdnListChanged:(NSNotification*)aNotification;
 - (void) preferenceAutoplayReceiversChanged:(NSNotification*)aNotification;
+- (void) preferenceRefreshReceiverList:(NSNotification*)aNotification;
+- (void) preferenceReconnectReceivers:(NSNotification*)aNotification;
 
 @end

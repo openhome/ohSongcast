@@ -48,6 +48,30 @@
 }
 
 
+- (void) removeNonSelected:(NSArray*)aSelected
+{
+    // create a new list of the selected receivers
+    NSMutableArray* list = [[NSMutableArray alloc] initWithCapacity:0];
+
+    for (Receiver* receiver in iList)
+    {
+        if ([aSelected containsObject:[receiver udn]])
+        {
+            [list addObject:receiver];
+        }
+        else
+        {
+            [receiver updateWithPtr:0];
+        }
+
+    }
+
+    // replace old list
+    [iList release];
+    iList = list;
+}
+
+
 - (void) receiverCallback:(CallbackArg*)aArg
 {
     // look for this receiver in the current list of receivers

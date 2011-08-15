@@ -82,6 +82,18 @@
 }
 
 
+- (IBAction) buttonRefreshClicked:(id)aSender
+{
+    [iPreferences refreshReceiverList];
+}
+
+
+- (IBAction) buttonReconnectClicked:(id)aSender
+{
+    [iPreferences reconnectReceivers];
+}
+
+
 - (IBAction) buttonShowInStatusBarClicked:(id)aSender
 {
     [iPreferences setIconVisible:([buttonShowInStatusBar state] == NSOnState)];

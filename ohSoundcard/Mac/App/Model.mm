@@ -59,6 +59,8 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     [iPreferences addObserverIconVisible:self selector:@selector(preferenceIconVisibleChanged:)];
     [iPreferences addObserverSelectedUdnList:self selector:@selector(preferenceSelectedUdnListChanged:)];
     [iPreferences addObserverAutoplayReceivers:self selector:@selector(preferenceAutoplayReceiversChanged:)];
+    [iPreferences addObserverRefreshReceiverList:self selector:@selector(preferenceRefreshReceiverList:)];
+    [iPreferences addObserverReconnectReceivers:self selector:@selector(preferenceReconnectReceivers:)];
     
     // create the soundcard object
     uint32_t subnet = 0;
@@ -267,6 +269,35 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     
     // set - this sends notification of the change
     [iPreferences setReceiverList:list];
+}
+
+
+- (void) preferenceRefreshReceiverList:(NSNotification*)aNotification
+{
+    // remove all non-selected receivers
+    [iReceiverList removeNonSelected:iSelectedUdnList];
+
+    // update the preferences
+    [self updatePreferenceReceiverList];
+    
+    // now signal the soundcard lower level to refresh
+    SoundcardRefreshReceivers(iSoundcard);
+}
+
+
+- (void) preferenceReconnectReceivers:(NSNotification*)aNotification
+{
+    // if the soundcard is enabled, force all selected receivers to reconnect
+    if (iEnabled)
+    {
+        for (Receiver* receiver in [iReceiverList receivers])
+        {
+            if ([iSelectedUdnList containsObject:[receiver udn]])
+            {
+                [self playReceiver:receiver];
+            }
+        }
+    }
 }
 
 

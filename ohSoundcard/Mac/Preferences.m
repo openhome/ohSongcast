@@ -262,6 +262,34 @@
 }
 
 
+- (void) refreshReceiverList
+{
+    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterPostNotification(centre, CFSTR("RefreshReceiverList"), appId, NULL, TRUE);
+}
+
+
+- (void) addObserverRefreshReceiverList:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"RefreshReceiverList" object:(NSString*)appId];
+}
+
+
+- (void) reconnectReceivers
+{
+    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterPostNotification(centre, CFSTR("ReconnectReceivers"), appId, NULL, TRUE);
+}
+
+
+- (void) addObserverReconnectReceivers:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"ReconnectReceivers" object:(NSString*)appId];
+}
+
+
 - (void) synchronize
 {
     CFPreferencesAppSynchronize(appId);

@@ -63,6 +63,12 @@ typedef enum
 - (void) setSelectedUdnList:(NSArray*)aSelectedUdnList;
 - (void) addObserverSelectedUdnList:(id)aObserver selector:(SEL)aSelector;
 
+- (void) refreshReceiverList;
+- (void) addObserverRefreshReceiverList:(id)aObserver selector:(SEL)aSelector;
+
+- (void) reconnectReceivers;
+- (void) addObserverReconnectReceivers:(id)aObserver selector:(SEL)aSelector;
+
 - (void) synchronize;
 
 @end
