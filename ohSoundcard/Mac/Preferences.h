@@ -2,20 +2,32 @@
 #import <Cocoa/Cocoa.h>
 
 
+// Enum for the receiver state
+typedef enum
+{
+    eReceiverStateOffline,
+    eReceiverStateDisconnected,
+    eReceiverStateConnecting,
+    eReceiverStateConnected
+    
+} EReceiverState;
+
+
+
 @interface PrefReceiver : NSObject
 {
     NSString* udn;
     NSString* room;
     NSString* group;
     NSString* name;
-    bool available;
+    EReceiverState status;
 }
 
 @property (assign) NSString* udn;
 @property (assign) NSString* room;
 @property (assign) NSString* group;
 @property (assign) NSString* name;
-@property (assign) bool available;
+@property (assign) EReceiverState status;
 
 - (id) initWithDict:(NSDictionary*)aDict;
 - (NSDictionary*) convertToDict;

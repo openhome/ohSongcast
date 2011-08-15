@@ -8,7 +8,7 @@
 @synthesize room;
 @synthesize group;
 @synthesize name;
-@synthesize available;
+@synthesize status;
 
 
 - (id) initWithDict:(NSDictionary*)aDict
@@ -19,7 +19,7 @@
     room = [[aDict objectForKey:@"Room"] retain];
     group = [[aDict objectForKey:@"Group"] retain];
     name = [[aDict objectForKey:@"Name"] retain];
-    available = [[aDict objectForKey:@"Available"] boolValue];
+    status = [[aDict objectForKey:@"Status"] intValue];
     
     return self;
 }
@@ -32,7 +32,7 @@
             room, @"Room",
             group, @"Group",
             name, @"Name",
-            [NSNumber numberWithBool:available], @"Available", nil];
+            [NSNumber numberWithInt:status], @"Status", nil];
 }
 
 @end

@@ -76,7 +76,7 @@
     [pref setRoom:room];
     [pref setGroup:group];
     [pref setName:name];
-    [pref setAvailable:(iPtr != nil)];
+    [pref setStatus:[self status]];
     
     return pref;
 }

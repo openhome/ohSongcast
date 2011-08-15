@@ -13,6 +13,7 @@
 + (NSString*) textConnected;
 + (NSString*) textDisconnected;
 + (NSString*) textUnavailable;
++ (NSString*) textSoundcardOff;
 
 @end
 
@@ -88,6 +89,7 @@
 {
     [iPreferences synchronize];
     [self updateButtonOnOff];
+    [tableViewReceiverList reloadData];
 }
 
 
@@ -167,7 +169,7 @@
 
     if ([titleColumn compare:[aColumn identifier]] == NSOrderedSame)
     {
-        return receiver;
+        return [NSArray arrayWithObjects:receiver, [NSNumber numberWithBool:[iPreferences enabled]], nil];
     }
     
     if ([checkColumn compare:[aColumn identifier]] == NSOrderedSame)
@@ -199,6 +201,9 @@
             }
         }
         [iPreferences setSelectedUdnList:list];
+        
+        // refresh the table view
+        [tableViewReceiverList reloadData];
     }
 }
 
@@ -213,6 +218,8 @@
 @synthesize udn;
 @synthesize title;
 @synthesize selected;
+@synthesize status;
+
 
 - (id) initWithPref:(PrefReceiver*)aPref uniqueInRoom:(bool)aUnique
 {
@@ -220,6 +227,7 @@
 
     [self setUdn:[aPref udn]];
     [self setSelected:false];
+    [self setStatus:[aPref status]];
 
     if (aUnique)
     {
@@ -240,6 +248,7 @@
     [copy setUdn:[NSString stringWithString:udn]];
     [copy setTitle:[NSString stringWithString:title]];
     [copy setSelected:selected];
+    [copy setStatus:status];
     return copy;    
 }
 
@@ -253,8 +262,10 @@
 static NSImage* imageConnected;
 static NSImage* imageDisconnected;
 static NSString* textConnected;
+static NSString* textConnecting;
 static NSString* textDisconnected;
 static NSString* textUnavailable;
+static NSString* textSoundcardOff;
 
 + (void) loadResources:(NSBundle*)aBundle
 {
@@ -262,8 +273,10 @@ static NSString* textUnavailable;
     imageDisconnected = [[NSImage alloc] initWithContentsOfFile:[aBundle pathForResource:@"red" ofType:@"tiff"]];
 
     textConnected = NSLocalizedStringFromTableInBundle(@"TableCellStatusConnected", nil, aBundle, @"");
+    textConnecting = NSLocalizedStringFromTableInBundle(@"TableCellStatusConnecting", nil, aBundle, @"");
     textDisconnected = NSLocalizedStringFromTableInBundle(@"TableCellStatusDisconnected", nil, aBundle, @"");
     textUnavailable = NSLocalizedStringFromTableInBundle(@"TableCellStatusUnavailable", nil, aBundle, @"");
+    textSoundcardOff = NSLocalizedStringFromTableInBundle(@"TableCellStatusSoundcardOff", nil, aBundle, @"");
 }
 
 + (NSImage*) imageConnected
@@ -281,6 +294,11 @@ static NSString* textUnavailable;
     return textConnected;
 }
 
++ (NSString*) textConnecting
+{
+    return textConnecting;
+}
+
 + (NSString*) textDisconnected
 {
     return textDisconnected;
@@ -289,6 +307,11 @@ static NSString* textUnavailable;
 + (NSString*) textUnavailable
 {
     return textUnavailable;
+}
+
++ (NSString*) textSoundcardOff
+{
+    return textSoundcardOff;
 }
 
 @end
@@ -302,22 +325,76 @@ static NSString* textUnavailable;
 - (void) drawWithFrame:(NSRect)aFrame inView:(NSView *)aView
 {
     // get the data from the receiver
-    NSString* title = [[self objectValue] title];
-    NSImage* image = [CellResources imageDisconnected];
-    NSString* status = [CellResources textDisconnected];
+    Receiver* receiver = [[self objectValue] objectAtIndex:0];
+    
+    NSString* title = [receiver title];
+    bool selected = [receiver selected];
+    EReceiverState status = [receiver status];
+
+    NSString* statusText;
+    NSImage* statusImage;
+    switch (status)
+    {
+        default:
+        case eReceiverStateOffline:
+            statusText = [CellResources textUnavailable];
+            statusImage = [CellResources imageDisconnected];
+            break;
+
+        case eReceiverStateDisconnected:
+            statusText = [CellResources textDisconnected];
+            statusImage = [CellResources imageDisconnected];
+            break;
+
+        case eReceiverStateConnecting:
+            statusText = [CellResources textConnecting];
+            statusImage = [CellResources imageDisconnected];
+            break;
+
+        case eReceiverStateConnected:
+            statusText = [CellResources textConnected];
+            statusImage = [CellResources imageConnected];
+            break;
+    }
+
+    if (![[[self objectValue] objectAtIndex:1] boolValue])
+    {
+        statusText = [CellResources textSoundcardOff];
+        statusImage = [CellResources imageDisconnected];
+    }
 
 
     // create attribute dictionaries for the text
+    NSColor* titleColor;
+    NSColor* statusColor;
+    
+    if ([self isHighlighted])
+    {
+        titleColor = [NSColor alternateSelectedControlTextColor];
+        statusColor = [NSColor alternateSelectedControlTextColor];
+    }
+    else if (selected)
+    {
+        titleColor = [NSColor textColor];
+        statusColor = [NSColor darkGrayColor];
+    }
+    else
+    {
+        titleColor = [NSColor darkGrayColor];
+        statusColor = [NSColor darkGrayColor];
+    }
+
     NSMutableParagraphStyle* style = [[NSMutableParagraphStyle alloc] init];
     [style setParagraphStyle:[NSParagraphStyle defaultParagraphStyle]];
     [style setLineBreakMode:NSLineBreakByTruncatingTail];
-    
-    NSDictionary* titleDict = [NSDictionary dictionaryWithObjectsAndKeys:[NSFont systemFontOfSize:13.0f] , NSFontAttributeName,
+
+    NSDictionary* titleDict = [NSDictionary dictionaryWithObjectsAndKeys:[NSFont systemFontOfSize:13.0f], NSFontAttributeName,
                                style, NSParagraphStyleAttributeName,
+                               titleColor, NSForegroundColorAttributeName,
                                nil];
     NSDictionary* statusDict = [NSDictionary dictionaryWithObjectsAndKeys:[NSFont systemFontOfSize:11.0f], NSFontAttributeName,
                                 style, NSParagraphStyleAttributeName,
-                                [NSColor darkGrayColor], NSForegroundColorAttributeName,
+                                statusColor, NSForegroundColorAttributeName,
                                 nil];
     [style release];
 
@@ -328,22 +405,25 @@ static NSString* textUnavailable;
     
     [title drawAtPoint:pt withAttributes:titleDict];
 
-    // draw the status image
-    NSRect rect;
-    rect.size.width = 10.0f;
-    rect.size.height = 10.0f;
-    rect.origin = aFrame.origin;
-    rect.origin.y = aFrame.origin.y + aFrame.size.height*0.5f;
-    rect.origin.y += (aFrame.size.height*0.5f - rect.size.height) * 0.5f;
+    if (selected)
+    {
+        // draw the status image
+        NSRect rect;
+        rect.size.width = 10.0f;
+        rect.size.height = 10.0f;
+        rect.origin = aFrame.origin;
+        rect.origin.y = aFrame.origin.y + aFrame.size.height*0.5f;
+        rect.origin.y += (aFrame.size.height*0.5f - rect.size.height) * 0.5f;
 
-    [image drawInRect:rect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0f];
+        [statusImage drawInRect:rect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0f];
 
-    // draw the status text
-    pt = aFrame.origin;
-    pt.x += 12.0f;
-    pt.y = aFrame.origin.y + aFrame.size.height*0.5f + 3.0f;
+        // draw the status text
+        pt = aFrame.origin;
+        pt.x += 12.0f;
+        pt.y = aFrame.origin.y + aFrame.size.height*0.5f + 3.0f;
 
-    [status drawAtPoint:pt withAttributes:statusDict];
+        [statusText drawAtPoint:pt withAttributes:statusDict];
+    }
 }
 
 

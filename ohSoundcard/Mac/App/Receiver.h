@@ -3,17 +3,6 @@
 #import "Preferences.h"
 
 
-// Enum for the receiver state
-typedef enum
-{
-    eReceiverStateOffline,
-    eReceiverStateDisconnected,
-    eReceiverStateConnecting,
-    eReceiverStateConnected
-    
-} EReceiverState;
-
-
 // Declaration of a class to hold receiver data
 @interface Receiver : NSObject
 {

@@ -9,11 +9,13 @@
     NSString* udn;
     NSString* title;
     bool selected;
+    EReceiverState status;
 }
 
 @property (assign) NSString* udn;
 @property (assign) NSString* title;
 @property (assign) bool selected;
+@property (assign) EReceiverState status;
 
 - (id) initWithPref:(PrefReceiver*)aPref uniqueInRoom:(bool)aUnique;
 
