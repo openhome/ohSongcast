@@ -52,35 +52,35 @@
 }
 
 
-- (bool) iconVisible
+- (bool) getBoolPreference:(NSString*)aName default:(bool)aDefault
 {
-    CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("IconVisible"), appId);
+    CFPropertyListRef pref = CFPreferencesCopyAppValue((CFStringRef)aName, appId);
     
     if (pref)
     {
         if (CFGetTypeID(pref) == CFBooleanGetTypeID())
         {
-            CFBooleanRef visible = (CFBooleanRef)pref;
-            return (visible == kCFBooleanTrue);
+            CFBooleanRef value = (CFBooleanRef)pref;
+            return (value == kCFBooleanTrue);
         }
         
         CFRelease(pref);
     }
     
-    return true;
+    return aDefault;
 }
 
 
-- (void) setIconVisible:(bool)aVisible
+- (void) setBoolPreference:(NSString*)aName value:(bool)aValue notification:(NSString*)aNotification
 {
     // set the new preference value
-    if (aVisible)
+    if (aValue)
     {
-        CFPreferencesSetAppValue(CFSTR("IconVisible"), kCFBooleanTrue, appId);
+        CFPreferencesSetAppValue((CFStringRef)aName, kCFBooleanTrue, appId);
     }
     else
     {
-        CFPreferencesSetAppValue(CFSTR("IconVisible"), kCFBooleanFalse, appId);
+        CFPreferencesSetAppValue((CFStringRef)aName, kCFBooleanFalse, appId);
     }
     
     // flush the preferences
@@ -88,7 +88,19 @@
     
     // send notification that this has changed
     CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
-    CFNotificationCenterPostNotification(centre, CFSTR("PreferenceIconVisibleChanged"), appId, NULL, TRUE);
+    CFNotificationCenterPostNotification(centre, (CFStringRef)aNotification, appId, NULL, TRUE);
+}
+
+
+- (bool) iconVisible
+{
+    return [self getBoolPreference:@"IconVisible" default:true];
+}
+
+
+- (void) setIconVisible:(bool)aVisible
+{
+    [self setBoolPreference:@"IconVisible" value:aVisible notification:@"PreferenceIconVisibleChanged"];
 }
 
 
@@ -101,41 +113,13 @@
 
 - (bool) autoplayReceivers
 {
-    CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("AutoplayReceivers"), appId);
-    
-    if (pref)
-    {
-        if (CFGetTypeID(pref) == CFBooleanGetTypeID())
-        {
-            CFBooleanRef visible = (CFBooleanRef)pref;
-            return (visible == kCFBooleanTrue);
-        }
-        
-        CFRelease(pref);
-    }
-    
-    return true;
+    return [self getBoolPreference:@"AutoplayReceivers" default:true];
 }
 
 
 - (void) setAutoplayReceivers:(bool)aAutoplayReceivers
 {
-    // set the new preference value
-    if (aAutoplayReceivers)
-    {
-        CFPreferencesSetAppValue(CFSTR("AutoplayReceivers"), kCFBooleanTrue, appId);
-    }
-    else
-    {
-        CFPreferencesSetAppValue(CFSTR("AutoplayReceivers"), kCFBooleanFalse, appId);
-    }
-    
-    // flush the preferences
-    CFPreferencesAppSynchronize(appId);
-    
-    // send notification that this has changed
-    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
-    CFNotificationCenterPostNotification(centre, CFSTR("PreferenceAutoplayReceiversChanged"), appId, NULL, TRUE);
+    [self setBoolPreference:@"AutoplayReceivers" value:aAutoplayReceivers notification:@"PreferenceAutoplayReceiversChanged"];
 }
 
 
@@ -148,41 +132,13 @@
 
 - (bool) enabled
 {
-    CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("Enabled"), appId);
-    
-    if (pref)
-    {
-        if (CFGetTypeID(pref) == CFBooleanGetTypeID())
-        {
-            CFBooleanRef enabled = (CFBooleanRef)pref;
-            return (enabled == kCFBooleanTrue);
-        }
-        
-        CFRelease(pref);
-    }
-    
-    return false;
+    return [self getBoolPreference:@"Enabled" default:false];
 }
 
 
 - (void) setEnabled:(bool)aEnabled
 {
-    // set the new preference value
-    if (aEnabled)
-    {
-        CFPreferencesSetAppValue(CFSTR("Enabled"), kCFBooleanTrue, appId);
-    }
-    else
-    {
-        CFPreferencesSetAppValue(CFSTR("Enabled"), kCFBooleanFalse, appId);
-    }
-    
-    // flush the preferences
-    CFPreferencesAppSynchronize(appId);
-
-    // send notification that this has changed
-    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
-    CFNotificationCenterPostNotification(centre, CFSTR("PreferenceEnabledChanged"), appId, NULL, TRUE);
+    [self setBoolPreference:@"Enabled" value:aEnabled notification:@"PreferenceEnabledChanged"];
 }
 
 
