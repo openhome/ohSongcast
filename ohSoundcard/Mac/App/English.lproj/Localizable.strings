@@ -11,6 +11,9 @@
 /* Menu item 2 - turn soundcard on - %@ is the name of the app */
 "MenuTurnOn" = "Turn %@ On";
 
-/* Menu item 3 - Open preferences - %@ is the name of the app */
+/* Menu item 3 - reconnect all receivers */
+"MenuReconnect" = "Reconnect Selected Receivers";
+
+/* Menu item 4 - Open preferences - %@ is the name of the app */
 "MenuPreferences" = "Open %@ Preferences...";
 

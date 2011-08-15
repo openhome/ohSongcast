@@ -417,7 +417,7 @@
 											<object class="NSButtonCell" key="NSCell" id="487701832">
 												<int key="NSCellFlags">-2080244224</int>
 												<int key="NSCellFlags2">134217728</int>
-												<string key="NSContents">Reconnect selected receivers</string>
+												<string key="NSContents">Reconnect Selected Receivers</string>
 												<reference key="NSSupport" ref="492922193"/>
 												<reference key="NSControlView" ref="697034508"/>
 												<int key="NSButtonFlags">-2038021889</int>

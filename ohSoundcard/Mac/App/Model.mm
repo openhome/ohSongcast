@@ -150,6 +150,22 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 }
 
 
+- (void) reconnectReceivers
+{
+    // if the soundcard is enabled, force all selected receivers to reconnect
+    if (iEnabled)
+    {
+        for (Receiver* receiver in [iReceiverList receivers])
+        {
+            if ([iSelectedUdnList containsObject:[receiver udn]])
+            {
+                [self playReceiver:receiver];
+            }
+        }
+    }
+}
+
+
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification
 {
     // refresh cached preferences and update the local copy
@@ -287,17 +303,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 
 - (void) preferenceReconnectReceivers:(NSNotification*)aNotification
 {
-    // if the soundcard is enabled, force all selected receivers to reconnect
-    if (iEnabled)
-    {
-        for (Receiver* receiver in [iReceiverList receivers])
-        {
-            if ([iSelectedUdnList containsObject:[receiver udn]])
-            {
-                [self playReceiver:receiver];
-            }
-        }
-    }
+    [self reconnectReceivers];
 }
 
 

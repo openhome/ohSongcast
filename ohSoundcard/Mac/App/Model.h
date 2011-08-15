@@ -30,6 +30,7 @@
 - (bool) iconVisible;
 - (bool) enabled;
 - (void) setEnabled:(bool)aValue;
+- (void) reconnectReceivers;
 
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;
 - (void) preferenceIconVisibleChanged:(NSNotification*)aNotification;

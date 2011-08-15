@@ -7,6 +7,7 @@
 @synthesize menu;
 @synthesize menuItemStatus;
 @synthesize menuItemOnOff;
+@synthesize menuItemReconnect;
 @synthesize menuItemPrefs;
 
 
@@ -16,6 +17,7 @@
     NSString* appName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
 
     // initialise menu items that do not depend on state
+    [menuItemReconnect setTitle:NSLocalizedString(@"MenuReconnect", @"")];
     [menuItemPrefs setTitle:[NSString stringWithFormat:NSLocalizedString(@"MenuPreferences", @""), appName]];
 
     // create and start the model
@@ -48,6 +50,12 @@
     // toggle the state of the soundcard - allow the eventing to come back
     // up through enabledChanged to update the UI
     [model setEnabled:![model enabled]];
+}
+
+
+- (IBAction)menuItemReconnectClicked:(id)aSender
+{
+    [model reconnectReceivers];
 }
 
 

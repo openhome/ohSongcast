@@ -63,6 +63,14 @@
 						<reference key="NSOnImage" ref="936935583"/>
 						<reference key="NSMixedImage" ref="494784749"/>
 					</object>
+					<object class="NSMenuItem" id="304330509">
+						<reference key="NSMenu" ref="891238739"/>
+						<string key="NSTitle">Reconnect Selected Receivers</string>
+						<string key="NSKeyEquiv"/>
+						<int key="NSMnemonicLoc">2147483647</int>
+						<reference key="NSOnImage" ref="936935583"/>
+						<reference key="NSMixedImage" ref="494784749"/>
+					</object>
 					<object class="NSMenuItem" id="739538056">
 						<reference key="NSMenu" ref="891238739"/>
 						<bool key="NSIsDisabled">YES</bool>
@@ -169,6 +177,14 @@
 					</object>
 					<int key="connectionID">546</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">menuItemReconnectClicked:</string>
+						<reference key="source" ref="976324537"/>
+						<reference key="destination" ref="304330509"/>
+					</object>
+					<int key="connectionID">548</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -215,6 +231,7 @@
 							<reference ref="739538056"/>
 							<reference ref="962161702"/>
 							<reference ref="41320044"/>
+							<reference ref="304330509"/>
 						</object>
 						<reference key="parent" ref="0"/>
 					</object>
@@ -248,6 +265,11 @@
 						<reference key="object" ref="41320044"/>
 						<reference key="parent" ref="891238739"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">547</int>
+						<reference key="object" ref="304330509"/>
+						<reference key="parent" ref="891238739"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -263,11 +285,13 @@
 					<string>538.IBPluginDependency</string>
 					<string>544.IBPluginDependency</string>
 					<string>545.IBPluginDependency</string>
+					<string>547.IBPluginDependency</string>
 				</object>
 				<object class="NSMutableArray" key="dict.values">
 					<bool key="EncodedWithXMLCoder">YES</bool>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{526, 587}, {278, 103}}</string>
+					<string>{{526, 567}, {278, 123}}</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -293,7 +317,7 @@
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">546</int>
+			<int key="maxID">548</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -307,9 +331,11 @@
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>menuItemOnOffClicked:</string>
 							<string>menuItemPrefsClicked:</string>
+							<string>menuItemReconnectClicked:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 						</object>
@@ -320,6 +346,7 @@
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>menuItemOnOffClicked:</string>
 							<string>menuItemPrefsClicked:</string>
+							<string>menuItemReconnectClicked:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
@@ -331,6 +358,10 @@
 								<string key="name">menuItemPrefsClicked:</string>
 								<string key="candidateClassName">id</string>
 							</object>
+							<object class="IBActionInfo">
+								<string key="name">menuItemReconnectClicked:</string>
+								<string key="candidateClassName">id</string>
+							</object>
 						</object>
 					</object>
 					<object class="NSMutableDictionary" key="outlets">
@@ -340,11 +371,13 @@
 							<string>menu</string>
 							<string>menuItemOnOff</string>
 							<string>menuItemPrefs</string>
+							<string>menuItemReconnect</string>
 							<string>menuItemStatus</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>NSMenu</string>
+							<string>NSMenuItem</string>
 							<string>NSMenuItem</string>
 							<string>NSMenuItem</string>
 							<string>NSMenuItem</string>
@@ -357,6 +390,7 @@
 							<string>menu</string>
 							<string>menuItemOnOff</string>
 							<string>menuItemPrefs</string>
+							<string>menuItemReconnect</string>
 							<string>menuItemStatus</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
@@ -371,6 +405,10 @@
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">menuItemPrefs</string>
+								<string key="candidateClassName">NSMenuItem</string>
+							</object>
+							<object class="IBToOneOutletInfo">
+								<string key="name">menuItemReconnect</string>
 								<string key="candidateClassName">NSMenuItem</string>
 							</object>
 							<object class="IBToOneOutletInfo">
