@@ -1,2 +1,11 @@
 
 
+/* Text in the table cell for the connected status of a receiver */
+"TableCellStatusConnected" = "Connected";
+
+/* Text in the table cell for the disconnected status of a receiver */
+"TableCellStatusDisconnected" = "Disconnected";
+
+/* Text in the table cell for the unavailable status of a receiver */
+"TableCellStatusUnavailable" = "Unavailable";
+

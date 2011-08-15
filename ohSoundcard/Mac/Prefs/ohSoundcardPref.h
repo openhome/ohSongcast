@@ -4,7 +4,7 @@
 
 
 // Receiver class for data displayed in the table view
-@interface Receiver : NSObject
+@interface Receiver : NSObject<NSCopying>
 {
     NSString* udn;
     NSString* title;
@@ -51,3 +51,14 @@
 - (void) preferenceReceiverListChanged:(NSNotification*)aNotification;
 
 @end
+
+
+// Declaration of custom table cell
+@interface CellReceiver : NSTextFieldCell
+{
+}
+
+@end
+
+
+

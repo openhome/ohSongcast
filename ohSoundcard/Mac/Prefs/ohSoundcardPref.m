@@ -2,7 +2,23 @@
 #import "ohSoundcardPref.h"
 
 
+// Class for storing static resources used by table cell
+@interface CellResources : NSObject
+{
+}
 
++ (void) loadResources:(NSBundle*)aBundle;
++ (NSImage*) imageConnected;
++ (NSImage*) imageDisconnected;
++ (NSString*) textConnected;
++ (NSString*) textDisconnected;
++ (NSString*) textUnavailable;
+
+@end
+
+
+
+// Implementation of preference pane
 @implementation ohSoundcardPref
 
 @synthesize icon;
@@ -17,6 +33,8 @@
 {
     // get the bundle name from the info.plist
     NSString* appName = [[[self bundle] infoDictionary] objectForKey:@"CFBundleName"];
+
+    [CellResources loadResources:[self bundle]];
 
     // initialise the text for the UI elements
     [buttonOnOff setTitle:[NSString stringWithFormat:[buttonOnOff title], appName]];
@@ -37,7 +55,7 @@
 
     // initialise UI from preferences
     [self updateButtonOnOff];
-    [buttonShowInStatusBar setState:([iPreferences iconVisible] ? NSOnState : NSOffState)];
+    [buttonShowInStatusBar setState:([iPreferences iconVisible] ? NSOnState : NSOffState)];    
 }
 
 
@@ -149,7 +167,7 @@
 
     if ([titleColumn compare:[aColumn identifier]] == NSOrderedSame)
     {
-        return [receiver title];
+        return receiver;
     }
     
     if ([checkColumn compare:[aColumn identifier]] == NSOrderedSame)
@@ -215,7 +233,123 @@
     return self;
 }
 
+
+- (id) copyWithZone:(NSZone*)aZone
+{
+    Receiver* copy = [[Receiver alloc] init];
+    [copy setUdn:[NSString stringWithString:udn]];
+    [copy setTitle:[NSString stringWithString:title]];
+    [copy setSelected:selected];
+    return copy;    
+}
+
 @end
+
+
+
+// Implementation of cell resources
+@implementation CellResources
+
+static NSImage* imageConnected;
+static NSImage* imageDisconnected;
+static NSString* textConnected;
+static NSString* textDisconnected;
+static NSString* textUnavailable;
+
++ (void) loadResources:(NSBundle*)aBundle
+{
+    imageConnected = [[NSImage alloc] initWithContentsOfFile:[aBundle pathForResource:@"green" ofType:@"tiff"]];
+    imageDisconnected = [[NSImage alloc] initWithContentsOfFile:[aBundle pathForResource:@"red" ofType:@"tiff"]];
+
+    textConnected = NSLocalizedStringFromTableInBundle(@"TableCellStatusConnected", nil, aBundle, @"");
+    textDisconnected = NSLocalizedStringFromTableInBundle(@"TableCellStatusDisconnected", nil, aBundle, @"");
+    textUnavailable = NSLocalizedStringFromTableInBundle(@"TableCellStatusUnavailable", nil, aBundle, @"");
+}
+
++ (NSImage*) imageConnected
+{
+    return imageConnected;
+}
+
++ (NSImage*) imageDisconnected
+{
+    return imageDisconnected;
+}
+
++ (NSString*) textConnected
+{
+    return textConnected;
+}
+
++ (NSString*) textDisconnected
+{
+    return textDisconnected;
+}
+
++ (NSString*) textUnavailable
+{
+    return textUnavailable;
+}
+
+@end
+
+
+
+// Implementation of custom table cell
+@implementation CellReceiver
+
+
+- (void) drawWithFrame:(NSRect)aFrame inView:(NSView *)aView
+{
+    // get the data from the receiver
+    NSString* title = [[self objectValue] title];
+    NSImage* image = [CellResources imageDisconnected];
+    NSString* status = [CellResources textDisconnected];
+
+
+    // create attribute dictionaries for the text
+    NSMutableParagraphStyle* style = [[NSMutableParagraphStyle alloc] init];
+    [style setParagraphStyle:[NSParagraphStyle defaultParagraphStyle]];
+    [style setLineBreakMode:NSLineBreakByTruncatingTail];
+    
+    NSDictionary* titleDict = [NSDictionary dictionaryWithObjectsAndKeys:[NSFont systemFontOfSize:13.0f] , NSFontAttributeName,
+                               style, NSParagraphStyleAttributeName,
+                               nil];
+    NSDictionary* statusDict = [NSDictionary dictionaryWithObjectsAndKeys:[NSFont systemFontOfSize:11.0f], NSFontAttributeName,
+                                style, NSParagraphStyleAttributeName,
+                                [NSColor darkGrayColor], NSForegroundColorAttributeName,
+                                nil];
+    [style release];
+
+
+    // draw the title
+    NSPoint pt = aFrame.origin;
+    pt.y += (aFrame.size.height*0.5f - [title sizeWithAttributes:titleDict].height) * 0.5f;
+    
+    [title drawAtPoint:pt withAttributes:titleDict];
+
+    // draw the status image
+    NSRect rect;
+    rect.size.width = 10.0f;
+    rect.size.height = 10.0f;
+    rect.origin = aFrame.origin;
+    rect.origin.y = aFrame.origin.y + aFrame.size.height*0.5f;
+    rect.origin.y += (aFrame.size.height*0.5f - rect.size.height) * 0.5f;
+
+    [image drawInRect:rect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0f];
+
+    // draw the status text
+    pt = aFrame.origin;
+    pt.x += 12.0f;
+    pt.y = aFrame.origin.y + aFrame.size.height*0.5f + 3.0f;
+
+    [status drawAtPoint:pt withAttributes:statusDict];
+}
+
+
+@end
+
+
 
 
 
