@@ -1,9 +1,11 @@
-/********************************************************************************
+/*
+*******************************************************************************
 **    Copyright (c) 1998-2000 Microsoft Corporation. All Rights Reserved.
 **
 **       Portions Copyright (c) 1998-1999 Intel Corporation
 **
-********************************************************************************/
+*******************************************************************************
+*/
 
 // Every debug output has "Modulname text"
 static char STR_MODULENAME[] = "OHSOUNDCARD Network: ";
@@ -152,7 +154,10 @@ CSocketOhm::CSocketOhm()
 	iHeader.iMsgType = 3;
 	iHeader.iAudioHeaderBytes = 50;
 	iHeader.iAudioNetworkTimestamp = 0;
-	iHeader.iAudioMediaLatency = 0;
+	iHeader.iAudioMediaLatency = kMediaLatencyMs >> 24 & 0x000000ff;
+	iHeader.iAudioMediaLatency += kMediaLatencyMs >> 8 & 0x0000ff00;
+	iHeader.iAudioMediaLatency += kMediaLatencyMs << 8 & 0x00ff0000;
+	iHeader.iAudioMediaLatency += kMediaLatencyMs << 24 & 0xff000000;
 	iHeader.iAudioMediaTimestamp = 0;
 	iHeader.iAudioSampleStartHi = 0;
 	iHeader.iAudioSampleStartLo = 0;
@@ -173,7 +178,7 @@ CSocketOhm::CSocketOhm()
 	iSamplesTotal = 0;
 	iSampleRate = 0;
 
-    iPerformanceCounter = KeQueryPerformanceCounter(&iPerformanceFrequency);
+    iPerformanceCounter = KeQueryInterruptTime();
 }
 
 NTSTATUS CSocketOhm::Initialise(CWinsock& aWsk, NETWORK_CALLBACK aCallback, void* aContext)
@@ -359,6 +364,7 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 
 	if (alloc == NULL)
 	{
+		IoFreeIrp(irp);
         return;
 	}
 
@@ -372,6 +378,7 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 
 	if (udp->iBuf.Mdl == NULL)
 	{
+		IoFreeIrp(irp);
 		ExFreePool(alloc);
         return;
 	}
@@ -387,8 +394,6 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 	ULONG frame = ++iFrame;
 
 	RtlCopyMemory(header, &iHeader, sizeof(OHMHEADER));
-
-	KeReleaseSpinLock (&iSpinLock, oldIrql);
 
 	// Fill in multipus header
 
@@ -445,21 +450,17 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 
 	// use last timestamp for this message
 
-	LARGE_INTEGER timestamp = iPerformanceCounter;
+	ULONGLONG timestamp = iPerformanceCounter;
 
-	timestamp.QuadPart *= iTimestampMultiplier;
-	timestamp.QuadPart /= iPerformanceFrequency.QuadPart;
+	timestamp *= iTimestampMultiplier;
+	timestamp /= 10000000; // InterruptTime is in 100ns units
 
-	header->iAudioNetworkTimestamp = timestamp.LowPart >> 24 & 0x000000ff;
-	header->iAudioNetworkTimestamp += timestamp.LowPart >> 8 & 0x0000ff00;
-	header->iAudioNetworkTimestamp += timestamp.LowPart << 8 & 0x00ff0000;
-	header->iAudioNetworkTimestamp += timestamp.LowPart << 24 & 0xff000000;
+	header->iAudioNetworkTimestamp = timestamp >> 24 & 0x000000ff;
+	header->iAudioNetworkTimestamp += timestamp >> 8 & 0x0000ff00;
+	header->iAudioNetworkTimestamp += timestamp << 8 & 0x00ff0000;
+	header->iAudioNetworkTimestamp += timestamp << 24 & 0xff000000;
 
 	header->iAudioMediaTimestamp = header->iAudioNetworkTimestamp;
-
-	// create timestamp for next time
-
-    iPerformanceCounter = KeQueryPerformanceCounter(&iPerformanceFrequency);
 
 	// Copy the audio
 
@@ -470,6 +471,12 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 	IoSetCompletionRoutine(irp,	SendComplete, alloc, TRUE, TRUE, TRUE);
 
 	((PWSK_PROVIDER_DATAGRAM_DISPATCH)(iSocket->Dispatch))->WskSendTo(iSocket, &udp->iBuf, 0, &udp->iAddr, 0, NULL, irp);
+
+	// create timestamp for next time
+
+    iPerformanceCounter = KeQueryInterruptTime();
+
+	KeReleaseSpinLock (&iSpinLock, oldIrql);
 }
 
 void CSocketOhm::CopyAudio(UCHAR* aDestination, UCHAR* aSource, ULONG aBytes, ULONG aBitDepth)

@@ -253,12 +253,6 @@ namespace OpenHome.Soundcard
 
         void EventNotifyIconRightClick(object sender, EventArgs e)
         {
-            /*
-            if (Visibility == Visibility.Visible)
-            {
-                HideOurselves();
-            }
-             */
         }
 
         public void ApplicationDeactivated()

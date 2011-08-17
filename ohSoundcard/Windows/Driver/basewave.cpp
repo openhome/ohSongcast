@@ -501,7 +501,10 @@ Return Value:
     if (m_pTimer)
     {
         KeCancelTimer(m_pTimer);
-        ExFreePoolWithTag(m_pTimer, OHSOUNDCARD_POOLTAG);
+
+		MpusStop();
+    
+		ExFreePoolWithTag(m_pTimer, OHSOUNDCARD_POOLTAG);
     }
 
     if (m_pDpc)
@@ -978,12 +981,12 @@ Return Value:
 
             DPF(D_TERSE, ("KSSTATE_STOP"));
 
+            KeCancelTimer( m_pTimer );
+
             m_fDmaActive                      = FALSE;
             m_ulDmaPosition                   = 0;
             m_ullElapsedTimeCarryForward      = 0;
             m_ulByteDisplacementCarryForward  = 0;
-
-            KeCancelTimer( m_pTimer );
 
 			MpusStop();
 

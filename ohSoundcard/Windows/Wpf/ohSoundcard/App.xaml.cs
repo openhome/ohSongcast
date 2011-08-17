@@ -12,8 +12,6 @@ namespace OpenHome.Soundcard
     {
         protected override void OnDeactivated(EventArgs e)
         {
-            Console.WriteLine("Application deactivated");
-
             base.OnDeactivated(e);
 
             MainWindow main = MainWindow as MainWindow;

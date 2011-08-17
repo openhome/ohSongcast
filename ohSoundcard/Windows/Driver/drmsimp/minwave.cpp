@@ -1,4 +1,5 @@
-/*++
+/*
+++
 
 Copyright (c) 1997-2000  Microsoft Corporation All Rights Reserved
 
@@ -10,7 +11,8 @@ Abstract:
 
     Implementation of wavecyclic miniport.
 
---*/
+--
+*/
 
 #pragma warning (disable : 4127)
 

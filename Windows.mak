@@ -45,7 +45,7 @@ rmdir = Scripts\rmdir.bat
 uset4 = no
 
 
-all: $(objdir)$(dllprefix)ohSoundcard.$(dllext) $(objdir)TestSoundcard.$(exeext) $(objdir)TestSoundcardCs.$(exeext) all_common
+all: $(objdir)$(dllprefix)ohSoundcard.$(dllext) $(objdir)TestSoundcard.$(exeext) $(objdir)TestSoundcardCs.$(exeext) $(objdir)/Install32.$(exeext) all_common
 
 
 # Include rules to build platform independent code
@@ -100,4 +100,9 @@ $(objdir)ohSoundcard.$(exeext) : $(objdir)$(dllprefix)ohSoundcard.net.$(dllext) 
 $(objdir)TestSoundcard.$(exeext) : $(objdir)$(dllprefix)ohSoundcard.$(dllext) ohSoundcard\TestSoundcard.cpp
 	$(compiler)TestSoundcard.$(objext) -c $(cflags) $(includes) ohSoundcard\TestSoundcard.cpp
 	$(link) $(linkoutput)$(objdir)TestSoundcard.$(exeext) $(objdir)ohSoundcard.$(libext) $(objdir)TestSoundcard.$(objext) 
+
+$(objdir)/Install32.$(exeext) : ohSoundcard/Windows/Install.cpp
+	$(compiler)/Install32.$(objext) -c $(cflags) $(includes) ohSoundcard/Windows/Install.cpp
+	$(link) $(linkoutput)$(objdir)/Install32.$(exeext) $(objdir)/Install32.$(objext) setupapi.lib
+	signtool sign /v /a /t http://timestamp.verisign.com/scripts/timestamp.dll $(objdir)/Install32.$(exeext)
 
