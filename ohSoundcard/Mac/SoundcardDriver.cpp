@@ -193,7 +193,17 @@ Soundcard* Soundcard::Create(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBo
     if (uname(&name) < 0)
         return 0;
 
+    // strip off the ".local" from the end
     Brn computer(name.nodename);
+    Brn local(".local");
+    if (computer.Bytes() > local.Bytes())
+    {
+        Brn end = computer.Split(computer.Bytes() - local.Bytes());
+        if (Ascii::CaseInsensitiveEquals(end, local))
+        {
+            computer.Set(computer.Ptr(), computer.Bytes() - local.Bytes());
+        }
+    }
 
     // create the driver
     OhmSenderDriverMac* driver;
