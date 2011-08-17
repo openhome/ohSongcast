@@ -23,7 +23,6 @@
 @implementation ohSoundcardPref
 
 @synthesize icon;
-@synthesize textSenderName;
 @synthesize buttonOnOff;
 @synthesize buttonAutoplay;
 @synthesize textDescription;

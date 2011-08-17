@@ -26,7 +26,6 @@
 @interface ohSoundcardPref : NSPreferencePane 
 {
     IBOutlet NSImageView* icon;
-    IBOutlet NSTextField* textSenderName;
     IBOutlet NSButton* buttonOnOff;
     IBOutlet NSButton* buttonAutoplay;
     IBOutlet NSTextField* textDescription;
@@ -39,7 +38,6 @@
 }
 
 @property (assign) NSImageView* icon;
-@property (assign) NSTextField* textSenderName;
 @property (assign) NSButton* buttonOnOff;
 @property (assign) NSButton* buttonAutoplay;
 @property (assign) NSTextField* textDescription;

@@ -114,7 +114,7 @@
 										<object class="NSButton" id="816734497">
 											<reference key="NSNextResponder" ref="227962976"/>
 											<int key="NSvFlags">268</int>
-											<string key="NSFrame">{{28, 209}, {226, 32}}</string>
+											<string key="NSFrame">{{28, 202}, {226, 32}}</string>
 											<reference key="NSSuperview" ref="227962976"/>
 											<bool key="NSEnabled">YES</bool>
 											<object class="NSButtonCell" key="NSCell" id="468263715">
@@ -165,7 +165,7 @@
 										<object class="NSTextField" id="840967910">
 											<reference key="NSNextResponder" ref="227962976"/>
 											<int key="NSvFlags">268</int>
-											<string key="NSFrame">{{14, 100}, {255, 95}}</string>
+											<string key="NSFrame">{{14, 91}, {255, 95}}</string>
 											<reference key="NSSuperview" ref="227962976"/>
 											<bool key="NSEnabled">YES</bool>
 											<object class="NSTextFieldCell" key="NSCell" id="984543764">
@@ -174,29 +174,6 @@
 												<string key="NSContents">%@ will send the audio from all applications running on this computer, such as iTunes and Safari, to the connected Songcast receivers</string>
 												<reference key="NSSupport" ref="492922193"/>
 												<reference key="NSControlView" ref="840967910"/>
-												<reference key="NSBackgroundColor" ref="673809057"/>
-												<object class="NSColor" key="NSTextColor">
-													<int key="NSColorSpace">1</int>
-													<bytes key="NSRGB">MC4yOTgwMzkyMjc3IDAuMjk4MDM5MjI3NyAwLjI5ODAzOTIyNzcAA</bytes>
-												</object>
-											</object>
-										</object>
-										<object class="NSTextField" id="246643368">
-											<reference key="NSNextResponder" ref="227962976"/>
-											<int key="NSvFlags">268</int>
-											<string key="NSFrame">{{13, 14}, {255, 73}}</string>
-											<reference key="NSSuperview" ref="227962976"/>
-											<bool key="NSEnabled">YES</bool>
-											<object class="NSTextFieldCell" key="NSCell" id="336426650">
-												<int key="NSCellFlags">-2080244224</int>
-												<int key="NSCellFlags2">4198400</int>
-												<string key="NSContents">%@ is the name of the Songcast sender for this computer's audio output</string>
-												<object class="NSFont" key="NSSupport">
-													<string key="NSName">LucidaGrande</string>
-													<double key="NSSize">13</double>
-													<int key="NSfFlags">16</int>
-												</object>
-												<reference key="NSControlView" ref="246643368"/>
 												<reference key="NSBackgroundColor" ref="673809057"/>
 												<object class="NSColor" key="NSTextColor">
 													<int key="NSColorSpace">1</int>
@@ -577,14 +554,6 @@
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
-						<string key="label">textSenderName</string>
-						<reference key="source" ref="294453543"/>
-						<reference key="destination" ref="246643368"/>
-					</object>
-					<int key="connectionID">116</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBOutletConnection" key="connection">
 						<string key="label">textDescription</string>
 						<reference key="source" ref="294453543"/>
 						<reference key="destination" ref="840967910"/>
@@ -771,7 +740,6 @@
 							<reference ref="191036152"/>
 							<reference ref="846253852"/>
 							<reference ref="635880239"/>
-							<reference ref="246643368"/>
 							<reference ref="390934257"/>
 							<reference ref="697034508"/>
 						</object>
@@ -809,20 +777,6 @@
 						<int key="objectID">114</int>
 						<reference key="object" ref="984543764"/>
 						<reference key="parent" ref="840967910"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">108</int>
-						<reference key="object" ref="246643368"/>
-						<object class="NSMutableArray" key="children">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-							<reference ref="336426650"/>
-						</object>
-						<reference key="parent" ref="581876306"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">109</int>
-						<reference key="object" ref="336426650"/>
-						<reference key="parent" ref="246643368"/>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">100</int>
@@ -983,9 +937,6 @@
 					<string>106.IBPluginDependency</string>
 					<string>107.IBPluginDependency</string>
 					<string>107.IBViewBoundsToFrameTransform</string>
-					<string>108.IBPluginDependency</string>
-					<string>108.IBViewBoundsToFrameTransform</string>
-					<string>109.IBPluginDependency</string>
 					<string>110.IBPluginDependency</string>
 					<string>110.IBViewBoundsToFrameTransform</string>
 					<string>111.IBPluginDependency</string>
@@ -1044,11 +995,6 @@
 					<object class="NSAffineTransform">
 						<bytes key="NSTransformStruct">AUEgAABCQAAAA</bytes>
 					</object>
-					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<object class="NSAffineTransform">
-						<bytes key="NSTransformStruct">P4AAAL+AAABBUAAAwsYAAA</bytes>
-					</object>
-					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<object class="NSAffineTransform">
 						<bytes key="NSTransformStruct">P4AAAL+AAABB4AAAwx4AAA</bytes>
