@@ -36,28 +36,24 @@
 }
 
 
-- (void) removeNonSelected:(NSArray*)aSelected
+- (void) removeUnavailableUnselected:(NSArray*)aSelected
 {
-    // lock the list to rebuild it containing only the selected receivers
+    // lock the list and rebuild it containing only receivers that are
+    // selected and/or available on the network i.e. remove all
+    // receivers that are both unavailable and unselected
     @synchronized(iLock)
     {
         // build the new list
         NSMutableArray* list = [[NSMutableArray alloc] initWithCapacity:0];
-
+        
         for (Receiver* receiver in iList)
         {
-            if ([aSelected containsObject:[receiver udn]])
+            if ([aSelected containsObject:[receiver udn]] || [receiver status] != eReceiverStateOffline)
             {
                 [list addObject:receiver];
             }
-            else
-            {
-                // this releases the internal handle for this receiver since it
-                // is no longer of interest
-                [receiver updateWithPtr:0];
-            }
         }
-
+        
         // replace old list
         [iList release];
         iList = list;
