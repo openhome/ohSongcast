@@ -91,7 +91,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     if ([aReceiver status] == eReceiverStateConnected || [aReceiver status] == eReceiverStateConnecting)
     {
         [aReceiver stop];
-//        [aReceiver standby];
+        [aReceiver standby];
     }
 }
 
