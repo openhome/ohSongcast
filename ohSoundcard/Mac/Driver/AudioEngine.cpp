@@ -242,8 +242,8 @@ struct tmpaddr
 {
 	__uint8_t	sa_len;		/* total length */
 	sa_family_t	sa_family;	/* [XSI] address family */
-    unsigned short port;
-    unsigned long addr;
+    uint16_t port;
+    uint32_t addr;
     char zero[8];
 };
 
@@ -338,7 +338,7 @@ void AudioEngine::TimerFired(OSObject* aOwner, IOTimerEventSource* aSender)
                 size_t bytesSent;
                 sock_send(socket, &msg, 0, &bytesSent);
                 sock_close(socket);
-            
+
 
                 IOFree(data, sizeof(AudioHeader) + audioBytes);
             }
