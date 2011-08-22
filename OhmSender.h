@@ -82,7 +82,7 @@ class OhmSender
 	static const TUint kMaxSenderUriBytes = 100; 
 
 public:
-	static const TUint kMaxNameBytes = 32;
+	static const TUint kMaxNameBytes = 64;
 	static const TUint kMaxTrackUriBytes = Ohm::kMaxTrackUriBytes;
 	static const TUint kMaxTrackMetadataBytes = Ohm::kMaxTrackMetadataBytes;
 	static const TUint kMaxTrackMetatextBytes = Ohm::kMaxTrackMetatextBytes;
