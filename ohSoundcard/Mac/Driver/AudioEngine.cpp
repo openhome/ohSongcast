@@ -17,6 +17,11 @@ typedef struct SocketAddress
 } __attribute__((__packed__)) SocketAddress;
 
 
+static const uint32_t BLOCKS = 16;
+static const uint32_t BLOCK_FRAMES = 128;
+static const uint32_t CHANNELS = 2;
+static const uint32_t BIT_DEPTH = 24;
+
 
 // implementation of the AudioEngine class
 OSDefineMetaClassAndStructors(AudioEngine, IOAudioEngine);
@@ -24,134 +29,142 @@ OSDefineMetaClassAndStructors(AudioEngine, IOAudioEngine);
 
 bool AudioEngine::init(OSDictionary* aProperties)
 {
-    IOLog("ohSoundcard AudioEngine[%p]::init(%p) ...\n", this, aProperties);
-
-    uint64_t interval;
-    uint64_t max32bit = (uint64_t)2 << 32;
-
-    if (!IOAudioEngine::init(aProperties))
-        goto Error;
+    if (!IOAudioEngine::init(aProperties)) {
+        IOLog("ohSoundcard AudioEngine[%p]::init(%p) base class init failed\n", this, aProperties);
+        return false;
+    }
 
     iTimer = 0;
-    iOutputBuffer = 0;
-    iOutputBufferBytes = 0;
     iCurrentBlock = 0;
-    iNumBlocks = 16;
-    iBlockFrames = 128;
-    iSampleRate.whole = 44100;
-    iSampleRate.fraction = 0;
     iCurrentFrame = 0;
 
+    iSampleRate.whole = 44100;
+    iSampleRate.fraction = 0;
     iActive = false;
     iTtl = 0;
 
     // calculate the timer interval making sure no overflows occur
-    interval = 1000000000;
-    interval *= iBlockFrames;
-    interval /= iSampleRate.whole;
-    if (interval >= max32bit)
-        goto Error;
+    uint64_t interval = 1000000000;
+    interval *= BLOCK_FRAMES;
+    interval /= iSampleRate.whole;    
     iTimerIntervalNs = interval;
-    
+
+    // allocate the output buffers
+    iBuffer = new BlockBuffer(BLOCKS, BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
+    iAudioMsg = new AudioMessage(BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
+
+    if (!iBuffer || !iBuffer->Ptr() || !iAudioMsg || !iAudioMsg->Ptr()) {
+        IOLog("ohSoundcard AudioEngine[%p]::init(%p) buffer alloc failed\n", this, aProperties);
+        if (iBuffer) {
+            delete iBuffer;
+            iBuffer = 0;
+        }
+        if (iAudioMsg) {
+            delete iAudioMsg;
+            iAudioMsg = 0;
+        }
+        return false;
+    }
+
     IOLog("ohSoundcard AudioEngine[%p]::init(%p) ok\n", this, aProperties);
     return true;
-
-Error:
-    IOLog("ohSoundcard AudioEngine[%p]::init(%p) fail\n", this, aProperties);
-    return false;
 }
 
 
 bool AudioEngine::initHardware(IOService* aProvider)
 {
-    IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) ...\n", this, aProvider);
-
-    IOAudioStream* outStream = 0;
-    IOWorkLoop* workLoop = 0;
-    IOAudioStreamFormat format;
-
     // base class initialisation
-    if (!IOAudioEngine::initHardware(aProvider))
-        goto Error;
-
+    if (!IOAudioEngine::initHardware(aProvider)) {
+        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) base class init failed\n", this, aProvider);
+        return false;
+    }
+    
     setDescription("OpenHome Songcast Driver");
+    setNumSampleFramesPerBuffer(BLOCKS * BLOCK_FRAMES);
     setSampleRate(&iSampleRate);
-    setNumSampleFramesPerBuffer(iNumBlocks * iBlockFrames);
+
 
     // create output stream
-    outStream = new IOAudioStream;
-    if (!outStream)
-        goto Error;
+    IOAudioStream* outStream = new IOAudioStream;
+    if (!outStream) {
+        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to alloc stream\n", this, aProvider);
+        return false;
+    }
 
-    if (!outStream->initWithAudioEngine(this, kIOAudioStreamDirectionOutput, 1))
-        goto Error;
+    if (!outStream->initWithAudioEngine(this, kIOAudioStreamDirectionOutput, 1)) {
+        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to init stream\n", this, aProvider);
+        outStream->release();
+        return false;
+    }
+
 
     // initialise audio format for the stream
-    format.fNumChannels = 2;
+    IOAudioStreamFormat format;
+    format.fNumChannels = CHANNELS;
     format.fSampleFormat = kIOAudioStreamSampleFormatLinearPCM;
     format.fNumericRepresentation = kIOAudioStreamNumericRepresentationSignedInt;
-    format.fBitDepth = 24;
-    format.fBitWidth = 24;
+    format.fBitDepth = BIT_DEPTH;
+    format.fBitWidth = BIT_DEPTH;
     format.fAlignment = kIOAudioStreamAlignmentHighByte;
     format.fByteOrder = kIOAudioStreamByteOrderBigEndian;
     format.fIsMixable = 1;
     format.fDriverTag = 0;
+
     outStream->addAvailableFormat(&format, &iSampleRate, &iSampleRate);
+    outStream->setSampleBuffer(iBuffer->Ptr(), iBuffer->Bytes());
 
-    // allocate the output buffer
-    iOutputBufferBytes = iNumBlocks * iBlockFrames * format.fNumChannels * format.fBitWidth / 8;
-    iOutputBuffer = (void*)IOMalloc(iOutputBufferBytes);
-    if (!iOutputBuffer)
-        goto Error;
+    if (outStream->setFormat(&format) != kIOReturnSuccess) {
+        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to set stream format\n", this, aProvider);
+        outStream->release();
+        return false;
+    }
 
-    outStream->setSampleBuffer(iOutputBuffer, iOutputBufferBytes);
-    
-    if (outStream->setFormat(&format) != kIOReturnSuccess)
-        goto Error;
-    
-    if (addAudioStream(outStream) != kIOReturnSuccess)
-        goto Error;
+    if (addAudioStream(outStream) != kIOReturnSuccess) {
+        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to add stream\n", this, aProvider);
+        outStream->release();
+        return false;
+    }
 
+    // stream can be released as the addAudioStream will retain it
     outStream->release();
 
-    
+
     // create the timer
-    workLoop = getWorkLoop();
-    if (!workLoop)
-        goto Error;
-    
+    IOWorkLoop* workLoop = getWorkLoop();
+    if (!workLoop) {
+        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to get work loop\n", this, aProvider);
+        return false;
+    }
+
     iTimer = IOTimerEventSource::timerEventSource(this, TimerFired);
-    if (!iTimer)
-        goto Error;
-    
-    if (workLoop->addEventSource(iTimer) != kIOReturnSuccess)
-        goto Error;
+    if (!iTimer) {
+        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to create timer\n", this, aProvider);
+        return false;
+    }
+
+    if (workLoop->addEventSource(iTimer) != kIOReturnSuccess) {
+        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to add timer\n", this, aProvider);
+        return false;
+    }
 
     IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) ok\n", this, aProvider);
     return true;
-
-Error:
-    if (outStream)
-        outStream->release();
-    if (iOutputBuffer) {
-        IOFree(iOutputBuffer, iOutputBufferBytes);
-        iOutputBuffer = 0;
-        iOutputBufferBytes = 0;
-    }
-    
-    IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) fail\n", this, aProvider);
-    return false;
 }
 
 
 void AudioEngine::free()
 {
     IOLog("ohSoundcard AudioEngine[%p]::free()\n", this);
-    if (iOutputBuffer) {
-        IOFree(iOutputBuffer, iOutputBufferBytes);
-        iOutputBuffer = 0;
-        iOutputBufferBytes = 0;
+
+    if (iBuffer) {
+        delete iBuffer;
+        iBuffer = 0;
     }
+    if (iAudioMsg) {
+        delete iAudioMsg;
+        iAudioMsg = 0;
+    }
+
     IOAudioEngine::free();
 }
 
@@ -168,20 +181,16 @@ void AudioEngine::stop(IOService* aProvider)
 
 IOReturn AudioEngine::performAudioEngineStart()
 {
-    IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStart() ...\n", this);
-
     takeTimeStamp(false);
     iCurrentBlock = 0;
     iCurrentFrame = 0;
 
-    if (iTimer->setTimeout(iTimerIntervalNs) != kIOReturnSuccess)
-        goto Error;
+    if (iTimer->setTimeout(iTimerIntervalNs) != kIOReturnSuccess) {
+        IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStart() failed to start timer\n", this);
+        return kIOReturnError;
+    }
     
     IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStart() ok\n", this);
-    return kIOReturnSuccess;
-
-Error:
-    IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStart() fail\n", this);
     return kIOReturnSuccess;
 }
 
@@ -201,7 +210,7 @@ IOReturn AudioEngine::performAudioEngineStop()
 
 UInt32 AudioEngine::getCurrentSampleFrame()
 {
-    return iCurrentBlock * iBlockFrames;
+    return iCurrentBlock * iBuffer->BlockFrames();
 }
 
 
@@ -266,33 +275,25 @@ void AudioEngine::TimerFired(OSObject* aOwner, IOTimerEventSource* aSender)
         {
             if (engine->iActive != 0)
             {
-                uint8_t channels = 2;
-                uint8_t bitDepth = 24;
-                uint32_t sampleRate = 44100;
+                void* block = engine->iBuffer->BlockPtr(engine->iCurrentBlock);
+                uint32_t blockBytes = engine->iBuffer->BlockBytes();
 
-                uint32_t offset = engine->iCurrentBlock * engine->iBlockFrames * channels * bitDepth / 8;
-                void* block = (uint8_t*)engine->iOutputBuffer + offset;
-
-                uint32_t audioBytes = engine->iBlockFrames * channels * bitDepth / 8;
                 uint32_t frame = ++engine->iCurrentFrame;
 
                 // set the data for the audio message
-                AudioMessage* audioMsg = new AudioMessage(engine->iBlockFrames, channels, bitDepth);                
-                audioMsg->SetSampleRate(sampleRate);
-                audioMsg->SetFrame(frame);
-                audioMsg->SetData(block, audioBytes);
+                engine->iAudioMsg->SetSampleRate(engine->iSampleRate.whole);
+                engine->iAudioMsg->SetFrame(frame);
+                engine->iAudioMsg->SetData(block, blockBytes);
 
                 // send data
                 if (engine->iSocket.IsOpen())
                 {
-                    engine->iSocket.Send(audioMsg->Ptr(), audioMsg->Bytes());
+                    engine->iSocket.Send(engine->iAudioMsg->Ptr(), engine->iAudioMsg->Bytes());
                 }
-
-                delete audioMsg;
             }
             
             engine->iCurrentBlock++;
-            if (engine->iCurrentBlock >= engine->iNumBlocks) {
+            if (engine->iCurrentBlock >= engine->iBuffer->Blocks()) {
                 engine->iCurrentBlock = 0;
                 engine->takeTimeStamp();
             }
@@ -479,10 +480,34 @@ void AudioMessage::SetData(void* aPtr, uint32_t aBytes)
     if (aBytes == iAudioBytes) {
         memcpy(audioPtr, aPtr, iAudioBytes);
     }
+    else if (aBytes < iAudioBytes) {
+        memset(audioPtr, 0, iAudioBytes);
+        memcpy(audioPtr, aPtr, aBytes);
+    }
     else {
         memset(audioPtr, 0, iAudioBytes);
     }
 }
 
+
+
+// implementation of BlockBuffer
+BlockBuffer::BlockBuffer(uint32_t aBlocks, uint32_t aBlockFrames, uint32_t aChannels, uint32_t aBitDepth)
+: iPtr(0)
+, iBytes(aBlocks * aBlockFrames * aChannels * aBitDepth / 8)
+, iBlockBytes(aBlockFrames * aChannels * aBitDepth / 8)
+, iBlocks(aBlocks)
+, iBlockFrames(aBlockFrames)
+{
+    iPtr = IOMalloc(iBytes);
+}
+
+
+BlockBuffer::~BlockBuffer()
+{
+    if (iPtr) {
+        IOFree(iPtr, iBytes);
+    }
+}
 
 

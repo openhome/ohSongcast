@@ -84,6 +84,32 @@ private:
 
 
 
+// Class for the audio buffer - audio is sent over the network in blocks of fixed size
+class BlockBuffer
+{
+public:
+    BlockBuffer(uint32_t aBlocks, uint32_t aBlockFrames, uint32_t aChannels, uint32_t aBitDepth);
+    ~BlockBuffer();
+
+    void* Ptr() const { return iPtr; }
+    uint32_t Bytes() const { return iBytes; }
+    
+    void* BlockPtr(uint32_t aBlockIndex) const { return (uint8_t*)iPtr + (aBlockIndex * iBlockBytes); }
+    uint32_t BlockBytes() const { return iBlockBytes; }
+
+    uint32_t Blocks() const { return iBlocks; }
+    uint32_t BlockFrames() const { return iBlockFrames; }
+    
+private:
+    void* iPtr;
+    const uint32_t iBytes;
+    const uint32_t iBlockBytes;
+    const uint32_t iBlocks;
+    const uint32_t iBlockFrames;
+};
+
+
+
 // Main class for the audio engine
 class AudioEngine : public IOAudioEngine
 {
@@ -109,14 +135,14 @@ private:
 
     static void TimerFired(OSObject* aOwner, IOTimerEventSource* aSender);
     IOTimerEventSource* iTimer;
-    void* iOutputBuffer;
-    UInt32 iOutputBufferBytes;
+
     UInt32 iCurrentBlock;
-    UInt32 iNumBlocks;
-    UInt32 iBlockFrames;
+    UInt32 iCurrentFrame;
     IOAudioSampleRate iSampleRate;
     UInt32 iTimerIntervalNs;
-    UInt32 iCurrentFrame;
+    
+    BlockBuffer* iBuffer;
+    AudioMessage* iAudioMsg;
 
     bool iActive;
     uint64_t iTtl;
