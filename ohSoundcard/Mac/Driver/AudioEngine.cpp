@@ -5,6 +5,20 @@
 #include <sys/kpi_socket.h>
 
 
+// struct for defining the IPv4 socket address
+typedef struct SocketAddress
+{
+	uint8_t	sa_len;
+	sa_family_t	sa_family;
+    uint16_t port;
+    uint32_t addr;
+    char zero[8];
+
+} __attribute__((__packed__)) SocketAddress;
+
+
+
+// implementation of the AudioEngine class
 OSDefineMetaClassAndStructors(AudioEngine, IOAudioEngine);
 
 
@@ -28,9 +42,7 @@ bool AudioEngine::init(OSDictionary* aProperties)
     iSampleRate.fraction = 0;
     iCurrentFrame = 0;
 
-    iActive = false;    
-    iIpAddress = 0;
-    iPort = 0;
+    iActive = false;
     iTtl = 0;
 
     // calculate the timer interval making sure no overflows occur
@@ -148,6 +160,9 @@ void AudioEngine::stop(IOService* aProvider)
 {
     IOLog("ohSoundcard AudioEngine[%p]::stop(%p)\n", this, aProvider);
     IOAudioEngine::stop(aProvider);
+    
+    // make sure kernel socket resource is freed
+    iSocket.Close();
 }
 
 
@@ -173,8 +188,12 @@ Error:
 
 IOReturn AudioEngine::performAudioEngineStop()
 {
+    // stop the sending timer
     iTimer->cancelTimeout();
-    
+
+    // close the kernel socket
+    iSocket.Close();
+
     IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStop()\n", this);
     return kIOReturnSuccess;
 }
@@ -236,16 +255,6 @@ IOReturn AudioEngine::clipOutputSamples(const void* aMixBuffer, void* aSampleBuf
 
     return kIOReturnSuccess;
 }
-
-
-struct tmpaddr
-{
-	__uint8_t	sa_len;		/* total length */
-	sa_family_t	sa_family;	/* [XSI] address family */
-    uint16_t port;
-    uint32_t addr;
-    char zero[8];
-};
 
 
 void AudioEngine::TimerFired(OSObject* aOwner, IOTimerEventSource* aSender)
@@ -311,33 +320,10 @@ void AudioEngine::TimerFired(OSObject* aOwner, IOTimerEventSource* aSender)
                 memcpy(audioData, block, audioBytes);
 
                 // send data
-                socket_t socket;
-                sock_socket(PF_INET, SOCK_DGRAM, 0, NULL, NULL, &socket);
-
-                struct tmpaddr addr;
-                memset(&addr, 0, sizeof(tmpaddr));
-                addr.sa_len = sizeof(tmpaddr);
-                addr.sa_family = AF_INET;
-                addr.port = htons((uint16_t)engine->iPort);
-                addr.addr = (uint32_t)engine->iIpAddress;
-                sock_connect(socket, (const sockaddr*)&addr, 0);
-
-                struct iovec sockdata;
-                sockdata.iov_base = data;
-                sockdata.iov_len = sizeof(AudioHeader) + audioBytes;
-            
-                struct msghdr msg;
-                msg.msg_name = 0;
-                msg.msg_namelen = 0;
-                msg.msg_iov = &sockdata;
-                msg.msg_iovlen = 1;
-                msg.msg_control = 0;
-                msg.msg_controllen = 0;
-                msg.msg_flags = 0;
-            
-                size_t bytesSent;
-                sock_send(socket, &msg, 0, &bytesSent);
-                sock_close(socket);
+                if (engine->iSocket.IsOpen())
+                {
+                    engine->iSocket.Send(data, sizeof(AudioHeader) + audioBytes);
+                }
 
 
                 IOFree(data, sizeof(AudioHeader) + audioBytes);
@@ -363,9 +349,8 @@ void AudioEngine::SetActive(uint64_t aActive)
 
 void AudioEngine::SetEndpoint(uint64_t aIpAddress, uint64_t aPort)
 {
-    IOLog("ohSoundcard AudioEngine[%p]::SetEndpoint(%llu, %llu)\n", this, aIpAddress, aPort);
-    iIpAddress = aIpAddress;
-    iPort = aPort;
+    iSocket.Close();
+    iSocket.Open(aIpAddress, aPort);
 }
 
 
@@ -375,6 +360,91 @@ void AudioEngine::SetTtl(uint64_t aTtl)
     iTtl = aTtl;
 }
 
+
+
+// implementation of AudioSocket class
+AudioSocket::AudioSocket()
+: iSocket(0)
+{
+}
+
+
+AudioSocket::~AudioSocket()
+{
+}
+
+
+bool AudioSocket::IsOpen() const
+{
+    return (iSocket != 0);
+}
+
+
+void AudioSocket::Open(uint32_t aIpAddress, uint16_t aPort)
+{
+    // ensure socket is closed
+    Close();
+
+    // create the new socket
+    errno_t err = sock_socket(PF_INET, SOCK_DGRAM, 0, NULL, NULL, &iSocket);
+    if (err != 0) {
+        IOLog("ohSoundcard AudioSocket[%p]::Open(0x%x, %u) sock_socket failed with %d\n", this, aIpAddress, aPort, err);
+        iSocket = 0;
+        return;
+    }
+
+    // connect the socket to the endpoint
+    SocketAddress addr;
+    memset(&addr, 0, sizeof(SocketAddress));
+    addr.sa_len = sizeof(SocketAddress);
+    addr.sa_family = AF_INET;
+    addr.port = htons(aPort);
+    addr.addr = aIpAddress;
+
+    err = sock_connect(iSocket, (const sockaddr*)&addr, 0);
+    if (err != 0) {
+        IOLog("ohSoundcard AudioSocket[%p]::Open(0x%x, %u) sock_connect failed with %d\n", this, aIpAddress, aPort, err);
+        sock_close(iSocket);
+        iSocket = 0;
+        return;
+    }
+    
+    IOLog("ohSoundcard AudioSocket[%p]::Open(0x%x, %u) ok\n", this, aIpAddress, aPort);
+}
+
+
+void AudioSocket::Close()
+{
+    if (iSocket != 0) {
+        sock_close(iSocket);
+        iSocket = 0;
+        IOLog("ohSoundcard AudioSocket[%p]::Close()\n", this);
+    }
+}
+
+
+void AudioSocket::Send(void* aBuffer, uint32_t aBytes) const
+{
+    if (iSocket == 0) {
+        return;
+    }
+
+    struct iovec sockdata;
+    sockdata.iov_base = aBuffer;
+    sockdata.iov_len = aBytes;
+
+    struct msghdr msg;
+    msg.msg_name = 0;
+    msg.msg_namelen = 0;
+    msg.msg_iov = &sockdata;
+    msg.msg_iovlen = 1;
+    msg.msg_control = 0;
+    msg.msg_controllen = 0;
+    msg.msg_flags = 0;
+
+    size_t bytesSent;
+    sock_send(iSocket, &msg, 0, &bytesSent);
+}
 
 
 

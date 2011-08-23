@@ -3,8 +3,27 @@
 
 #include <IOKit/audio/IOAudioEngine.h>
 #include <IOKit/IOTimerEventSource.h>
+#include <sys/kpi_socket.h>
 
 
+// Class to wrap the kernel socket
+class AudioSocket
+{
+public:
+    AudioSocket();
+    ~AudioSocket();
+    
+    bool IsOpen() const;
+    void Open(uint32_t aIpAddress, uint16_t aPort);
+    void Close();
+    void Send(void* aBuffer, uint32_t aBytes) const;
+    
+private:
+    socket_t iSocket;
+};
+
+
+// Main class for the audio engine
 class AudioEngine : public IOAudioEngine
 {
     OSDeclareDefaultStructors(AudioEngine);
@@ -39,9 +58,8 @@ private:
     UInt32 iCurrentFrame;
 
     bool iActive;
-    uint64_t iIpAddress;
-    uint64_t iPort;
     uint64_t iTtl;
+    AudioSocket iSocket;
 };
 
 
