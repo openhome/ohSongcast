@@ -274,59 +274,21 @@ void AudioEngine::TimerFired(OSObject* aOwner, IOTimerEventSource* aSender)
                 void* block = (uint8_t*)engine->iOutputBuffer + offset;
 
                 uint32_t audioBytes = engine->iBlockFrames * channels * bitDepth / 8;
-                uint16_t sampleCount = engine->iBlockFrames;
                 uint32_t frame = ++engine->iCurrentFrame;
 
-                uint8_t* data = (uint8_t*)IOMalloc(sizeof(AudioHeader) + audioBytes);
-            
-                AudioHeader* header = (AudioHeader*)data;
-
-                header->iSignature[0] = 'O';
-                header->iSignature[1] = 'h';
-                header->iSignature[2] = 'm';
-                header->iSignature[3] = ' ';
-                header->iVersion = 1;
-                header->iType = 3;
-                header->iAudioHeaderBytes = 50;
-                header->iAudioNetworkTimestamp = 0;
-                header->iAudioMediaLatency = 1000000;
-                header->iAudioMediaTimestamp = 0;
-                header->iAudioStartSample = 0;
-                header->iAudioTotalSamples = 0;
-                header->iAudioVolumeOffset = 0;
-                header->iAudioReserved = 0;
-
-                // set size of header + audio data
-                header->iTotalBytes = OSSwapHostToBigInt16(sizeof(AudioHeader) + audioBytes);
-            
-                // lossless audio
-                header->iAudioFlags = 2;
-
-                header->iAudioSampleCount = OSSwapHostToBigInt16(sampleCount);
-                header->iAudioFrame = OSSwapHostToBigInt32(frame);
-                header->iAudioSampleRate = OSSwapHostToBigInt32(sampleRate);
-                header->iAudioBitRate = OSSwapHostToBigInt32(sampleRate * channels * bitDepth);
-                header->iAudioBitDepth = bitDepth;
-                header->iAudioChannels = channels;
-            
-                // codec information
-                header->iAudioCodecNameBytes = 3;
-                header->iAudioCodecName[0]= 'P';
-                header->iAudioCodecName[1]= 'C';
-                header->iAudioCodecName[2]= 'M';
-                
-                // copy audio data
-                uint8_t* audioData = data + sizeof(AudioHeader);
-                memcpy(audioData, block, audioBytes);
+                // set the data for the audio message
+                AudioMessage* audioMsg = new AudioMessage(engine->iBlockFrames, channels, bitDepth);                
+                audioMsg->SetSampleRate(sampleRate);
+                audioMsg->SetFrame(frame);
+                audioMsg->SetData(block, audioBytes);
 
                 // send data
                 if (engine->iSocket.IsOpen())
                 {
-                    engine->iSocket.Send(data, sizeof(AudioHeader) + audioBytes);
+                    engine->iSocket.Send(audioMsg->Ptr(), audioMsg->Bytes());
                 }
 
-
-                IOFree(data, sizeof(AudioHeader) + audioBytes);
+                delete audioMsg;
             }
             
             engine->iCurrentBlock++;
@@ -446,6 +408,81 @@ void AudioSocket::Send(void* aBuffer, uint32_t aBytes) const
     sock_send(iSocket, &msg, 0, &bytesSent);
 }
 
+
+
+// implementation of AudioMessage class
+AudioMessage::AudioMessage(uint32_t aFrames, uint32_t aChannels, uint32_t aBitDepth)
+: iPtr(0)
+, iAudioBytes(aFrames * aChannels * aBitDepth / 8)
+{
+    iPtr = IOMalloc(Bytes());
+    
+    // set some static header fields
+    Header()->iSignature[0] = 'O';
+    Header()->iSignature[1] = 'h';
+    Header()->iSignature[2] = 'm';
+    Header()->iSignature[3] = ' ';
+    Header()->iVersion = 1;
+    Header()->iType = 3;
+    Header()->iAudioHeaderBytes = 50;
+    Header()->iAudioNetworkTimestamp = 0;
+    Header()->iAudioMediaLatency = 1000000;
+    Header()->iAudioMediaTimestamp = 0;
+    Header()->iAudioStartSample = 0;
+    Header()->iAudioTotalSamples = 0;
+    Header()->iAudioVolumeOffset = 0;
+    Header()->iAudioReserved = 0;
+    
+    // set size of header + audio data
+    Header()->iTotalBytes = OSSwapHostToBigInt16(Bytes());
+    
+    // codec information
+    Header()->iAudioCodecNameBytes = 3;
+    Header()->iAudioCodecName[0]= 'P';
+    Header()->iAudioCodecName[1]= 'C';
+    Header()->iAudioCodecName[2]= 'M';
+    
+    Header()->iAudioBitDepth = aBitDepth;
+    Header()->iAudioChannels = aChannels;
+    Header()->iAudioSampleCount = OSSwapHostToBigInt16(aFrames);
+    
+    // lossless audio with no timestamps
+    Header()->iAudioFlags = 2;    
+}
+
+
+AudioMessage::~AudioMessage()
+{
+    if (iPtr) {
+        IOFree(iPtr, Bytes());
+    }
+}
+
+
+void AudioMessage::SetSampleRate(uint32_t aSampleRate)
+{
+    Header()->iAudioSampleRate = OSSwapHostToBigInt32(aSampleRate);
+    Header()->iAudioBitRate = OSSwapHostToBigInt32(aSampleRate * Header()->iAudioChannels * Header()->iAudioBitDepth);
+}
+
+
+void AudioMessage::SetFrame(uint32_t aFrame)
+{
+    Header()->iAudioFrame = OSSwapHostToBigInt32(aFrame);
+}
+
+
+void AudioMessage::SetData(void* aPtr, uint32_t aBytes)
+{
+    void* audioPtr = (uint8_t*)iPtr + sizeof(AudioHeader);
+    
+    if (aBytes == iAudioBytes) {
+        memcpy(audioPtr, aPtr, iAudioBytes);
+    }
+    else {
+        memset(audioPtr, 0, iAudioBytes);
+    }
+}
 
 
 
