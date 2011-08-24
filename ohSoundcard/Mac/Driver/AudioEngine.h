@@ -73,6 +73,7 @@ public:
     
     void SetSampleRate(uint32_t aSampleRate);
     void SetFrame(uint32_t aFrame);
+    void SetTimestamp(uint32_t aTimestamp);
     void SetData(void* aPtr, uint32_t aBytes);
     
 private:
@@ -140,6 +141,7 @@ private:
     UInt32 iCurrentFrame;
     IOAudioSampleRate iSampleRate;
     UInt32 iTimerIntervalNs;
+    uint64_t iTimestamp;
     
     BlockBuffer* iBuffer;
     AudioMessage* iAudioMsg;

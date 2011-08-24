@@ -18,7 +18,7 @@ typedef struct SocketAddress
 
 
 static const uint32_t BLOCKS = 16;
-static const uint32_t BLOCK_FRAMES = 128;
+static const uint32_t BLOCK_FRAMES = 220;
 static const uint32_t CHANNELS = 2;
 static const uint32_t BIT_DEPTH = 24;
 
@@ -48,6 +48,7 @@ bool AudioEngine::init(OSDictionary* aProperties)
     interval *= BLOCK_FRAMES;
     interval /= iSampleRate.whole;    
     iTimerIntervalNs = interval;
+    iTimestamp = 0;
 
     // allocate the output buffers
     iBuffer = new BlockBuffer(BLOCKS, BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
@@ -176,6 +177,15 @@ void AudioEngine::stop(IOService* aProvider)
     
     // make sure kernel socket resource is freed
     iSocket.Close();
+
+    // remove timer
+    iTimer->cancelTimeout();
+    IOWorkLoop* workLoop = getWorkLoop();
+    if (workLoop) {
+        workLoop->removeEventSource(iTimer);
+    }
+    iTimer->release();
+    iTimer = 0;
 }
 
 
@@ -184,6 +194,10 @@ IOReturn AudioEngine::performAudioEngineStart()
     takeTimeStamp(false);
     iCurrentBlock = 0;
     iCurrentFrame = 0;
+
+    uint64_t currTime;
+    clock_get_uptime(&currTime);
+    absolutetime_to_nanoseconds(currTime, &iTimestamp);
 
     if (iTimer->setTimeout(iTimerIntervalNs) != kIOReturnSuccess) {
         IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStart() failed to start timer\n", this);
@@ -280,9 +294,13 @@ void AudioEngine::TimerFired(OSObject* aOwner, IOTimerEventSource* aSender)
 
                 uint32_t frame = ++engine->iCurrentFrame;
 
+                // calc the timestamp
+                uint64_t timestamp = (engine->iTimestamp * engine->iSampleRate.whole * 256) / 1000000000;
+
                 // set the data for the audio message
                 engine->iAudioMsg->SetSampleRate(engine->iSampleRate.whole);
                 engine->iAudioMsg->SetFrame(frame);
+                engine->iAudioMsg->SetTimestamp((uint32_t)timestamp);
                 engine->iAudioMsg->SetData(block, blockBytes);
 
                 // send data
@@ -291,13 +309,18 @@ void AudioEngine::TimerFired(OSObject* aOwner, IOTimerEventSource* aSender)
                     engine->iSocket.Send(engine->iAudioMsg->Ptr(), engine->iAudioMsg->Bytes());
                 }
             }
-            
+
             engine->iCurrentBlock++;
             if (engine->iCurrentBlock >= engine->iBuffer->Blocks()) {
                 engine->iCurrentBlock = 0;
                 engine->takeTimeStamp();
             }
-            aSender->setTimeout(engine->iTimerIntervalNs);
+
+            uint64_t currTime;
+            clock_get_uptime(&currTime);
+            absolutetime_to_nanoseconds(currTime, &engine->iTimestamp);
+
+            aSender->setTimeout((UInt32)(engine->iTimerIntervalNs));
         }
     }
 }
@@ -427,7 +450,7 @@ AudioMessage::AudioMessage(uint32_t aFrames, uint32_t aChannels, uint32_t aBitDe
     Header()->iType = 3;
     Header()->iAudioHeaderBytes = 50;
     Header()->iAudioNetworkTimestamp = 0;
-    Header()->iAudioMediaLatency = 1000000;
+    Header()->iAudioMediaLatency = OSSwapHostToBigInt32(1000000);
     Header()->iAudioMediaTimestamp = 0;
     Header()->iAudioStartSample = 0;
     Header()->iAudioTotalSamples = 0;
@@ -447,8 +470,8 @@ AudioMessage::AudioMessage(uint32_t aFrames, uint32_t aChannels, uint32_t aBitDe
     Header()->iAudioChannels = aChannels;
     Header()->iAudioSampleCount = OSSwapHostToBigInt16(aFrames);
     
-    // lossless audio with no timestamps
-    Header()->iAudioFlags = 2;    
+    // lossless audio with timestamps
+    Header()->iAudioFlags = 6;
 }
 
 
@@ -470,6 +493,13 @@ void AudioMessage::SetSampleRate(uint32_t aSampleRate)
 void AudioMessage::SetFrame(uint32_t aFrame)
 {
     Header()->iAudioFrame = OSSwapHostToBigInt32(aFrame);
+}
+
+
+void AudioMessage::SetTimestamp(uint32_t aTimestamp)
+{
+    Header()->iAudioNetworkTimestamp = OSSwapHostToBigInt32(aTimestamp);
+    Header()->iAudioMediaTimestamp = Header()->iAudioNetworkTimestamp;
 }
 
 
