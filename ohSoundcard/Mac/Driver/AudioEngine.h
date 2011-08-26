@@ -135,13 +135,17 @@ private:
     virtual IOReturn clipOutputSamples(const void* aMixBuffer, void* aSampleBuffer, UInt32 aFirstSampleFrame, UInt32 aNumSampleFrames, const IOAudioStreamFormat* aFormat, IOAudioStream* aStream);
 
     static void TimerFired(OSObject* aOwner, IOTimerEventSource* aSender);
-    IOTimerEventSource* iTimer;
+    void TimerFired();
 
-    UInt32 iCurrentBlock;
-    UInt32 iCurrentFrame;
+    uint32_t iCurrentBlock;
+    uint32_t iCurrentFrame;
     IOAudioSampleRate iSampleRate;
-    UInt32 iTimerIntervalNs;
+    uint32_t iTimerIntervalNs;
     uint64_t iTimestamp;
+
+    IOTimerEventSource* iTimer;
+    uint64_t iTimeZero;
+    uint32_t iTimerFiredCount;
     
     BlockBuffer* iBuffer;
     AudioMessage* iAudioMsg;

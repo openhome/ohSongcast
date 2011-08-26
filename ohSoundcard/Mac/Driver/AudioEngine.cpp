@@ -42,6 +42,9 @@ bool AudioEngine::init(OSDictionary* aProperties)
     iSampleRate.fraction = 0;
     iActive = false;
     iTtl = 0;
+    
+    iTimeZero = 0;
+    iTimerFiredCount = 0;
 
     // calculate the timer interval making sure no overflows occur
     uint64_t interval = 1000000000;
@@ -199,6 +202,9 @@ IOReturn AudioEngine::performAudioEngineStart()
     clock_get_uptime(&currTime);
     absolutetime_to_nanoseconds(currTime, &iTimestamp);
 
+    iTimeZero = iTimestamp;
+    iTimerFiredCount = 0;
+
     if (iTimer->setTimeout(iTimerIntervalNs) != kIOReturnSuccess) {
         IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStart() failed to start timer\n", this);
         return kIOReturnError;
@@ -249,43 +255,66 @@ void AudioEngine::TimerFired(OSObject* aOwner, IOTimerEventSource* aSender)
     if (aOwner)
     {
         AudioEngine* engine = OSDynamicCast(AudioEngine, aOwner);
-        if (engine)
-        {
-            if (engine->iActive != 0)
-            {
-                void* block = engine->iBuffer->BlockPtr(engine->iCurrentBlock);
-                uint32_t blockBytes = engine->iBuffer->BlockBytes();
-
-                uint32_t frame = ++engine->iCurrentFrame;
-
-                // calc the timestamp
-                uint64_t timestamp = (engine->iTimestamp * engine->iSampleRate.whole * 256) / 1000000000;
-
-                // set the data for the audio message
-                engine->iAudioMsg->SetSampleRate(engine->iSampleRate.whole);
-                engine->iAudioMsg->SetFrame(frame);
-                engine->iAudioMsg->SetTimestamp((uint32_t)timestamp);
-                engine->iAudioMsg->SetData(block, blockBytes);
-
-                // send data
-                if (engine->iSocket.IsOpen())
-                {
-                    engine->iSocket.Send(engine->iAudioMsg->Ptr(), engine->iAudioMsg->Bytes());
-                }
-            }
-
-            engine->iCurrentBlock++;
-            if (engine->iCurrentBlock >= engine->iBuffer->Blocks()) {
-                engine->iCurrentBlock = 0;
-                engine->takeTimeStamp();
-            }
-
-            uint64_t currTime;
-            clock_get_uptime(&currTime);
-            absolutetime_to_nanoseconds(currTime, &engine->iTimestamp);
-
-            aSender->setTimeout((UInt32)(engine->iTimerIntervalNs));
+        if (engine) {
+            engine->TimerFired();
         }
+    }
+}
+
+
+void AudioEngine::TimerFired()
+{
+    // increment the timer fired count - this is used to calculate accurate timer
+    // intervals for when the timer is next scheduled
+    iTimerFiredCount++;
+
+    // calculate the absolute time when the next timer should fire - we calculate
+    // this based on the following:
+    //  - the absolute iTimeZero (which is the origin of time for this session)
+    //  - the expected timer interval (based on the sample rate of the audio and the number of samples to send)
+    //  - the number of times that the timer has currently fired
+    uint64_t timeOfNextFire = iTimeZero + (iTimerIntervalNs * (iTimerFiredCount + 1));
+
+    // calculate the interval for the next timer and schedule it - this is simply based on the
+    // difference between the expected time of the next fire and the current time
+    uint64_t currTimeAbs, currTimeNs;
+    clock_get_uptime(&currTimeAbs);
+    absolutetime_to_nanoseconds(currTimeAbs, &currTimeNs);
+    iTimer->setTimeout((uint32_t)(timeOfNextFire - currTimeNs));
+
+    
+    // construct the audio message to send
+    void* block = iBuffer->BlockPtr(iCurrentBlock);
+    uint32_t blockBytes = iBuffer->BlockBytes();
+
+    // convert the timestamp to the correct units
+    uint64_t timestamp = (iTimestamp * iSampleRate.whole * 256) / 1000000000;
+
+    // set the data for the audio message
+    iAudioMsg->SetSampleRate(iSampleRate.whole);
+    iAudioMsg->SetFrame(iCurrentFrame);
+    iAudioMsg->SetTimestamp((uint32_t)timestamp);
+    iAudioMsg->SetData(block, blockBytes);    
+
+    
+    // increment counters and send timestamp to the upper audio layers if the buffer
+    // wraps
+    iCurrentBlock++;
+    iCurrentFrame++;
+
+    if (iCurrentBlock >= iBuffer->Blocks()) {
+        iCurrentBlock = 0;
+        takeTimeStamp();
+    }
+
+    // get the timestamp to use for the next audio packet
+    clock_get_uptime(&currTimeAbs);
+    absolutetime_to_nanoseconds(currTimeAbs, &iTimestamp);
+
+    // send the data
+    if (iActive != 0 && iSocket.IsOpen())
+    {
+        iSocket.Send(iAudioMsg->Ptr(), iAudioMsg->Bytes());
     }
 }
 
