@@ -10,7 +10,7 @@ endif
 export objdir = $(CURDIR)/Build/Obj/Mac/$(build_dir)/
 
 
-default : make_objdir_x86_64 make_objdir_i386 make_objdir_ppc make_objdir_universal driver app
+default : make_objdir_x86_64 make_objdir_i386 make_objdir_ppc make_objdir_universal driver app prefs
 
 
 .PHONY : clean
@@ -39,6 +39,10 @@ driver :
 .PHONY : app
 app :
 	$(MAKE) -C App
+
+.PHONY : prefs
+prefs :
+	$(MAKE) -C Prefs
 
 
 
