@@ -654,7 +654,7 @@ void OhmSender::RunMulticast()
         
 		iDriver.SetEndpoint(iTargetEndpoint);
 
-		LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x\n", iTargetEndpoint);
+		LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x:%d\n", iTargetEndpoint.Address(), iTargetEndpoint.Port());
 
         try {
             for (;;) {
@@ -792,7 +792,7 @@ void OhmSender::RunUnicast()
 
 				iDriver.SetEndpoint(iTargetEndpoint);
 
-				LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x\n", iTargetEndpoint);
+				LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x:%d\n", iTargetEndpoint.Address(), iTargetEndpoint.Port());
         
 				SendTrack();
                 SendMetatext();
@@ -911,7 +911,7 @@ void OhmSender::RunUnicast()
                                     
 									iDriver.SetEndpoint(iTargetEndpoint);
 
-									LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x\n", iTargetEndpoint);
+									LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x:%d\n", iTargetEndpoint.Address(), iTargetEndpoint.Port());
                                     
 									iMutexActive.Signal();
                                 }
