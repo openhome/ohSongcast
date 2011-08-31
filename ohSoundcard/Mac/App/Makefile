@@ -64,11 +64,12 @@ $(resourcedir)%.strings : %.strings
 $(resourcedir)%.nib : %.xib
 	$(ibtool) $(ibtool_flags) --compile $@ $<
 
-$(outputdir)ohSoundcard.app : $(outputdir)ohSoundcard $(resourcedir)NonLocalizable.strings $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib Info.plist MenuIconOff.png MenuIconOn.png $(libohSoundcard)
+$(outputdir)ohSoundcard.app : $(outputdir)ohSoundcard $(resourcedir)NonLocalizable.strings $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib Info.plist MenuIconOff.png MenuIconOn.png Icon.icns $(libohSoundcard)
 	cp $< $(macosdir)
 	cp $(libohSoundcard) $(macosdir)
 	cp MenuIconOff.png $(resourcedir)
 	cp MenuIconOn.png $(resourcedir)
+	cp Icon.icns $(resourcedir)
 	cp Info.plist $(contentsdir)
 
 

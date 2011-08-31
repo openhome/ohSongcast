@@ -1,0 +1,9 @@
+#!/bin/sh
+
+
+touch /System/Library/Extensions/ohSoundcard.kext
+
+killall -HUP kextd
+
+defaults write /Library/Preferences/com.apple.loginwindow AutoLaunchedApplicationDictionary -array-add '{ "Path" = "/Applications/ohSoundcard.app"; "Hide" = "0"; }'
+
