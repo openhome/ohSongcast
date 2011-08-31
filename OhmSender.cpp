@@ -33,11 +33,11 @@ namespace Net {
 	    ~ProviderSender() {}
 	    
 	private:
-	    virtual void PresentationUrl(IInvocationResponse& aResponse, TUint aVersion, IInvocationResponseString& aValue);
-	    virtual void Metadata(IInvocationResponse& aResponse, TUint aVersion, IInvocationResponseString& aValue);
-	    virtual void Audio(IInvocationResponse& aResponse, TUint aVersion, IInvocationResponseBool& aValue);
-	    virtual void Status(IInvocationResponse& aResponse, TUint aVersion, IInvocationResponseString& aValue);
-	    virtual void Attributes(IInvocationResponse& aResponse, TUint aVersion, IInvocationResponseString& aValue);
+	    virtual void PresentationUrl(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue);
+	    virtual void Metadata(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue);
+	    virtual void Audio(IDvInvocation& aInvocation, IDvInvocationResponseBool& aValue);
+	    virtual void Status(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue);
+	    virtual void Attributes(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue);
 	
 	    void UpdateMetadata();
 	    void TimerAudioPresentExpired();
@@ -73,53 +73,53 @@ ProviderSender::ProviderSender(DvDevice& aDevice)
     SetPropertyAttributes(Brx::Empty());
 }
 
-void ProviderSender::PresentationUrl(IInvocationResponse& aResponse, TUint /*aVersion*/, IInvocationResponseString& aValue)
+void ProviderSender::PresentationUrl(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue)
 {
 	Brhz value;
     GetPropertyPresentationUrl(value);
-    aResponse.Start();
+    aInvocation.StartResponse();
     aValue.Write(value);
     aValue.WriteFlush();
-    aResponse.End();
+    aInvocation.EndResponse();
 }
 
-void ProviderSender::Metadata(IInvocationResponse& aResponse, TUint /*aVersion*/, IInvocationResponseString& aValue)
+void ProviderSender::Metadata(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue)
 {
 	Brhz value;
     GetPropertyMetadata(value);
-    aResponse.Start();
+    aInvocation.StartResponse();
     aValue.Write(value);
     aValue.WriteFlush();
-    aResponse.End();
+    aInvocation.EndResponse();
 }
 
-void ProviderSender::Audio(IInvocationResponse& aResponse, TUint /*aVersion*/, IInvocationResponseBool& aValue)
+void ProviderSender::Audio(IDvInvocation& aInvocation, IDvInvocationResponseBool& aValue)
 {
     TBool value;
     GetPropertyAudio(value);
-    aResponse.Start();
+    aInvocation.StartResponse();
     aValue.Write(value);
-    aResponse.End();
+    aInvocation.EndResponse();
 }
 
-void ProviderSender::Status(IInvocationResponse& aResponse, TUint /*aVersion*/, IInvocationResponseString& aValue)
+void ProviderSender::Status(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue)
 {
     Brhz value;
     GetPropertyStatus(value);
-    aResponse.Start();
+    aInvocation.StartResponse();
     aValue.Write(value);
     aValue.WriteFlush();
-    aResponse.End();
+    aInvocation.EndResponse();
 }
 
-void ProviderSender::Attributes(IInvocationResponse& aResponse, TUint /*aVersion*/, IInvocationResponseString& aValue)
+void ProviderSender::Attributes(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue)
 {
     Brhz value;
     GetPropertyAttributes(value);
-    aResponse.Start();
+    aInvocation.StartResponse();
     aValue.Write(value);
     aValue.WriteFlush();
-    aResponse.End();
+    aInvocation.EndResponse();
 }
 
 void ProviderSender::SetMetadata(const Brx& aValue)
