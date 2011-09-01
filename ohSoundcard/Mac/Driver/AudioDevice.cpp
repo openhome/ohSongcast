@@ -10,11 +10,11 @@ bool AudioDevice::initHardware(IOService* aProvider)
 {
     IOLog("ohSoundcard AudioDevice[%p]::initHardware(%p) ...\n", this, aProvider);
 
-    IOAudioEngine* engine = 0;
-
     // initialise base class
-    if (!IOAudioDevice::initHardware(aProvider))
-        goto Error;
+    if (!IOAudioDevice::initHardware(aProvider)) {
+        IOLog("ohSoundcard AudioDevice[%p]::initHardware(%p) base class initHardware failed\n", this, aProvider);
+        return false;
+    }
 
     // set device names
     setDeviceName("OpenHome Songcast Device");
@@ -22,28 +22,29 @@ bool AudioDevice::initHardware(IOService* aProvider)
     setManufacturerName("OpenHome.org");
 
     // create, initialise and activate the audio engine
-    engine = new AudioEngine();
-    if (!engine)
-        goto Error;
+    IOAudioEngine* engine = new AudioEngine();
+    if (!engine) {
+        IOLog("ohSoundcard AudioDevice[%p]::initHardware(%p) failed to allocated engine\n", this, aProvider);
+        return false;
+    }
 
-    if (!engine->init(0))
-        goto Error;
+    if (!engine->init(0)) {
+        IOLog("ohSoundcard AudioDevice[%p]::initHardware(%p) failed to initialise engine\n", this, aProvider);
+        engine->release();
+        return false;
+    }
 
-    if (activateAudioEngine(engine) != kIOReturnSuccess)
-        goto Error;
-    
+    if (activateAudioEngine(engine) != kIOReturnSuccess) {
+        IOLog("ohSoundcard AudioDevice[%p]::initHardware(%p) failed to activate engine\n", this, aProvider);
+        engine->release();
+        return false;
+    }
+
     // the engine must be released as it is retained when passed to activateAudioEngine
     engine->release();
 
     IOLog("ohSoundcard AudioDevice[%p]::initHardware(%p) ok\n", this, aProvider);
     return true;
-
-Error:
-    if (engine)
-        engine->release();
-
-    IOLog("ohSoundcard AudioDevice[%p]::initHardware(%p) fail\n", this, aProvider);
-    return false;
 }
 
 

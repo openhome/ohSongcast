@@ -29,6 +29,8 @@ OSDefineMetaClassAndStructors(AudioEngine, IOAudioEngine);
 
 bool AudioEngine::init(OSDictionary* aProperties)
 {
+    IOLog("ohSoundcard AudioEngine[%p]::init(%p) ...\n", this, aProperties);
+
     if (!IOAudioEngine::init(aProperties)) {
         IOLog("ohSoundcard AudioEngine[%p]::init(%p) base class init failed\n", this, aProperties);
         return false;
@@ -77,6 +79,8 @@ bool AudioEngine::init(OSDictionary* aProperties)
 
 bool AudioEngine::initHardware(IOService* aProvider)
 {
+    IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) ...\n", this, aProvider);
+
     // base class initialisation
     if (!IOAudioEngine::initHardware(aProvider)) {
         IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) base class init failed\n", this, aProvider);

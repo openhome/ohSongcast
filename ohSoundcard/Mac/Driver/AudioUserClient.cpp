@@ -54,18 +54,18 @@ bool AudioUserClient::start(IOService* aProvider)
 
     // set the device that this user client is to talk to
     iDevice = OSDynamicCast(AudioDevice, aProvider);
-    if (!iDevice)
-        goto Error;
+    if (!iDevice) {
+        IOLog("ohSoundcard AudioUserClient[%p]::start(%p) null device failure\n", this, aProvider);
+        return false;
+    }
 
-    if (!IOUserClient::start(aProvider))
-        goto Error;
+    if (!IOUserClient::start(aProvider)) {
+        IOLog("ohSoundcard AudioUserClient[%p]::start(%p) base class start failed\n", this, aProvider);
+        return false;
+    }
 
     IOLog("ohSoundcard AudioUserClient[%p]::start(%p) ok\n", this, aProvider);
     return true;
-
-Error:
-    IOLog("ohSoundcard AudioUserClient[%p]::start(%p) fail\n", this, aProvider);
-    return false;    
 }
 
 
