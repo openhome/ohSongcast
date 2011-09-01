@@ -122,6 +122,8 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
             THROW(SoundcardError);
         }
 
+        iHandleOpen = true;
+
         // open - is this necessary?
         IOConnectCallScalarMethod(iHandle, eOpen, 0, 0, 0, 0);
         SetEndpoint(iEndpoint);
@@ -131,8 +133,6 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
         // change the current audio output device to be the ohSoundcard driver
         AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &propBytes, &iDevicePrevious);
         AudioHardwareSetProperty(kAudioHardwarePropertyDefaultOutputDevice, propBytes, &iDeviceSoundcard);
-
-        iHandleOpen = true;
     }
     else
     {
@@ -176,6 +176,8 @@ void OhmSenderDriverMac::SetTtl(TUint aValue)
 
     if (iHandleOpen)
     {
+        uint64_t arg = aValue;
+        IOConnectCallScalarMethod(iHandle, eSetTtl, &arg, 1, 0, 0);
     }
 }
 
