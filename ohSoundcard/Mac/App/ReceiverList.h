@@ -17,14 +17,15 @@
 // Declaration of the receiver list class
 @interface ReceiverList : NSObject
 {
+    NSObject* iLock;
     NSMutableArray* iList;
-    id<IReceiverListObserver> iObserver;
+    NSObject<IReceiverListObserver>* iObserver;
 }
 
 - (id) initWithReceivers:(NSArray*)aReceivers;
 - (NSArray*) receivers;
-- (void) addObserver:(id<IReceiverListObserver>)aObserver;
-- (void) removeNonSelected:(NSArray*)aSelected;
+- (void) addObserver:(NSObject<IReceiverListObserver>*)aObserver;
+- (void) removeUnavailableUnselected:(NSArray*)aSelected;
 
 @end
 

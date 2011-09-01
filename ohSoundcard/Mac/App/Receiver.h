@@ -11,6 +11,7 @@
     NSString* group;
     NSString* name;
     void* iPtr;
+    NSObject* iLock;
 }
 
 @property (assign) NSString* udn;

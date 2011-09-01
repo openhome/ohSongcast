@@ -91,7 +91,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     if ([aReceiver status] == eReceiverStateConnected || [aReceiver status] == eReceiverStateConnecting)
     {
         [aReceiver stop];
-//        [aReceiver standby];
+        [aReceiver standby];
     }
 }
 
@@ -290,9 +290,9 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 
 - (void) preferenceRefreshReceiverList:(NSNotification*)aNotification
 {
-    // remove all non-selected receivers
-    [iReceiverList removeNonSelected:iSelectedUdnList];
-
+    // remove undiscovered, unselected receivers
+    [iReceiverList removeUnavailableUnselected:iSelectedUdnList];
+    
     // update the preferences
     [self updatePreferenceReceiverList];
     

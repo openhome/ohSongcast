@@ -14,7 +14,8 @@
 - (id) initWithPtr:(void *)aPtr
 {
     [super init];
-    
+
+    iLock = [[NSObject alloc] init];
     iPtr = aPtr;
     ReceiverAddRef(iPtr);
     
@@ -31,6 +32,7 @@
 {
     [super init];
     
+    iLock = [[NSObject alloc] init];
     iPtr = nil;
     
     udn = [[aPref udn] retain];
@@ -44,26 +46,30 @@
 
 - (void) updateWithPtr:(void*)aPtr
 {
-    if (iPtr != aPtr)
+    // access to iPtr must be locked
+    @synchronized(iLock)
     {
-        if (iPtr)
-            ReceiverRemoveRef(iPtr);
+        if (iPtr != aPtr)
+        {
+            if (iPtr)
+                ReceiverRemoveRef(iPtr);
+            if (aPtr)
+                ReceiverAddRef(aPtr);
+        }
+    
+        iPtr = aPtr;
+    
         if (aPtr)
-            ReceiverAddRef(aPtr);
-    }
-    
-    iPtr = aPtr;
-    
-    if (aPtr)
-    {
-        [udn release];
-        [room release];
-        [group release];
-        [name release];
-        udn = [[NSString alloc] initWithUTF8String:ReceiverUdn(iPtr)];
-        room = [[NSString alloc] initWithUTF8String:ReceiverRoom(iPtr)];
-        group = [[NSString alloc] initWithUTF8String:ReceiverGroup(iPtr)];
-        name = [[NSString alloc] initWithUTF8String:ReceiverName(iPtr)];
+        {
+            [udn release];
+            [room release];
+            [group release];
+            [name release];
+            udn = [[NSString alloc] initWithUTF8String:ReceiverUdn(iPtr)];
+            room = [[NSString alloc] initWithUTF8String:ReceiverRoom(iPtr)];
+            group = [[NSString alloc] initWithUTF8String:ReceiverGroup(iPtr)];
+            name = [[NSString alloc] initWithUTF8String:ReceiverName(iPtr)];
+        }
     }
 }
 
@@ -84,47 +90,63 @@
 
 - (EReceiverState) status
 {
-    if (iPtr)
+    // access to iPtr must be locked
+    @synchronized(iLock)
     {
-        switch (ReceiverStatus(iPtr))
+        if (iPtr)
         {
-            case eDisconnected:
-                return eReceiverStateDisconnected;
-            case eConnecting:
-                return eReceiverStateConnecting;
-            case eConnected:
-                return eReceiverStateConnected;
-            default:
-                return eReceiverStateOffline;
-        };
-    }
-    else
-    {
-        return eReceiverStateOffline;
+            switch (ReceiverStatus(iPtr))
+            {
+                case eDisconnected:
+                    return eReceiverStateDisconnected;
+                case eConnecting:
+                    return eReceiverStateConnecting;
+                case eConnected:
+                    return eReceiverStateConnected;
+                default:
+                    return eReceiverStateOffline;
+            };
+        }
+        else
+        {
+            return eReceiverStateOffline;
+        }
     }
 }
 
 
 - (void) play
 {
-    if (iPtr) {
-        ReceiverPlay(iPtr);
+    // access to iPtr must be locked
+    @synchronized(iLock)
+    {
+        if (iPtr) {
+            ReceiverPlay(iPtr);
+        }
     }
 }
 
 
 - (void) stop
 {
-    if (iPtr) {
-        ReceiverStop(iPtr);
+    // access to iPtr must be locked
+    @synchronized(iLock)
+    {
+        if (iPtr) {
+            ReceiverStop(iPtr);
+        }
     }
 }
 
 
 - (void) standby
 {
-    if (iPtr) {
-        ReceiverStandby(iPtr);
+    // access to iPtr must be locked
+    @synchronized(iLock)
+    {
+        if (iPtr) {
+            ReceiverStandby(iPtr);
+        }
     }
 }
 
