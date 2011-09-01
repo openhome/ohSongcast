@@ -11,6 +11,10 @@ const IOExternalMethodDispatch AudioUserClient::iMethods[eNumDriverMethods] =
     {
         (IOExternalMethodAction)&AudioUserClient::DispatchOpen, 0, 0, 0, 0
     },
+    // eClose
+    {
+        (IOExternalMethodAction)&AudioUserClient::DispatchClose, 0, 0, 0, 0
+    },
     // eSetActive
     {
         (IOExternalMethodAction)&AudioUserClient::DispatchSetActive, 1, 0, 0, 0
@@ -51,6 +55,7 @@ bool AudioUserClient::start(IOService* aProvider)
         return false;
     }
 
+    // make sure base class start is called after all other things that can fail
     if (!IOUserClient::start(aProvider)) {
         IOLog("ohSoundcard AudioUserClient[%p]::start(%p) base class start failed\n", this, aProvider);
         return false;
@@ -71,13 +76,6 @@ void AudioUserClient::stop(IOService* aProvider)
 IOReturn AudioUserClient::clientClose()
 {
     IOLog("ohSoundcard AudioUserClient[%p]::clientClose()\n", this);
-
-    // IOServiceClose has been called from user space - close the connection between
-    // this user client and the device
-    if (DeviceOk() == kIOReturnSuccess)
-    {
-        iDevice->close(this);
-    }
 
     // terminate the user client - don't call the base class clientClose()
     terminate();
@@ -134,6 +132,27 @@ IOReturn AudioUserClient::Open()
     }
 
     IOLog("ohSoundcard AudioUserClient[%p]::Open() ok\n", this);
+    return kIOReturnSuccess;
+}
+
+
+// eClose
+
+IOReturn AudioUserClient::DispatchClose(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
+{
+    return aTarget->Close();
+}
+
+IOReturn AudioUserClient::Close()
+{
+    IOReturn ret = DeviceOk();
+    if (ret != kIOReturnSuccess) {
+        IOLog("ohSoundcard AudioUserClient[%p]::Close() returns %x\n", this, ret);
+        return ret;
+    }
+
+    iDevice->close(this);
+    IOLog("ohSoundcard AudioUserClient[%p]::Close() ok\n", this);
     return kIOReturnSuccess;
 }
 
