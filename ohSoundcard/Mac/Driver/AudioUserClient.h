@@ -17,6 +17,7 @@ public:
     virtual bool start(IOService* aProvider);
     virtual void stop(IOService* aProvider);
     virtual IOReturn clientClose();
+    virtual IOReturn clientDied();
 
 private:
     static const IOExternalMethodDispatch iMethods[eNumDriverMethods];

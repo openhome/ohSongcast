@@ -71,6 +71,7 @@ public:
     void* Ptr() const { return iPtr; }
     uint32_t Bytes() const { return (sizeof(AudioHeader) + iAudioBytes); }
     
+    void SetHaltFlag(bool aHalt);
     void SetSampleRate(uint32_t aSampleRate);
     void SetFrame(uint32_t aFrame);
     void SetTimestamp(uint32_t aTimestamp);
@@ -111,6 +112,15 @@ private:
 
 
 
+// State enum for the audio engine
+enum EAudioEngineState
+{
+    eAudioEngineStateInactive,
+    eAudioEngineStateActive,
+    eAudioEngineStatePendingInactiveHalt
+};
+
+
 // Main class for the audio engine
 class AudioEngine : public IOAudioEngine
 {
@@ -121,6 +131,7 @@ public:
     virtual void free();
 
     void SetActive(uint64_t aActive);
+    void SetInactiveAndHalt();
     void SetEndpoint(uint64_t aIpAddress, uint64_t aPort);
     void SetTtl(uint64_t aTtl);
     
@@ -150,7 +161,7 @@ private:
     BlockBuffer* iBuffer;
     AudioMessage* iAudioMsg;
 
-    bool iActive;
+    EAudioEngineState iState;
     uint64_t iTtl;
     AudioSocket iSocket;
 };

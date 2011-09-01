@@ -84,6 +84,22 @@ IOReturn AudioUserClient::clientClose()
 }
 
 
+IOReturn AudioUserClient::clientDied()
+{
+    IOLog("ohSoundcard AudioUserClient[%p]::clientDied()\n", this);
+
+    // the user space application has crashed - get the driver to stop sending audio
+    AudioEngine* engine = 0;
+    GetEngine(&engine);
+    if (engine) {
+        engine->SetInactiveAndHalt();
+    }
+
+    // base class calls clientClose()
+    return IOUserClient::clientDied();
+}
+
+
 IOReturn AudioUserClient::DeviceOk()
 {
     if (iDevice == 0 || isInactive()) {

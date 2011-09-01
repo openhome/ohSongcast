@@ -42,7 +42,7 @@ bool AudioEngine::init(OSDictionary* aProperties)
 
     iSampleRate.whole = 44100;
     iSampleRate.fraction = 0;
-    iActive = false;
+    iState = eAudioEngineStateInactive;
     iTtl = 0;
     
     iTimeZero = 0;
@@ -295,6 +295,7 @@ void AudioEngine::TimerFired()
     uint64_t timestamp = (iTimestamp * iSampleRate.whole * 256) / 1000000000;
 
     // set the data for the audio message
+    iAudioMsg->SetHaltFlag(iState == eAudioEngineStatePendingInactiveHalt);
     iAudioMsg->SetSampleRate(iSampleRate.whole);
     iAudioMsg->SetFrame(iCurrentFrame);
     iAudioMsg->SetTimestamp((uint32_t)timestamp);
@@ -316,9 +317,14 @@ void AudioEngine::TimerFired()
     absolutetime_to_nanoseconds(currTimeAbs, &iTimestamp);
 
     // send the data
-    if (iActive != 0 && iSocket.IsOpen())
+    if (iState != eAudioEngineStateInactive && iSocket.IsOpen())
     {
         iSocket.Send(iAudioMsg->Ptr(), iAudioMsg->Bytes());
+    }
+
+    // set state to inactive if pending
+    if (iState == eAudioEngineStatePendingInactiveHalt) {
+        iState = eAudioEngineStateInactive;
     }
 }
 
@@ -326,7 +332,14 @@ void AudioEngine::TimerFired()
 void AudioEngine::SetActive(uint64_t aActive)
 {
     IOLog("ohSoundcard AudioEngine[%p]::SetActive(%llu)\n", this, aActive);
-    iActive = aActive;
+    iState = (aActive != 0) ? eAudioEngineStateActive : eAudioEngineStateInactive;
+}
+
+
+void AudioEngine::SetInactiveAndHalt()
+{
+    IOLog("ohSoundcard AudioEngine[%p]::SetInactiveAndHalt()\n", this);
+    iState = eAudioEngineStatePendingInactiveHalt;
 }
 
 
@@ -476,6 +489,17 @@ AudioMessage::~AudioMessage()
 {
     if (iPtr) {
         IOFree(iPtr, Bytes());
+    }
+}
+
+
+void AudioMessage::SetHaltFlag(bool aHalt)
+{
+    if (aHalt) {
+        Header()->iAudioFlags = 7;
+    }
+    else {
+        Header()->iAudioFlags = 6;
     }
 }
 
