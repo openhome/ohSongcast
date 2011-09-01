@@ -44,7 +44,7 @@ void CWinsock::Initialise(PSOCKADDR aSocket)
 
 CWinsock* CWinsock::Create(NETWORK_CALLBACK aCallback, void* aContext)
 {
-	CWinsock* winsock = (CWinsock*) ExAllocatePoolWithTag(NonPagedPool, sizeof(CWinsock), 0);
+	CWinsock* winsock = (CWinsock*) ExAllocatePoolWithTag(NonPagedPool, sizeof(CWinsock), '1ten');
 
 	if (winsock != NULL)
 	{
@@ -360,7 +360,7 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
         return;
     }
 
-	void* alloc = ExAllocatePoolWithTag(NonPagedPool, sizeof(UDPSEND) + sizeof(OHMHEADER) + aBytes, 0);
+	void* alloc = ExAllocatePoolWithTag(NonPagedPool, sizeof(UDPSEND) + sizeof(OHMHEADER) + aBytes, '2ten');
 
 	if (alloc == NULL)
 	{

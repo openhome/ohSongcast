@@ -654,7 +654,7 @@ Return Value:
 
     if (NT_SUCCESS(ntStatus))
     {
-        KeInitializeDpc(m_pDpc, TimerNotify, m_pMiniport);
+        KeInitializeDpc(m_pDpc, TimerNotify, this);
         KeInitializeTimerEx(m_pTimer, NotificationTimer);
     }
 
@@ -957,21 +957,23 @@ Return Value:
             {
                 DPF(D_TERSE, ("KSSTATE_RUN"));
 
-                LARGE_INTEGER   delay;
-
                 // Set the timer for DPC.
                 //
                 m_ullDmaTimeStamp             = KeQueryInterruptTime();
                 m_ullElapsedTimeCarryForward  = 0;
                 m_fDmaActive                  = TRUE;
-                delay.HighPart                = 0;
-                delay.LowPart                 = m_pMiniport->m_NotificationInterval;
+
+                m_ullTimerExpiry = m_ullDmaTimeStamp + 100000LL;
+
+				LARGE_INTEGER   delay;
+
+				delay.QuadPart                = -100000LL;
 
                 KeSetTimerEx
                 (
                     m_pTimer,
                     delay,
-                    m_pMiniport->m_NotificationInterval,
+                    0,
                     m_pDpc
                 );
             }
@@ -1068,12 +1070,29 @@ Return Value:
     UNREFERENCED_PARAMETER(SA1);
     UNREFERENCED_PARAMETER(SA2);
 
-    PCMiniportWaveCyclicMSVAD pMiniport =
-        (PCMiniportWaveCyclicMSVAD) DeferredContext;
+    PCMiniportWaveCyclicStreamMSVAD pStream =
+        (PCMiniportWaveCyclicStreamMSVAD) DeferredContext;
 
-    if (pMiniport && pMiniport->m_Port)
+    if (pStream && pStream->m_pMiniport && pStream->m_pMiniport->m_Port)
     {
-        pMiniport->m_Port->Notify(pMiniport->m_ServiceGroup);
+        pStream->m_ullTimerExpiry = pStream->m_ullTimerExpiry + 100000LL;
+
+		ULONGLONG expire = pStream->m_ullTimerExpiry;
+        ULONGLONG now = KeQueryInterruptTime();
+
+		LARGE_INTEGER delay;
+
+		delay.QuadPart = now - expire;
+
+        KeSetTimerEx
+        (
+            pStream->m_pTimer,
+            delay,
+            0,
+            pStream->m_pDpc
+        );
+
+		 pStream->m_pMiniport->m_Port->Notify(pStream->m_pMiniport->m_ServiceGroup);
     }
 } // TimerNotify
 

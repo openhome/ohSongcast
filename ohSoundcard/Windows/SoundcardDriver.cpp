@@ -163,8 +163,6 @@ TBool OhmSenderDriverWindows::InstallDriver()
 
 void OhmSenderDriverWindows::SetDefaultAudioPlaybackDevice()
 {	
-    printf("Defaulting %ws\n", iEndpointId);
-
 	IPolicyConfigVista *pPolicyConfig;
 	
     HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
@@ -174,8 +172,6 @@ void OhmSenderDriverWindows::SetDefaultAudioPlaybackDevice()
 		hr = pPolicyConfig->SetDefaultEndpoint(iEndpointId, eConsole);
 		pPolicyConfig->Release();
 	}
-
-    printf("failed\n");
 }
 
 void OhmSenderDriverWindows::SetEndpointEnabled(TBool aValue)
