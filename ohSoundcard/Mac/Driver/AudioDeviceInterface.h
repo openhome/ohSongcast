@@ -9,8 +9,6 @@
 enum EDriverMethod
 {
     eOpen,              // ()
-    eClose,             // ()
-    eSetEnabled,        // (uint64_t aEnabled)
     eSetActive,         // (uint64_t aActive)
     eSetEndpoint,       // (uint64_t aIpAddress, uint64_t aPort)
     eSetTtl,            // (uint64_t aTtl)

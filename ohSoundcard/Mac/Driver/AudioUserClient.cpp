@@ -11,14 +11,6 @@ const IOExternalMethodDispatch AudioUserClient::iMethods[eNumDriverMethods] =
     {
         (IOExternalMethodAction)&AudioUserClient::DispatchOpen, 0, 0, 0, 0
     },
-    // eClose
-    {
-        (IOExternalMethodAction)&AudioUserClient::DispatchClose, 0, 0, 0, 0
-    },
-    // eSetEnabled
-    {
-        (IOExternalMethodAction)&AudioUserClient::DispatchSetEnabled, 1, 0, 0, 0
-    },
     // eSetActive
     {
         (IOExternalMethodAction)&AudioUserClient::DispatchSetActive, 1, 0, 0, 0
@@ -80,8 +72,12 @@ IOReturn AudioUserClient::clientClose()
 {
     IOLog("ohSoundcard AudioUserClient[%p]::clientClose()\n", this);
 
-    // user has called IOServiceClose - make sure the close has been called
-    Close();
+    // IOServiceClose has been called from user space - close the connection between
+    // this user client and the device
+    if (DeviceOk() == kIOReturnSuccess)
+    {
+        iDevice->close(this);
+    }
 
     // terminate the user client - don't call the base class clientClose()
     terminate();
@@ -138,47 +134,6 @@ IOReturn AudioUserClient::Open()
     }
 
     IOLog("ohSoundcard AudioUserClient[%p]::Open() ok\n", this);
-    return kIOReturnSuccess;
-}
-
-
-// eClose
-
-IOReturn AudioUserClient::DispatchClose(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
-{
-    return aTarget->Close();
-}
-
-IOReturn AudioUserClient::Close()
-{
-    IOReturn ret = DeviceOk();
-    if (ret != kIOReturnSuccess) {
-        IOLog("ohSoundcard AudioUserClient[%p]::Close() returns %x\n", this, ret);
-        return ret;
-    }
-
-    iDevice->close(this);
-    IOLog("ohSoundcard AudioUserClient[%p]::Close() ok\n", this);
-    return kIOReturnSuccess;
-}
-
-
-// eSetEnabled
-
-IOReturn AudioUserClient::DispatchSetEnabled(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
-{
-    return aTarget->SetEnabled(aArgs->scalarInput[0]);
-}
-
-IOReturn AudioUserClient::SetEnabled(uint64_t aEnabled)
-{
-    IOReturn ret = DeviceOk();
-    if (ret != kIOReturnSuccess) {
-        IOLog("ohSoundcard AudioUserClient[%p]::SetEnabled(%llu) returns %x\n", this, aEnabled, ret);
-        return ret;
-    }
-
-    IOLog("ohSoundcard AudioUserClient[%p]::SetEnabled(%llu)\n", this, aEnabled);
     return kIOReturnSuccess;
 }
 
