@@ -224,9 +224,6 @@ IOReturn AudioEngine::performAudioEngineStop()
     // stop the sending timer
     iTimer->cancelTimeout();
 
-    // close the kernel socket
-    iSocket.Close();
-
     IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStop()\n", this);
     return kIOReturnSuccess;
 }
