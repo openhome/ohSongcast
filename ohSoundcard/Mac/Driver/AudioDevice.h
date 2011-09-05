@@ -4,9 +4,8 @@
 #include <IOKit/audio/IOAudioDevice.h>
 #include "AudioDeviceInterface.h"
 #include "AudioEngine.h"
+#include "Songcast.h"
 
-
-// sleep/wake handling
 
 
 class AudioDevice : public IOAudioDevice
@@ -14,17 +13,13 @@ class AudioDevice : public IOAudioDevice
     OSDeclareDefaultStructors(AudioDevice);
 
     virtual bool initHardware(IOService* aProvider);
+    virtual void free();
 
 public:
-    AudioEngine* Engine()
-    {
-        if (audioEngines->getCount() != 0) {
-            return OSDynamicCast(AudioEngine, audioEngines->getObject(0));
-        }
-        else {
-            return 0;
-        }
-    }
+    SongcastSocket& Socket() { return iSocket; }
+
+private:
+    SongcastSocket iSocket;
 };
 
 

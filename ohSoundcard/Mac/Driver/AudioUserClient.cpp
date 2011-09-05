@@ -89,12 +89,11 @@ IOReturn AudioUserClient::clientDied()
     IOLog("ohSoundcard AudioUserClient[%p]::clientDied()\n", this);
 
     // the user space application has crashed - get the driver to stop sending audio
-    AudioEngine* engine = 0;
-    GetEngine(&engine);
-    if (engine) {
-        engine->SetInactiveAndHalt();
+    if (DeviceOk() == kIOReturnSuccess)
+    {
+        iDevice->Socket().SetInactiveAndHalt();
     }
-
+    
     // base class calls clientClose()
     return IOUserClient::clientDied();
 }
@@ -111,21 +110,6 @@ IOReturn AudioUserClient::DeviceOk()
     else {
         return kIOReturnSuccess;
     }
-}
-
-
-IOReturn AudioUserClient::GetEngine(AudioEngine** aEngine)
-{
-    if (iDevice == 0 || isInactive()) {
-        return kIOReturnNotAttached;
-    }
-    else if (!iDevice->isOpen(this)) {
-        return kIOReturnNotOpen;
-    }
-
-    *aEngine = iDevice->Engine();
-
-    return (*aEngine != 0) ? kIOReturnSuccess : kIOReturnError;
 }
 
 
@@ -182,10 +166,9 @@ IOReturn AudioUserClient::DispatchSetActive(AudioUserClient* aTarget, void* aRef
 
 IOReturn AudioUserClient::SetActive(uint64_t aActive)
 {
-    AudioEngine* engine = 0;
-    IOReturn ret = GetEngine(&engine);
-    if (engine) {
-        engine->SetActive(aActive);
+    IOReturn ret = DeviceOk();
+    if (ret == kIOReturnSuccess) {
+        iDevice->Socket().SetActive(aActive);
     }
     else {
         IOLog("ohSoundcard AudioUserClient[%p]::SetActive(%llu) returns %x\n", this, aActive, ret);
@@ -203,10 +186,10 @@ IOReturn AudioUserClient::DispatchSetEndpoint(AudioUserClient* aTarget, void* aR
 
 IOReturn AudioUserClient::SetEndpoint(uint64_t aIpAddress, uint64_t aPort)
 {
-    AudioEngine* engine = 0;
-    IOReturn ret = GetEngine(&engine);
-    if (engine) {
-        engine->SetEndpoint(aIpAddress, aPort);
+    IOReturn ret = DeviceOk();
+    if (ret == kIOReturnSuccess) {
+        iDevice->Socket().Close();
+        iDevice->Socket().Open(aIpAddress, aPort);
     }
     else {
         IOLog("ohSoundcard AudioUserClient[%p]::SetEndpoint(%llu, %llu) returns %x\n", this, aIpAddress, aPort, ret);
@@ -224,10 +207,9 @@ IOReturn AudioUserClient::DispatchSetTtl(AudioUserClient* aTarget, void* aRefere
 
 IOReturn AudioUserClient::SetTtl(uint64_t aTtl)
 {
-    AudioEngine* engine = 0;
-    IOReturn ret = GetEngine(&engine);
-    if (engine) {
-        engine->SetTtl(aTtl);
+    IOReturn ret = DeviceOk();
+    if (ret == kIOReturnSuccess) {
+        iDevice->Socket().SetTtl(aTtl);
     }
     else {
         IOLog("ohSoundcard AudioUserClient[%p]::SetTtl(%llu) returns %x\n", this, aTtl, ret);

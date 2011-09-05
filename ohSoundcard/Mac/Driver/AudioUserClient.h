@@ -37,7 +37,6 @@ private:
     IOReturn SetTtl(uint64_t aTtl);
 
     IOReturn DeviceOk();
-    IOReturn GetEngine(AudioEngine** aEngine);
     
 private:
     AudioDevice* iDevice;

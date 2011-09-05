@@ -21,18 +21,14 @@ typedef struct SocketAddress
 // implementation of SongcastSocket class
 SongcastSocket::SongcastSocket()
 : iSocket(0)
+, iTtl(4)
+, iState(eSongcastStateInactive)
 {
 }
 
 
 SongcastSocket::~SongcastSocket()
 {
-}
-
-
-bool SongcastSocket::IsOpen() const
-{
-    return (iSocket != 0);
 }
 
 
@@ -79,15 +75,19 @@ void SongcastSocket::Close()
 }
 
 
-void SongcastSocket::Send(void* aBuffer, uint32_t aBytes) const
+void SongcastSocket::Send(SongcastAudioMessage& aMsg)
 {
-    if (iSocket == 0) {
+    if (iSocket == 0 || iState == eSongcastStateInactive) {
         return;
     }
     
+    if (iState == eSongcastStatePendingInactiveHalt) {
+        aMsg.SetHaltFlag(true);
+    }
+    
     struct iovec sockdata;
-    sockdata.iov_base = aBuffer;
-    sockdata.iov_len = aBytes;
+    sockdata.iov_base = aMsg.Ptr();
+    sockdata.iov_len = aMsg.Bytes();
     
     struct msghdr msg;
     msg.msg_name = 0;
@@ -100,6 +100,33 @@ void SongcastSocket::Send(void* aBuffer, uint32_t aBytes) const
     
     size_t bytesSent;
     sock_send(iSocket, &msg, 0, &bytesSent);
+
+    // set state to inactive if pending
+    if (iState == eSongcastStatePendingInactiveHalt) {
+        IOLog("ohSoundcard SongcastSocket[%p]::Send() pending->inactive\n", this);
+        iState = eSongcastStateInactive;
+    }
+}
+
+
+void SongcastSocket::SetActive(uint64_t aActive)
+{
+    IOLog("ohSoundcard SongcastSocket[%p]::SetActive(%llu)\n", this, aActive);
+    iState = (aActive != 0) ? eSongcastStateActive : eSongcastStateInactive;
+}
+
+
+void SongcastSocket::SetInactiveAndHalt()
+{
+    IOLog("ohSoundcard SongcastSocket[%p]::SetInactiveAndHalt()\n", this);
+    iState = eSongcastStatePendingInactiveHalt;
+}
+
+
+void SongcastSocket::SetTtl(uint64_t aTtl)
+{
+    IOLog("ohSoundcard SongcastSocket[%p]::SetTtl(%llu)\n", this, aTtl);
+    iTtl = aTtl;
 }
 
 

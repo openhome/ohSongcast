@@ -33,15 +33,6 @@ private:
 
 
 
-// State enum for the audio engine
-enum EAudioEngineState
-{
-    eAudioEngineStateInactive,
-    eAudioEngineStateActive,
-    eAudioEngineStatePendingInactiveHalt
-};
-
-
 // Main class for the audio engine
 class AudioEngine : public IOAudioEngine
 {
@@ -50,12 +41,9 @@ class AudioEngine : public IOAudioEngine
 public:
     virtual bool init(OSDictionary* aProperties);
     virtual void free();
-
-    void SetActive(uint64_t aActive);
-    void SetInactiveAndHalt();
-    void SetEndpoint(uint64_t aIpAddress, uint64_t aPort);
-    void SetTtl(uint64_t aTtl);
     
+    void SetSocket(ISongcastSocket& aSocket);
+
 private:
     virtual bool initHardware(IOService* aProvider);
     virtual void stop(IOService* aProvider);
@@ -82,9 +70,7 @@ private:
     BlockBuffer* iBuffer;
     SongcastAudioMessage* iAudioMsg;
 
-    EAudioEngineState iState;
-    uint64_t iTtl;
-    SongcastSocket iSocket;
+    ISongcastSocket* iSocket;
 };
 
 

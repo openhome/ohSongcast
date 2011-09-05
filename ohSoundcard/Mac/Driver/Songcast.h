@@ -4,32 +4,6 @@
 #include <sys/kpi_socket.h>
 
 
-// Class representing the songcast socket
-class ISongcastSocket
-{
-public:
-    virtual ~ISongcastSocket() {}
-    virtual void Send(void* aBuffer, uint32_t aBytes) const = 0;
-};
-
-
-class SongcastSocket : ISongcastSocket
-{
-public:
-    SongcastSocket();
-    ~SongcastSocket();
-
-    bool IsOpen() const;
-    void Open(uint32_t aIpAddress, uint16_t aPort);
-    void Close();
-    void Send(void* aBuffer, uint32_t aBytes) const;
-    
-private:
-    socket_t iSocket;
-};
-
-
-
 // NOTE: This struct is __packed__ - this prevents the compiler from adding
 // padding to the struct in order to align data on 4 byte boundaries. This is
 // required because, when sending the audio packets a single buffer is allocated
@@ -89,6 +63,44 @@ private:
     void* iPtr;
     const uint32_t iAudioBytes;
 };
+
+
+
+// Class representing the songcast socket
+class ISongcastSocket
+{
+public:
+    virtual ~ISongcastSocket() {}
+    virtual void Send(SongcastAudioMessage& aMsg) = 0;
+};
+
+enum ESongcastState
+{
+    eSongcastStateInactive,
+    eSongcastStateActive,
+    eSongcastStatePendingInactiveHalt
+};
+
+class SongcastSocket : public ISongcastSocket
+{
+public:
+    SongcastSocket();
+    ~SongcastSocket();
+    
+    void Open(uint32_t aIpAddress, uint16_t aPort);
+    void Close();
+    void Send(SongcastAudioMessage& aMsg);
+    
+    void SetActive(uint64_t aActive);
+    void SetInactiveAndHalt();
+    void SetTtl(uint64_t aTtl);
+    
+private:
+    socket_t iSocket;
+    uint8_t iTtl;
+    ESongcastState iState;
+};
+
 
 
 #endif // HEADER_SONGCAST

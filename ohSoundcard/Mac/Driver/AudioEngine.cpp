@@ -29,8 +29,6 @@ bool AudioEngine::init(OSDictionary* aProperties)
 
     iSampleRate.whole = 44100;
     iSampleRate.fraction = 0;
-    iState = eAudioEngineStateInactive;
-    iTtl = 0;
     
     iTimeZero = 0;
     iTimerFiredCount = 0;
@@ -164,14 +162,17 @@ void AudioEngine::free()
 }
 
 
+void AudioEngine::SetSocket(ISongcastSocket& aSocket)
+{
+    iSocket = &aSocket;
+}
+
+
 void AudioEngine::stop(IOService* aProvider)
 {
     IOLog("ohSoundcard AudioEngine[%p]::stop(%p)\n", this, aProvider);
     IOAudioEngine::stop(aProvider);
     
-    // make sure kernel socket resource is freed
-    iSocket.Close();
-
     // remove timer
     iTimer->cancelTimeout();
     IOWorkLoop* workLoop = getWorkLoop();
@@ -279,7 +280,6 @@ void AudioEngine::TimerFired()
     uint64_t timestamp = (iTimestamp * iSampleRate.whole * 256) / 1000000000;
 
     // set the data for the audio message
-    iAudioMsg->SetHaltFlag(iState == eAudioEngineStatePendingInactiveHalt);
     iAudioMsg->SetSampleRate(iSampleRate.whole);
     iAudioMsg->SetFrame(iCurrentFrame);
     iAudioMsg->SetTimestamp((uint32_t)timestamp);
@@ -301,43 +301,7 @@ void AudioEngine::TimerFired()
     absolutetime_to_nanoseconds(currTimeAbs, &iTimestamp);
 
     // send the data
-    if (iState != eAudioEngineStateInactive && iSocket.IsOpen())
-    {
-        iSocket.Send(iAudioMsg->Ptr(), iAudioMsg->Bytes());
-    }
-
-    // set state to inactive if pending
-    if (iState == eAudioEngineStatePendingInactiveHalt) {
-        iState = eAudioEngineStateInactive;
-    }
-}
-
-
-void AudioEngine::SetActive(uint64_t aActive)
-{
-    IOLog("ohSoundcard AudioEngine[%p]::SetActive(%llu)\n", this, aActive);
-    iState = (aActive != 0) ? eAudioEngineStateActive : eAudioEngineStateInactive;
-}
-
-
-void AudioEngine::SetInactiveAndHalt()
-{
-    IOLog("ohSoundcard AudioEngine[%p]::SetInactiveAndHalt()\n", this);
-    iState = eAudioEngineStatePendingInactiveHalt;
-}
-
-
-void AudioEngine::SetEndpoint(uint64_t aIpAddress, uint64_t aPort)
-{
-    iSocket.Close();
-    iSocket.Open(aIpAddress, aPort);
-}
-
-
-void AudioEngine::SetTtl(uint64_t aTtl)
-{
-    IOLog("ohSoundcard AudioEngine[%p]::SetTtl(%llu)\n", this, aTtl);
-    iTtl = aTtl;
+    iSocket->Send(*iAudioMsg);
 }
 
 

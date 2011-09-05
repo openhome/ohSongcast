@@ -22,7 +22,7 @@ bool AudioDevice::initHardware(IOService* aProvider)
     setManufacturerName("OpenHome.org");
 
     // create, initialise and activate the audio engine
-    IOAudioEngine* engine = new AudioEngine();
+    AudioEngine* engine = new AudioEngine();
     if (!engine) {
         IOLog("ohSoundcard AudioDevice[%p]::initHardware(%p) failed to allocated engine\n", this, aProvider);
         return false;
@@ -33,6 +33,7 @@ bool AudioDevice::initHardware(IOService* aProvider)
         engine->release();
         return false;
     }
+    engine->SetSocket(iSocket);
 
     if (activateAudioEngine(engine) != kIOReturnSuccess) {
         IOLog("ohSoundcard AudioDevice[%p]::initHardware(%p) failed to activate engine\n", this, aProvider);
@@ -46,6 +47,19 @@ bool AudioDevice::initHardware(IOService* aProvider)
     IOLog("ohSoundcard AudioDevice[%p]::initHardware(%p) ok\n", this, aProvider);
     return true;
 }
+
+
+void AudioDevice::free()
+{
+    IOLog("ohSoundcard AudioDevice[%p]::free()\n", this);
+
+    // close the kernel socket
+    iSocket.Close();
+    
+    IOAudioDevice::free();
+}
+
+
 
 
 
