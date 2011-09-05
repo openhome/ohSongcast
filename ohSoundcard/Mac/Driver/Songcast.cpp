@@ -2,6 +2,7 @@
 #include "Songcast.h"
 #include <IOKit/IOLib.h>
 #include <libkern/OSByteOrder.h>
+#include <netinet/in.h>
 
 
 
@@ -21,7 +22,7 @@ typedef struct SocketAddress
 // implementation of SongcastSocket class
 SongcastSocket::SongcastSocket()
 : iSocket(0)
-, iTtl(4)
+, iTtl(1)
 , iState(eSongcastStateInactive)
 {
 }
@@ -60,6 +61,9 @@ void SongcastSocket::Open(uint32_t aIpAddress, uint16_t aPort)
         iSocket = 0;
         return;
     }
+
+    // set the ttl
+    SetSocketTtl();
 
     IOLog("ohSoundcard SongcastSocket[%p]::Open(0x%x, %u) ok\n", this, aIpAddress, aPort);
 }
@@ -127,6 +131,19 @@ void SongcastSocket::SetTtl(uint64_t aTtl)
 {
     IOLog("ohSoundcard SongcastSocket[%p]::SetTtl(%llu)\n", this, aTtl);
     iTtl = aTtl;
+    SetSocketTtl();
+}
+
+
+void SongcastSocket::SetSocketTtl()
+{
+    if (iSocket != 0)
+    {
+        u_char ttl = iTtl;
+        if (sock_setsockopt(iSocket, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) != 0) {
+            IOLog("ohSoundcard SongcastSocket[%p]::SetSocketTtl() sock_setsockopt(ttl = %d) failed\n", this, ttl);
+        }
+    }
 }
 
 

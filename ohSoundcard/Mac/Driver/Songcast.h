@@ -96,6 +96,8 @@ public:
     void SetTtl(uint64_t aTtl);
     
 private:
+    void SetSocketTtl();
+
     socket_t iSocket;
     uint8_t iTtl;
     ESongcastState iState;
