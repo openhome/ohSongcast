@@ -66,6 +66,7 @@ private:
     IOTimerEventSource* iTimer;
     uint64_t iTimeZero;
     uint32_t iTimerFiredCount;
+    bool iAudioStopping;
     
     BlockBuffer* iBuffer;
     SongcastAudioMessage* iAudioMsg;

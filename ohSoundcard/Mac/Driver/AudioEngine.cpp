@@ -32,6 +32,7 @@ bool AudioEngine::init(OSDictionary* aProperties)
     
     iTimeZero = 0;
     iTimerFiredCount = 0;
+    iAudioStopping = false;
 
     // calculate the timer interval making sure no overflows occur
     uint64_t interval = 1000000000;
@@ -196,6 +197,7 @@ IOReturn AudioEngine::performAudioEngineStart()
 
     iTimeZero = iTimestamp;
     iTimerFiredCount = 0;
+    iAudioStopping = false;
 
     if (iTimer->setTimeout(iTimerIntervalNs) != kIOReturnSuccess) {
         IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStart() failed to start timer\n", this);
@@ -209,8 +211,8 @@ IOReturn AudioEngine::performAudioEngineStart()
 
 IOReturn AudioEngine::performAudioEngineStop()
 {
-    // stop the sending timer
-    iTimer->cancelTimeout();
+    // set flag that audio is stopping - let the timer method handle cleanup
+    iAudioStopping = true;
 
     IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStop()\n", this);
     return kIOReturnSuccess;
@@ -257,20 +259,22 @@ void AudioEngine::TimerFired()
     // intervals for when the timer is next scheduled
     iTimerFiredCount++;
 
-    // calculate the absolute time when the next timer should fire - we calculate
-    // this based on the following:
-    //  - the absolute iTimeZero (which is the origin of time for this session)
-    //  - the expected timer interval (based on the sample rate of the audio and the number of samples to send)
-    //  - the number of times that the timer has currently fired
-    uint64_t timeOfNextFire = iTimeZero + (iTimerIntervalNs * (iTimerFiredCount + 1));
+    if (!iAudioStopping)
+    {
+        // calculate the absolute time when the next timer should fire - we calculate
+        // this based on the following:
+        //  - the absolute iTimeZero (which is the origin of time for this session)
+        //  - the expected timer interval (based on the sample rate of the audio and the number of samples to send)
+        //  - the number of times that the timer has currently fired
+        uint64_t timeOfNextFire = iTimeZero + (iTimerIntervalNs * (iTimerFiredCount + 1));
 
-    // calculate the interval for the next timer and schedule it - this is simply based on the
-    // difference between the expected time of the next fire and the current time
-    uint64_t currTimeAbs, currTimeNs;
-    clock_get_uptime(&currTimeAbs);
-    absolutetime_to_nanoseconds(currTimeAbs, &currTimeNs);
-    iTimer->setTimeout((uint32_t)(timeOfNextFire - currTimeNs));
-
+        // calculate the interval for the next timer and schedule it - this is simply based on the
+        // difference between the expected time of the next fire and the current time
+        uint64_t currTimeAbs, currTimeNs;
+        clock_get_uptime(&currTimeAbs);
+        absolutetime_to_nanoseconds(currTimeAbs, &currTimeNs);
+        iTimer->setTimeout((uint32_t)(timeOfNextFire - currTimeNs));
+    }    
     
     // construct the audio message to send
     void* block = iBuffer->BlockPtr(iCurrentBlock);
@@ -280,6 +284,7 @@ void AudioEngine::TimerFired()
     uint64_t timestamp = (iTimestamp * iSampleRate.whole * 256) / 1000000000;
 
     // set the data for the audio message
+    iAudioMsg->SetHaltFlag(iAudioStopping);
     iAudioMsg->SetSampleRate(iSampleRate.whole);
     iAudioMsg->SetFrame(iCurrentFrame);
     iAudioMsg->SetTimestamp((uint32_t)timestamp);
@@ -297,6 +302,7 @@ void AudioEngine::TimerFired()
     }
 
     // get the timestamp to use for the next audio packet
+    uint64_t currTimeAbs;
     clock_get_uptime(&currTimeAbs);
     absolutetime_to_nanoseconds(currTimeAbs, &iTimestamp);
 
