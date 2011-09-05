@@ -149,7 +149,7 @@ void SongcastSocket::SetSocketTtl()
 
 
 // implementation of SongcastAudioMessage class
-SongcastAudioMessage::SongcastAudioMessage(uint32_t aFrames, uint32_t aChannels, uint32_t aBitDepth)
+SongcastAudioMessage::SongcastAudioMessage(uint32_t aBufferFrames, uint32_t aFrames, uint32_t aChannels, uint32_t aBitDepth)
 : iPtr(0)
 , iAudioBytes(aFrames * aChannels * aBitDepth / 8)
 {
@@ -164,7 +164,7 @@ SongcastAudioMessage::SongcastAudioMessage(uint32_t aFrames, uint32_t aChannels,
     Header()->iType = 3;
     Header()->iAudioHeaderBytes = 50;
     Header()->iAudioNetworkTimestamp = 0;
-    Header()->iAudioMediaLatency = OSSwapHostToBigInt32(1000000);
+    Header()->iAudioMediaLatency = OSSwapHostToBigInt32(aBufferFrames * 256);
     Header()->iAudioMediaTimestamp = 0;
     Header()->iAudioStartSample = 0;
     Header()->iAudioTotalSamples = 0;

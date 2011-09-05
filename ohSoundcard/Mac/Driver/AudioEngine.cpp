@@ -43,7 +43,7 @@ bool AudioEngine::init(OSDictionary* aProperties)
 
     // allocate the output buffers
     iBuffer = new BlockBuffer(BLOCKS, BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
-    iAudioMsg = new SongcastAudioMessage(BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
+    iAudioMsg = new SongcastAudioMessage(BLOCKS*BLOCK_FRAMES, BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
 
     if (!iBuffer || !iBuffer->Ptr() || !iAudioMsg || !iAudioMsg->Ptr()) {
         IOLog("ohSoundcard AudioEngine[%p]::init(%p) buffer alloc failed\n", this, aProperties);
