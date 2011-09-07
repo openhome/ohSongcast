@@ -26,9 +26,9 @@
             </Component>
             <Directory Id='ohSoundcardDriverFolder' Name='Driver'>
               <Component Id='Driver' Guid="CC03CD86-2CAF-4A77-91D6-CF243AA07D3F" >
-                <File Id='ohSoundcardDriver1' Name='ohSoundcard.inf' DiskId='1' Source='../../Driver/pkg64/ohSoundcard.inf' KeyPath='yes' />
-                <File Id='ohSoundcardDriver2' Name='ohSoundcard.sys' DiskId='1' Source='../../Driver/pkg64/ohSoundcard.sys' />
-                <File Id='ohSoundcardDriver3' Name='ohSoundcard.cat' DiskId='1' Source='../../Driver/pkg64/ohSoundcard.cat' />
+                <File Id='ohSoundcardDriver1' Name='ohSoundcard.inf' DiskId='1' Source='../../../../Build/Driver64/ohSoundcard.inf' KeyPath='yes' />
+                <File Id='ohSoundcardDriver2' Name='ohSoundcard.sys' DiskId='1' Source='../../../../Build/Driver64/ohSoundcard.sys' />
+                <File Id='ohSoundcardDriver3' Name='ohSoundcard.cat' DiskId='1' Source='../../../../Build/Driver64/ohSoundcard.cat' />
                 <difx:Driver Legacy='yes' PlugAndPlayPrompt="no" />
                 <!--
                 <difx:Driver Legacy='yes' DeleteFiles="no" ForceInstall="no" PlugAndPlayPrompt="no" AddRemovePrograms="no" />

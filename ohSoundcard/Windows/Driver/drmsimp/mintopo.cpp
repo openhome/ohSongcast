@@ -16,6 +16,7 @@ Abstract:
 
 #include <msvad.h>
 #include <common.h>
+#include <ntddk.h>
 #include <stdio.h>
 #include "drmsimp.h"
 #include "minwave.h"
@@ -26,7 +27,7 @@ extern void MpusStopLocked();
 extern void MpusUpdateEndpointLocked();
 extern void MpusUpdateTtlLocked();
 
-FAST_MUTEX MpusFastMutex;
+KSPIN_LOCK MpusSpinLock;
 
 UINT MpusEnabled;
 UINT MpusActive;
@@ -241,17 +242,13 @@ Return Value:
 
     NTSTATUS                    ntStatus;
 
-	ExInitializeFastMutex(&MpusFastMutex);
-
-	ExAcquireFastMutex(&MpusFastMutex);
-
 	MpusEnabled = 0;
 	MpusActive = 0;
 	MpusTtl = 0;
 	MpusAddr = 0;
 	MpusPort = 0;
 
-	ExReleaseFastMutex(&MpusFastMutex);
+	KeInitializeSpinLock(&MpusSpinLock);
 
     ntStatus = CMiniportTopologyMSVAD::Init (
         UnknownAdapter,
@@ -506,6 +503,45 @@ Return Value:
     return ntStatus;
 } // PropertyHandler_TopoFilter
 
+
+//=============================================================================
+NTSTATUS
+PropertyHandler_Topology
+( 
+    IN PPCPROPERTY_REQUEST      PropertyRequest 
+)
+/*++
+
+Routine Description:
+
+  Redirects property request to miniport object
+
+Arguments:
+
+  PropertyRequest - 
+
+Return Value:
+
+  NT status code.
+
+--*/
+{
+    PAGED_CODE();
+
+    ASSERT(PropertyRequest);
+
+    DPF_ENTER(("[PropertyHandler_Topology]"));
+
+    return ((PCMiniportTopology)
+        (PropertyRequest->MajorTarget))->PropertyHandlerGeneric
+        (
+            PropertyRequest
+        );
+} // PropertyHandler_Topology
+
+
+#pragma code_seg()
+
 //=============================================================================
 NTSTATUS
 PropertyHandler_Wave
@@ -513,8 +549,6 @@ PropertyHandler_Wave
     IN PPCPROPERTY_REQUEST		PropertyRequest
 )
 {
-    PAGED_CODE();
-
     ASSERT(PropertyRequest);
 
     DPF_ENTER(("[PropertyHandler_TopoFilter]"));
@@ -567,7 +601,9 @@ PropertyHandler_Wave
 
 				// PCMiniportTopology  pMiniport = (PCMiniportTopology)PropertyRequest->MajorTarget;
 
-				ExAcquireFastMutex(&MpusFastMutex);
+				KIRQL oldIrql;
+
+				KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
 				if (MpusEnabled != enabled) {
 					if (enabled) {
@@ -585,7 +621,7 @@ PropertyHandler_Wave
 					}
 				}
 
-				ExReleaseFastMutex(&MpusFastMutex);
+				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 
 				return STATUS_SUCCESS;
 			}
@@ -603,7 +639,9 @@ PropertyHandler_Wave
 					active = 1;
 				}
 
-				ExAcquireFastMutex(&MpusFastMutex);
+				KIRQL oldIrql;
+
+				KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
 				if (MpusActive != active) {
 					if (active) {
@@ -617,7 +655,7 @@ PropertyHandler_Wave
 					}
 				}
 
-				ExReleaseFastMutex(&MpusFastMutex);
+				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 
 				return STATUS_SUCCESS;
 			}
@@ -632,7 +670,9 @@ PropertyHandler_Wave
 				UINT addr = *pValue++;
 				UINT port = *pValue;
 
-				ExAcquireFastMutex(&MpusFastMutex);
+				KIRQL oldIrql;
+
+				KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
 				if (MpusAddr != addr || MpusPort != port) {
 					MpusAddr = addr;
@@ -640,7 +680,7 @@ PropertyHandler_Wave
 					MpusUpdateEndpointLocked();
 				}
 
-				ExReleaseFastMutex(&MpusFastMutex);
+				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 
 				return STATUS_SUCCESS;
 			}
@@ -654,14 +694,16 @@ PropertyHandler_Wave
 
 				UINT ttl = *pValue;
 
-				ExAcquireFastMutex(&MpusFastMutex);
+				KIRQL oldIrql;
+
+				KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
 				if (MpusTtl != ttl) {
 					MpusTtl = *pValue;
 					MpusUpdateTtlLocked();
 				}
 
-				ExReleaseFastMutex(&MpusFastMutex);
+				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 
 				return STATUS_SUCCESS;
 			}
@@ -672,42 +714,4 @@ PropertyHandler_Wave
 
 	return STATUS_INVALID_DEVICE_REQUEST;
 }
-
-//=============================================================================
-NTSTATUS
-PropertyHandler_Topology
-( 
-    IN PPCPROPERTY_REQUEST      PropertyRequest 
-)
-/*++
-
-Routine Description:
-
-  Redirects property request to miniport object
-
-Arguments:
-
-  PropertyRequest - 
-
-Return Value:
-
-  NT status code.
-
---*/
-{
-    PAGED_CODE();
-
-    ASSERT(PropertyRequest);
-
-    DPF_ENTER(("[PropertyHandler_Topology]"));
-
-    return ((PCMiniportTopology)
-        (PropertyRequest->MajorTarget))->PropertyHandlerGeneric
-        (
-            PropertyRequest
-        );
-} // PropertyHandler_Topology
-
-
-#pragma code_seg()
 

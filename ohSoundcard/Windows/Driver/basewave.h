@@ -138,6 +138,8 @@ protected:
     ULONGLONG                   m_ullElapsedTimeCarryForward;       // Time to carry forward in position calc.
     ULONG                       m_ulByteDisplacementCarryForward;   // Bytes to carry forward to next calc.
 
+	ULONGLONG                   m_ullTimerExpiry;					// Time of next timer expiry
+
 public:
     CMiniportWaveCyclicStreamMSVAD();
     ~CMiniportWaveCyclicStreamMSVAD();
@@ -155,6 +157,13 @@ public:
 
     // Friends
     friend class CMiniportWaveCyclicMSVAD;
+    friend void TimerNotify
+    ( 
+        IN  PKDPC               Dpc, 
+        IN  PVOID               DeferredContext, 
+        IN  PVOID               SA1, 
+        IN  PVOID               SA2 
+    );
 };
 typedef CMiniportWaveCyclicStreamMSVAD *PCMiniportWaveCyclicStreamMSVAD;
 

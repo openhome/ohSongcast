@@ -118,6 +118,8 @@ typedef struct
 
 class CSocketOhm
 {
+	static const ULONG kMediaLatencyMs = 100;
+
 public:
 	CSocketOhm();
 	NTSTATUS Initialise(CWinsock& aWsk, NETWORK_CALLBACK* aCallback, void*  aContext);
@@ -149,8 +151,7 @@ private:
 	ULONGLONG iSamplesTotal;
 	ULONG iSampleRate;
 	ULONG iTimestampMultiplier;
-	LARGE_INTEGER iPerformanceFrequency;
-	LARGE_INTEGER iPerformanceCounter;
+	ULONGLONG iPerformanceCounter;
 };
 
 #endif          // (NTDDI_VERSION >= NTDDI_VISTA)

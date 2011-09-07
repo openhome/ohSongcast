@@ -1,4 +1,5 @@
-/*++
+/*
+++
 
 Copyright (c) 1997-2000  Microsoft Corporation All Rights Reserved
 
@@ -10,18 +11,20 @@ Abstract:
 
     Implementation of wavecyclic miniport.
 
---*/
+--
+*/
 
 #pragma warning (disable : 4127)
 
 #include <msvad.h>
 #include <common.h>
+#include <ntddk.h>
 #include "drmsimp.h"
 #include "minwave.h"
 #include "wavtable.h"
 #include "network.h"
 
-extern FAST_MUTEX MpusFastMutex;
+extern KSPIN_LOCK MpusSpinLock;
 
 extern UINT MpusEnabled;
 extern UINT MpusActive;
@@ -283,8 +286,6 @@ Return Value:
         m_fRenderAllocated = FALSE;
     }
 
-	ExAcquireFastMutex(&MpusFastMutex);
-
 	MpusAudioSampleRate = 0;
 	MpusAudioBitRate = 0;
 	MpusAudioBitDepth = 0;
@@ -292,8 +293,6 @@ Return Value:
 	MpusSendFormat = 0;
 
 	CWinsock::Initialise(&MpusAddress, MpusAddr, MpusPort);
-
-	ExReleaseFastMutex(&MpusFastMutex);
 
 	KeInitializeEvent(&WskInitialisedEvent, NotificationEvent, false);
 
@@ -745,14 +744,16 @@ void WskInitialised(void* aContext)
 
 void MpusStop()
 {
-	ExAcquireFastMutex(&MpusFastMutex);
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
 	if (MpusActive && MpusEnabled)
 	{
 		MpusStopLocked();
 	}
 
-	ExReleaseFastMutex(&MpusFastMutex);
+	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 }
 
 //=============================================================================
@@ -790,7 +791,9 @@ void MpusUpdateTtlLocked()
 
 void MpusSend(UCHAR* aBuffer, UINT aBytes)
 {
-	ExAcquireFastMutex(&MpusFastMutex);
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
 	if (MpusActive && MpusEnabled)
 	{
@@ -804,7 +807,7 @@ void MpusSend(UCHAR* aBuffer, UINT aBytes)
 		Socket->Send(&MpusAddress, aBuffer, aBytes, 0, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels);
 	}
 
-	ExReleaseFastMutex(&MpusFastMutex);
+	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 }
 
 //=============================================================================
@@ -813,7 +816,9 @@ void MpusSend(UCHAR* aBuffer, UINT aBytes)
 
 void MpusSetFormat(UINT aSampleRate, UINT aBitRate, UINT aBitDepth, UINT aChannels)
 {
-	ExAcquireFastMutex(&MpusFastMutex);
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
 	MpusAudioSampleRate = aSampleRate;
 	MpusAudioBitRate = aBitRate;
@@ -821,5 +826,5 @@ void MpusSetFormat(UINT aSampleRate, UINT aBitRate, UINT aBitDepth, UINT aChanne
 	MpusAudioChannels = aChannels;
 	MpusSendFormat = 1;
 
-	ExReleaseFastMutex(&MpusFastMutex);
+	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 }
