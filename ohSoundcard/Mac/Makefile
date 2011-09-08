@@ -47,11 +47,11 @@ prefs :
 $(objdir)Installer/ohSoundcard.pkg : driver app prefs
 	mkdir -p $(objdir)Installer/Dst/System/Library/Extensions/
 	mkdir -p $(objdir)Installer/Dst/Library/PreferencePanes/
-	mkdir -p $(objdir)Installer/Dst/Applications/
+	mkdir -p $(objdir)Installer/Dst/Library/OpenHome/
 	mkdir -p $(objdir)Installer/Dst/Library/LaunchAgents/
 	cp -R $(objdir)Universal/Driver/ohSoundcard.kext $(objdir)Installer/Dst/System/Library/Extensions/
 	cp -R $(objdir)x86_64/Prefs/ohSoundcard.prefPane $(objdir)Installer/Dst/Library/PreferencePanes/
-	cp -R $(objdir)x86_64/App/ohSoundcard.app $(objdir)Installer/Dst/Applications/
+	cp -R $(objdir)x86_64/App/ohSoundcard.app $(objdir)Installer/Dst/Library/OpenHome/
 	cp LaunchAgent.plist  $(objdir)Installer/Dst/Library/LaunchAgents/org.openhome.ohSoundcard.plist
 	pkgbuild --identifier org.openhome.ohSoundcard --install-location / --root $(objdir)Installer/Dst --component-plist PkgComponent.plist --scripts Scripts $@
 

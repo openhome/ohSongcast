@@ -12,6 +12,6 @@
 	<key>Label</key>
 	<string>org.openhome.ohSoundcard</string>
 	<key>Program</key>
-	<string>/Applications/ohSoundcard.app/Contents/MacOS/ohSoundcard</string>
+	<string>/Library/OpenHome/ohSoundcard.app/Contents/MacOS/ohSoundcard</string>
 </dict>
 </plist>
