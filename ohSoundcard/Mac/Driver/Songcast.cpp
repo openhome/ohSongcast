@@ -41,7 +41,7 @@ void SongcastSocket::Open(uint32_t aIpAddress, uint16_t aPort)
     // create the new socket
     errno_t err = sock_socket(PF_INET, SOCK_DGRAM, 0, NULL, NULL, &iSocket);
     if (err != 0) {
-        IOLog("ohSoundcard SongcastSocket[%p]::Open(0x%x, %u) sock_socket failed with %d\n", this, aIpAddress, aPort, err);
+        IOLog("Songcaster SongcastSocket[%p]::Open(0x%x, %u) sock_socket failed with %d\n", this, aIpAddress, aPort, err);
         iSocket = 0;
         return;
     }
@@ -56,7 +56,7 @@ void SongcastSocket::Open(uint32_t aIpAddress, uint16_t aPort)
     
     err = sock_connect(iSocket, (const sockaddr*)&addr, 0);
     if (err != 0) {
-        IOLog("ohSoundcard SongcastSocket[%p]::Open(0x%x, %u) sock_connect failed with %d\n", this, aIpAddress, aPort, err);
+        IOLog("Songcaster SongcastSocket[%p]::Open(0x%x, %u) sock_connect failed with %d\n", this, aIpAddress, aPort, err);
         sock_close(iSocket);
         iSocket = 0;
         return;
@@ -65,7 +65,7 @@ void SongcastSocket::Open(uint32_t aIpAddress, uint16_t aPort)
     // set the ttl
     SetSocketTtl();
 
-    IOLog("ohSoundcard SongcastSocket[%p]::Open(0x%x, %u) ok\n", this, aIpAddress, aPort);
+    IOLog("Songcaster SongcastSocket[%p]::Open(0x%x, %u) ok\n", this, aIpAddress, aPort);
 }
 
 
@@ -74,7 +74,7 @@ void SongcastSocket::Close()
     if (iSocket != 0) {
         sock_close(iSocket);
         iSocket = 0;
-        IOLog("ohSoundcard SongcastSocket[%p]::Close()\n", this);
+        IOLog("Songcaster SongcastSocket[%p]::Close()\n", this);
     }
 }
 
@@ -107,7 +107,7 @@ void SongcastSocket::Send(SongcastAudioMessage& aMsg)
 
     // set state to inactive if pending
     if (iState == eSongcastStatePendingInactiveHalt) {
-        IOLog("ohSoundcard SongcastSocket[%p]::Send() pending->inactive\n", this);
+        IOLog("Songcaster SongcastSocket[%p]::Send() pending->inactive\n", this);
         iState = eSongcastStateInactive;
     }
 }
@@ -115,21 +115,21 @@ void SongcastSocket::Send(SongcastAudioMessage& aMsg)
 
 void SongcastSocket::SetActive(uint64_t aActive)
 {
-    IOLog("ohSoundcard SongcastSocket[%p]::SetActive(%llu)\n", this, aActive);
+    IOLog("Songcaster SongcastSocket[%p]::SetActive(%llu)\n", this, aActive);
     iState = (aActive != 0) ? eSongcastStateActive : eSongcastStateInactive;
 }
 
 
 void SongcastSocket::SetInactiveAndHalt()
 {
-    IOLog("ohSoundcard SongcastSocket[%p]::SetInactiveAndHalt()\n", this);
+    IOLog("Songcaster SongcastSocket[%p]::SetInactiveAndHalt()\n", this);
     iState = eSongcastStatePendingInactiveHalt;
 }
 
 
 void SongcastSocket::SetTtl(uint64_t aTtl)
 {
-    IOLog("ohSoundcard SongcastSocket[%p]::SetTtl(%llu)\n", this, aTtl);
+    IOLog("Songcaster SongcastSocket[%p]::SetTtl(%llu)\n", this, aTtl);
     iTtl = aTtl;
     SetSocketTtl();
 }
@@ -141,7 +141,7 @@ void SongcastSocket::SetSocketTtl()
     {
         u_char ttl = iTtl;
         if (sock_setsockopt(iSocket, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) != 0) {
-            IOLog("ohSoundcard SongcastSocket[%p]::SetSocketTtl() sock_setsockopt(ttl = %d) failed\n", this, ttl);
+            IOLog("Songcaster SongcastSocket[%p]::SetSocketTtl() sock_setsockopt(ttl = %d) failed\n", this, ttl);
         }
     }
 }

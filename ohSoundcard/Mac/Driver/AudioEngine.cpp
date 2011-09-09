@@ -16,10 +16,10 @@ OSDefineMetaClassAndStructors(AudioEngine, IOAudioEngine);
 
 bool AudioEngine::init(OSDictionary* aProperties)
 {
-    IOLog("ohSoundcard AudioEngine[%p]::init(%p) ...\n", this, aProperties);
+    IOLog("Songcaster AudioEngine[%p]::init(%p) ...\n", this, aProperties);
 
     if (!IOAudioEngine::init(aProperties)) {
-        IOLog("ohSoundcard AudioEngine[%p]::init(%p) base class init failed\n", this, aProperties);
+        IOLog("Songcaster AudioEngine[%p]::init(%p) base class init failed\n", this, aProperties);
         return false;
     }
 
@@ -46,7 +46,7 @@ bool AudioEngine::init(OSDictionary* aProperties)
     iAudioMsg = new SongcastAudioMessage(BLOCKS*BLOCK_FRAMES, BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
 
     if (!iBuffer || !iBuffer->Ptr() || !iAudioMsg || !iAudioMsg->Ptr()) {
-        IOLog("ohSoundcard AudioEngine[%p]::init(%p) buffer alloc failed\n", this, aProperties);
+        IOLog("Songcaster AudioEngine[%p]::init(%p) buffer alloc failed\n", this, aProperties);
         if (iBuffer) {
             delete iBuffer;
             iBuffer = 0;
@@ -58,18 +58,18 @@ bool AudioEngine::init(OSDictionary* aProperties)
         return false;
     }
 
-    IOLog("ohSoundcard AudioEngine[%p]::init(%p) ok\n", this, aProperties);
+    IOLog("Songcaster AudioEngine[%p]::init(%p) ok\n", this, aProperties);
     return true;
 }
 
 
 bool AudioEngine::initHardware(IOService* aProvider)
 {
-    IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) ...\n", this, aProvider);
+    IOLog("Songcaster AudioEngine[%p]::initHardware(%p) ...\n", this, aProvider);
 
     // base class initialisation
     if (!IOAudioEngine::initHardware(aProvider)) {
-        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) base class init failed\n", this, aProvider);
+        IOLog("Songcaster AudioEngine[%p]::initHardware(%p) base class init failed\n", this, aProvider);
         return false;
     }
     
@@ -81,12 +81,12 @@ bool AudioEngine::initHardware(IOService* aProvider)
     // create output stream
     IOAudioStream* outStream = new IOAudioStream;
     if (!outStream) {
-        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to alloc stream\n", this, aProvider);
+        IOLog("Songcaster AudioEngine[%p]::initHardware(%p) failed to alloc stream\n", this, aProvider);
         return false;
     }
 
     if (!outStream->initWithAudioEngine(this, kIOAudioStreamDirectionOutput, 1)) {
-        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to init stream\n", this, aProvider);
+        IOLog("Songcaster AudioEngine[%p]::initHardware(%p) failed to init stream\n", this, aProvider);
         outStream->release();
         return false;
     }
@@ -108,13 +108,13 @@ bool AudioEngine::initHardware(IOService* aProvider)
     outStream->setSampleBuffer(iBuffer->Ptr(), iBuffer->Bytes());
 
     if (outStream->setFormat(&format) != kIOReturnSuccess) {
-        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to set stream format\n", this, aProvider);
+        IOLog("Songcaster AudioEngine[%p]::initHardware(%p) failed to set stream format\n", this, aProvider);
         outStream->release();
         return false;
     }
 
     if (addAudioStream(outStream) != kIOReturnSuccess) {
-        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to add stream\n", this, aProvider);
+        IOLog("Songcaster AudioEngine[%p]::initHardware(%p) failed to add stream\n", this, aProvider);
         outStream->release();
         return false;
     }
@@ -126,29 +126,29 @@ bool AudioEngine::initHardware(IOService* aProvider)
     // create the timer
     IOWorkLoop* workLoop = getWorkLoop();
     if (!workLoop) {
-        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to get work loop\n", this, aProvider);
+        IOLog("Songcaster AudioEngine[%p]::initHardware(%p) failed to get work loop\n", this, aProvider);
         return false;
     }
 
     iTimer = IOTimerEventSource::timerEventSource(this, TimerFired);
     if (!iTimer) {
-        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to create timer\n", this, aProvider);
+        IOLog("Songcaster AudioEngine[%p]::initHardware(%p) failed to create timer\n", this, aProvider);
         return false;
     }
 
     if (workLoop->addEventSource(iTimer) != kIOReturnSuccess) {
-        IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) failed to add timer\n", this, aProvider);
+        IOLog("Songcaster AudioEngine[%p]::initHardware(%p) failed to add timer\n", this, aProvider);
         return false;
     }
 
-    IOLog("ohSoundcard AudioEngine[%p]::initHardware(%p) ok\n", this, aProvider);
+    IOLog("Songcaster AudioEngine[%p]::initHardware(%p) ok\n", this, aProvider);
     return true;
 }
 
 
 void AudioEngine::free()
 {
-    IOLog("ohSoundcard AudioEngine[%p]::free()\n", this);
+    IOLog("Songcaster AudioEngine[%p]::free()\n", this);
 
     if (iBuffer) {
         delete iBuffer;
@@ -171,7 +171,7 @@ void AudioEngine::SetSocket(ISongcastSocket& aSocket)
 
 void AudioEngine::stop(IOService* aProvider)
 {
-    IOLog("ohSoundcard AudioEngine[%p]::stop(%p)\n", this, aProvider);
+    IOLog("Songcaster AudioEngine[%p]::stop(%p)\n", this, aProvider);
     IOAudioEngine::stop(aProvider);
     
     // remove timer
@@ -200,11 +200,11 @@ IOReturn AudioEngine::performAudioEngineStart()
     iAudioStopping = false;
 
     if (iTimer->setTimeout(iTimerIntervalNs) != kIOReturnSuccess) {
-        IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStart() failed to start timer\n", this);
+        IOLog("Songcaster AudioEngine[%p]::performAudioEngineStart() failed to start timer\n", this);
         return kIOReturnError;
     }
     
-    IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStart() ok\n", this);
+    IOLog("Songcaster AudioEngine[%p]::performAudioEngineStart() ok\n", this);
     return kIOReturnSuccess;
 }
 
@@ -214,7 +214,7 @@ IOReturn AudioEngine::performAudioEngineStop()
     // set flag that audio is stopping - let the timer method handle cleanup
     iAudioStopping = true;
 
-    IOLog("ohSoundcard AudioEngine[%p]::performAudioEngineStop()\n", this);
+    IOLog("Songcaster AudioEngine[%p]::performAudioEngineStop()\n", this);
     return kIOReturnSuccess;
 }
 
@@ -227,7 +227,7 @@ UInt32 AudioEngine::getCurrentSampleFrame()
 
 IOReturn AudioEngine::performFormatChange(IOAudioStream* aAudioStream, const IOAudioStreamFormat* aNewFormat, const IOAudioSampleRate* aNewSampleRate)
 {
-    IOLog("ohSoundcard AudioEngine[%p]::performFormatChange()\n", this);
+    IOLog("Songcaster AudioEngine[%p]::performFormatChange()\n", this);
     return kIOReturnSuccess;
 }
 
