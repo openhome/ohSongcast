@@ -3,7 +3,7 @@
 # ensure permissions for the driver are correctly set
 /usr/sbin/chown -R root:wheel /System/Library/Extensions/ohSoundcard.kext
 find /System/Library/Extensions/ohSoundcard.kext -type d -exec /bin/chmod 0755 {} \;
-find /System/Library/Extensions/ohSoundcard.kext -type d -exec /bin/chmod 0644 {} \;
+find /System/Library/Extensions/ohSoundcard.kext -type f -exec /bin/chmod 0644 {} \;
 
 # load the driver
 kextload /System/Library/Extensions/ohSoundcard.kext
