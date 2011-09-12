@@ -218,6 +218,9 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
         // change the current audio output device to be what it was previously
         AudioHardwareSetProperty(kAudioHardwarePropertyDefaultOutputDevice, propBytes, &iDevicePrevious);
 
+        // make sure the driver stops sending data
+        iDriver->SetActive(false);
+
         // delete the internal driver instance
         delete iDriver;
         iDriver = 0;
