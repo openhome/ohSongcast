@@ -119,6 +119,18 @@ Return Value:
 	PAGED_CODE();
 
     DPF_ENTER(("[CMiniportWaveCyclic::~CMiniportWaveCyclic]"));
+
+	if (Socket != NULL)
+	{
+		Socket->Close();
+		ExFreePool(Socket);
+	}
+
+	if (Wsk != NULL)
+	{
+		Wsk->Close();
+	}
+
 } // ~CMiniportWaveCyclic
 
 
@@ -292,6 +304,9 @@ Return Value:
 	MpusAudioChannels = 0;
 	MpusSendFormat = 0;
 
+	Wsk = NULL;
+	Socket = NULL;
+
 	CWinsock::Initialise(&MpusAddress, MpusAddr, MpusPort);
 
 	KeInitializeEvent(&WskInitialisedEvent, NotificationEvent, false);
@@ -305,7 +320,7 @@ Return Value:
 
 	LARGE_INTEGER timeout;
 
-	timeout.QuadPart = -100000000; // 1 second
+	timeout.QuadPart = -100000000; // 10 seconds
 
 	ntStatus = KeWaitForSingleObject(&WskInitialisedEvent, Executive, KernelMode, false, &timeout);
 

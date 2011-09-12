@@ -163,11 +163,6 @@ private:
     Mutex iMutexZone;
     Semaphore iNetworkDeactivated;
     Semaphore iZoneDeactivated;
-    Timer iTimerAliveJoin;
-    Timer iTimerAliveAudio;
-    Timer iTimerExpiry;
-    Timer iTimerZoneUri;
-    Timer iTimerPresetInfo;
     ProviderSender* iProvider;
     TBool iStarted;
     TBool iActive;
@@ -184,6 +179,11 @@ private:
     TUint iSlaveCount;
     Endpoint iSlaveList[kMaxSlaveCount];
     TUint iSlaveExpiry[kMaxSlaveCount];
+    Timer iTimerAliveJoin;
+    Timer iTimerAliveAudio;
+    Timer iTimerExpiry;
+    Timer iTimerZoneUri;
+    Timer iTimerPresetInfo;
     Bws<Ohm::kMaxTrackUriBytes> iTrackUri;
     Bws<Ohm::kMaxTrackMetadataBytes> iTrackMetadata;
     Bws<Ohm::kMaxTrackMetatextBytes> iTrackMetatext;

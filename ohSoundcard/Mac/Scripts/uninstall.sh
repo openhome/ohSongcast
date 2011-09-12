@@ -22,3 +22,12 @@ then
   fi
 fi
 
+
+# remove installed files
+
+rm -rf "$launchFile"
+rm -rf "$driver"
+rm -rf /Library/PreferencePanes/ohSoundcard.prefPane
+rm -rf /Library/OpenHome/ohSoundcard.app
+
+

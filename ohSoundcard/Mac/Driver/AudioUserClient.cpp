@@ -15,10 +15,6 @@ const IOExternalMethodDispatch AudioUserClient::iMethods[eNumDriverMethods] =
     {
         (IOExternalMethodAction)&AudioUserClient::DispatchClose, 0, 0, 0, 0
     },
-    // eSetEnabled
-    {
-        (IOExternalMethodAction)&AudioUserClient::DispatchSetEnabled, 1, 0, 0, 0
-    },
     // eSetActive
     {
         (IOExternalMethodAction)&AudioUserClient::DispatchSetActive, 1, 0, 0, 0
@@ -50,43 +46,56 @@ IOReturn AudioUserClient::externalMethod(uint32_t aSelector, IOExternalMethodArg
 
 bool AudioUserClient::start(IOService* aProvider)
 {
-    IOLog("ohSoundcard AudioUserClient[%p]::start(%p) ...\n", this, aProvider);
+    IOLog("Songcaster AudioUserClient[%p]::start(%p) ...\n", this, aProvider);
 
     // set the device that this user client is to talk to
     iDevice = OSDynamicCast(AudioDevice, aProvider);
-    if (!iDevice)
-        goto Error;
+    if (!iDevice) {
+        IOLog("Songcaster AudioUserClient[%p]::start(%p) null device failure\n", this, aProvider);
+        return false;
+    }
 
-    if (!IOUserClient::start(aProvider))
-        goto Error;
+    // make sure base class start is called after all other things that can fail
+    if (!IOUserClient::start(aProvider)) {
+        IOLog("Songcaster AudioUserClient[%p]::start(%p) base class start failed\n", this, aProvider);
+        return false;
+    }
 
-    IOLog("ohSoundcard AudioUserClient[%p]::start(%p) ok\n", this, aProvider);
+    IOLog("Songcaster AudioUserClient[%p]::start(%p) ok\n", this, aProvider);
     return true;
-
-Error:
-    IOLog("ohSoundcard AudioUserClient[%p]::start(%p) fail\n", this, aProvider);
-    return false;    
 }
 
 
 void AudioUserClient::stop(IOService* aProvider)
 {
-    IOLog("ohSoundcard AudioUserClient[%p]::stop(%p)\n", this, aProvider);
+    IOLog("Songcaster AudioUserClient[%p]::stop(%p)\n", this, aProvider);
     IOUserClient::stop(aProvider);
 }
 
 
 IOReturn AudioUserClient::clientClose()
 {
-    IOLog("ohSoundcard AudioUserClient[%p]::clientClose()\n", this);
-
-    // user has called IOServiceClose - make sure the close has been called
-    Close();
+    IOLog("Songcaster AudioUserClient[%p]::clientClose()\n", this);
 
     // terminate the user client - don't call the base class clientClose()
     terminate();
 
     return kIOReturnSuccess;
+}
+
+
+IOReturn AudioUserClient::clientDied()
+{
+    IOLog("Songcaster AudioUserClient[%p]::clientDied()\n", this);
+
+    // the user space application has crashed - get the driver to stop sending audio
+    if (DeviceOk() == kIOReturnSuccess)
+    {
+        iDevice->Socket().SetInactiveAndHalt();
+    }
+    
+    // base class calls clientClose()
+    return IOUserClient::clientDied();
 }
 
 
@@ -104,21 +113,6 @@ IOReturn AudioUserClient::DeviceOk()
 }
 
 
-IOReturn AudioUserClient::GetEngine(AudioEngine** aEngine)
-{
-    if (iDevice == 0 || isInactive()) {
-        return kIOReturnNotAttached;
-    }
-    else if (!iDevice->isOpen(this)) {
-        return kIOReturnNotOpen;
-    }
-
-    *aEngine = iDevice->Engine();
-
-    return (*aEngine != 0) ? kIOReturnSuccess : kIOReturnError;
-}
-
-
 // eOpen
 
 IOReturn AudioUserClient::DispatchOpen(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
@@ -129,15 +123,15 @@ IOReturn AudioUserClient::DispatchOpen(AudioUserClient* aTarget, void* aReferenc
 IOReturn AudioUserClient::Open()
 {
     if (iDevice == 0 || isInactive()) {
-        IOLog("ohSoundcard AudioUserClient[%p]::Open() not attached\n", this);
+        IOLog("Songcaster AudioUserClient[%p]::Open() not attached\n", this);
         return kIOReturnNotAttached;
     }
     else if (!iDevice->open(this)) {
-        IOLog("ohSoundcard AudioUserClient[%p]::Open() exclusive access\n", this);
+        IOLog("Songcaster AudioUserClient[%p]::Open() exclusive access\n", this);
         return kIOReturnExclusiveAccess;
     }
 
-    IOLog("ohSoundcard AudioUserClient[%p]::Open() ok\n", this);
+    IOLog("Songcaster AudioUserClient[%p]::Open() ok\n", this);
     return kIOReturnSuccess;
 }
 
@@ -153,32 +147,12 @@ IOReturn AudioUserClient::Close()
 {
     IOReturn ret = DeviceOk();
     if (ret != kIOReturnSuccess) {
-        IOLog("ohSoundcard AudioUserClient[%p]::Close() returns %x\n", this, ret);
+        IOLog("Songcaster AudioUserClient[%p]::Close() returns %x\n", this, ret);
         return ret;
     }
 
     iDevice->close(this);
-    IOLog("ohSoundcard AudioUserClient[%p]::Close() ok\n", this);
-    return kIOReturnSuccess;
-}
-
-
-// eSetEnabled
-
-IOReturn AudioUserClient::DispatchSetEnabled(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
-{
-    return aTarget->SetEnabled(aArgs->scalarInput[0]);
-}
-
-IOReturn AudioUserClient::SetEnabled(uint64_t aEnabled)
-{
-    IOReturn ret = DeviceOk();
-    if (ret != kIOReturnSuccess) {
-        IOLog("ohSoundcard AudioUserClient[%p]::SetEnabled(%llu) returns %x\n", this, aEnabled, ret);
-        return ret;
-    }
-
-    IOLog("ohSoundcard AudioUserClient[%p]::SetEnabled(%llu)\n", this, aEnabled);
+    IOLog("Songcaster AudioUserClient[%p]::Close() ok\n", this);
     return kIOReturnSuccess;
 }
 
@@ -192,13 +166,12 @@ IOReturn AudioUserClient::DispatchSetActive(AudioUserClient* aTarget, void* aRef
 
 IOReturn AudioUserClient::SetActive(uint64_t aActive)
 {
-    AudioEngine* engine = 0;
-    IOReturn ret = GetEngine(&engine);
-    if (engine) {
-        engine->SetActive(aActive);
+    IOReturn ret = DeviceOk();
+    if (ret == kIOReturnSuccess) {
+        iDevice->Socket().SetActive(aActive);
     }
     else {
-        IOLog("ohSoundcard AudioUserClient[%p]::SetActive(%llu) returns %x\n", this, aActive, ret);
+        IOLog("Songcaster AudioUserClient[%p]::SetActive(%llu) returns %x\n", this, aActive, ret);
     }
     return ret;
 }
@@ -213,13 +186,13 @@ IOReturn AudioUserClient::DispatchSetEndpoint(AudioUserClient* aTarget, void* aR
 
 IOReturn AudioUserClient::SetEndpoint(uint64_t aIpAddress, uint64_t aPort)
 {
-    AudioEngine* engine = 0;
-    IOReturn ret = GetEngine(&engine);
-    if (engine) {
-        engine->SetEndpoint(aIpAddress, aPort);
+    IOReturn ret = DeviceOk();
+    if (ret == kIOReturnSuccess) {
+        iDevice->Socket().Close();
+        iDevice->Socket().Open(aIpAddress, aPort);
     }
     else {
-        IOLog("ohSoundcard AudioUserClient[%p]::SetEndpoint(%llu, %llu) returns %x\n", this, aIpAddress, aPort, ret);
+        IOLog("Songcaster AudioUserClient[%p]::SetEndpoint(%llu, %llu) returns %x\n", this, aIpAddress, aPort, ret);
     }
     return ret;
 }
@@ -234,13 +207,12 @@ IOReturn AudioUserClient::DispatchSetTtl(AudioUserClient* aTarget, void* aRefere
 
 IOReturn AudioUserClient::SetTtl(uint64_t aTtl)
 {
-    AudioEngine* engine = 0;
-    IOReturn ret = GetEngine(&engine);
-    if (engine) {
-        engine->SetTtl(aTtl);
+    IOReturn ret = DeviceOk();
+    if (ret == kIOReturnSuccess) {
+        iDevice->Socket().SetTtl(aTtl);
     }
     else {
-        IOLog("ohSoundcard AudioUserClient[%p]::SetTtl(%llu) returns %x\n", this, aTtl, ret);
+        IOLog("Songcaster AudioUserClient[%p]::SetTtl(%llu) returns %x\n", this, aTtl, ret);
     }
     return ret;
 }

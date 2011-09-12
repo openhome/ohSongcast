@@ -16,7 +16,7 @@
     </dict>
     <dict>
         <key>RootRelativeBundlePath</key>
-        <string>Applications/ohSoundcard.app</string>
+        <string>Library/OpenHome/ohSoundcard.app</string>
         <key>BundleIsRelocatable</key>
         <false/>
         <key>BundleIsVersionChecked</key>

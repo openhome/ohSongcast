@@ -89,24 +89,6 @@
 						<reference key="NSOnImage" ref="936935583"/>
 						<reference key="NSMixedImage" ref="494784749"/>
 					</object>
-					<object class="NSMenuItem" id="962161702">
-						<reference key="NSMenu" ref="891238739"/>
-						<bool key="NSIsDisabled">YES</bool>
-						<bool key="NSIsSeparator">YES</bool>
-						<string key="NSTitle"/>
-						<string key="NSKeyEquiv"/>
-						<int key="NSMnemonicLoc">2147483647</int>
-						<reference key="NSOnImage" ref="936935583"/>
-						<reference key="NSMixedImage" ref="494784749"/>
-					</object>
-					<object class="NSMenuItem" id="41320044">
-						<reference key="NSMenu" ref="891238739"/>
-						<string key="NSTitle">Quit</string>
-						<string key="NSKeyEquiv"/>
-						<int key="NSMnemonicLoc">2147483647</int>
-						<reference key="NSOnImage" ref="936935583"/>
-						<reference key="NSMixedImage" ref="494784749"/>
-					</object>
 				</object>
 			</object>
 		</object>
@@ -171,14 +153,6 @@
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBActionConnection" key="connection">
-						<string key="label">terminate:</string>
-						<reference key="source" ref="1021"/>
-						<reference key="destination" ref="41320044"/>
-					</object>
-					<int key="connectionID">546</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
 						<string key="label">menuItemReconnectClicked:</string>
 						<reference key="source" ref="976324537"/>
 						<reference key="destination" ref="304330509"/>
@@ -229,8 +203,6 @@
 							<reference ref="843778045"/>
 							<reference ref="320491276"/>
 							<reference ref="739538056"/>
-							<reference ref="962161702"/>
-							<reference ref="41320044"/>
 							<reference ref="304330509"/>
 						</object>
 						<reference key="parent" ref="0"/>
@@ -256,16 +228,6 @@
 						<reference key="parent" ref="891238739"/>
 					</object>
 					<object class="IBObjectRecord">
-						<int key="objectID">544</int>
-						<reference key="object" ref="962161702"/>
-						<reference key="parent" ref="891238739"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">545</int>
-						<reference key="object" ref="41320044"/>
-						<reference key="parent" ref="891238739"/>
-					</object>
-					<object class="IBObjectRecord">
 						<int key="objectID">547</int>
 						<reference key="object" ref="304330509"/>
 						<reference key="parent" ref="891238739"/>
@@ -283,16 +245,12 @@
 					<string>535.IBPluginDependency</string>
 					<string>536.IBPluginDependency</string>
 					<string>538.IBPluginDependency</string>
-					<string>544.IBPluginDependency</string>
-					<string>545.IBPluginDependency</string>
 					<string>547.IBPluginDependency</string>
 				</object>
 				<object class="NSMutableArray" key="dict.values">
 					<bool key="EncodedWithXMLCoder">YES</bool>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{526, 567}, {278, 123}}</string>
-					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>{{526, 597}, {278, 93}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>

@@ -38,22 +38,44 @@
 			<string>org_openhome_ohSoundcard</string>
 			<key>CFBundleIdentifier</key>
 			<string>org.openhome.ohSoundcard</string>
-			<key>IOKitDebug</key>
-			<integer>65535</integer>
 		</dict>
 	</dict>
-	<key>OSBundleLibraries</key>
-	<dict>
-		<key>com.apple.iokit.IOAudioFamily</key>
-		<string>1.8.3f2</string>
-		<key>com.apple.kpi.bsd</key>
-		<string>10.8</string>
-		<key>com.apple.kpi.iokit</key>
-		<string>10.8</string>
-		<key>com.apple.kpi.libkern</key>
-		<string>10.8</string>
-		<key>com.apple.kpi.mach</key>
-		<string>10.8</string>
-	</dict>
+    <key>OSBundleLibraries_x86_64</key>
+    <dict>
+        <key>com.apple.iokit.IOAudioFamily</key>
+        <string>1.8.3f2</string>
+        <key>com.apple.kpi.bsd</key>
+        <string>10.8</string>
+        <key>com.apple.kpi.iokit</key>
+        <string>10.8</string>
+        <key>com.apple.kpi.libkern</key>
+        <string>10.8</string>
+        <key>com.apple.kpi.mach</key>
+        <string>10.8</string>
+    </dict>
+    <key>OSBundleLibraries_i386</key>
+    <dict>
+        <key>com.apple.iokit.IOAudioFamily</key>
+        <string>1.8.3f2</string>
+        <key>com.apple.kpi.bsd</key>
+        <string>10.8</string>
+        <key>com.apple.kpi.iokit</key>
+        <string>10.8</string>
+        <key>com.apple.kpi.libkern</key>
+        <string>10.8</string>
+        <key>com.apple.kpi.mach</key>
+        <string>10.8</string>
+    </dict>
+    <key>OSBundleLibraries_ppc</key>
+    <dict>
+        <key>com.apple.kpi.bsd</key>
+        <string>10.8</string>
+        <key>com.apple.kpi.iokit</key>
+        <string>10.8</string>
+        <key>com.apple.kpi.libkern</key>
+        <string>10.8</string>
+        <key>com.apple.kpi.mach</key>
+        <string>10.8</string>
+    </dict>
 </dict>
 </plist>

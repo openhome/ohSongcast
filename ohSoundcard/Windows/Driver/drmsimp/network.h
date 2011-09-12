@@ -12,7 +12,7 @@
 #pragma warning(disable:4201) // nameless struct/union
 #pragma warning(disable:4214) // bit field types other than int
 
-#include <ntddk.h>
+#include <wdm.h>
 #include <wsk.h>
 
 #pragma warning(pop)
@@ -127,13 +127,14 @@ public:
 	void Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels);
 
 	bool Initialised();
-
+	void Close();
 
 private:
 	static IO_COMPLETION_ROUTINE CreateComplete;
 	static IO_COMPLETION_ROUTINE BindComplete;
 	static IO_COMPLETION_ROUTINE InitialiseComplete;
 	static IO_COMPLETION_ROUTINE SendComplete;
+	static IO_COMPLETION_ROUTINE CloseComplete;
 
 	void SendPacket(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, ULONG aSampleRate, ULONG aBitDepth, ULONG aChannels);
 	static void CopyAudio(UCHAR* aDestination, UCHAR* aSource, ULONG aBytes, ULONG aBitDepth);

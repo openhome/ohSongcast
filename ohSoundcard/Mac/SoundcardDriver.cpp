@@ -29,16 +29,37 @@ private:
     virtual void SetTtl(TUint aValue);
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
 
+    static void DriverFound(void* aPtr, io_iterator_t aIterator);
+    void DriverFound();
+    void FindAudioDevice();
+
     AudioDeviceID iDeviceSoundcard;
     AudioDeviceID iDevicePrevious;
 
-    io_service_t iDriver;
-    io_connect_t iHandle;
-    TBool iHandleOpen;
+    io_service_t iService;
+    io_iterator_t iNotification;
+    IONotificationPortRef iNotificationPort;
 
+    TBool iEnabled;
     Endpoint iEndpoint;
     TBool iActive;
     TUint iTtl;
+
+    class Driver
+    {
+    public:
+        Driver(io_service_t aService);
+        ~Driver();
+
+        void SetEndpoint(const Endpoint& aEndpoint);
+        void SetActive(TBool aValue);
+        void SetTtl(TUint aValue);
+
+    private:
+        io_connect_t iHandle;
+    };
+
+    Driver* iDriver;
 };
 
 
@@ -53,10 +74,79 @@ using namespace OpenHome::Net;
 
 
 OhmSenderDriverMac::OhmSenderDriverMac()
-    : iHandleOpen(false)
+    : iDeviceSoundcard(0)
+    , iDevicePrevious(0)
+    , iService(0)
+    , iNotification(0)
+    , iNotificationPort(0)
+    , iEnabled(false)
     , iEndpoint()
     , iActive(false)
     , iTtl(4)
+    , iDriver(0)
+{
+    // register for notifications of the driver becoming available
+    iNotificationPort = IONotificationPortCreate(kIOMasterPortDefault);
+    CFRunLoopSourceRef notificationSource = IONotificationPortGetRunLoopSource(iNotificationPort);
+    CFRunLoopAddSource(CFRunLoopGetCurrent(), notificationSource, kCFRunLoopDefaultMode);
+
+    IOServiceAddMatchingNotification(iNotificationPort,
+                                     kIOFirstMatchNotification,
+                                     IOServiceMatching(AudioDeviceName),
+                                     DriverFound, this,
+                                     &iNotification);
+
+    // need to empty the notification iterator to arm the notification
+    io_object_t obj;
+    while ((obj = IOIteratorNext(iNotification))) {
+        IOObjectRelease(obj);
+    }
+
+    // find the service for the driver
+    iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(AudioDeviceName));
+    if (iService != 0)
+    {
+        FindAudioDevice();
+
+        // notification no longer required
+        IONotificationPortDestroy(iNotificationPort);
+        iNotificationPort = 0;
+    }
+}
+
+void OhmSenderDriverMac::DriverFound(void* aPtr, io_iterator_t aIterator)
+{
+    ((OhmSenderDriverMac*)aPtr)->DriverFound();
+}
+
+void OhmSenderDriverMac::DriverFound()
+{
+    if (iService)
+        return;
+
+    // get the IOService for the driver
+    iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(AudioDeviceName));
+
+    try
+    {
+        // lookup the AudioDevice for the driver
+        FindAudioDevice();
+    }
+    catch (SoundcardError)
+    {
+        iService = 0;
+        return;
+    }
+
+    // set the state of the driver
+    SetEnabled(iEnabled);
+
+    // notifications are no longer required
+    IONotificationPortDestroy(iNotificationPort);
+    iNotificationPort = 0;
+}
+
+void OhmSenderDriverMac::FindAudioDevice()
 {
     // get the list of audio devices
     const int MAX_AUDIO_DEVICES = 32;
@@ -95,54 +185,45 @@ OhmSenderDriverMac::OhmSenderDriverMac()
     if (!found) {
         THROW(SoundcardError);
     }
-
-
-    // find the service for the driver
-    iDriver = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(AudioDeviceName));
-    if (iDriver == 0) {
-        THROW(SoundcardError);
-    }
 }
+
 
 // IOhmSenderDriver
 void OhmSenderDriverMac::SetEnabled(TBool aValue)
 {
-    if ((iHandleOpen && aValue) || (!iHandleOpen && !aValue)) {
+    iEnabled = aValue;
+
+    // return early if the IOService for the device is not available yet
+    if (!iService)
         return;
-    }
 
     UInt32 propBytes = sizeof(AudioDeviceID);
-    kern_return_t res;
 
-    if (aValue)
+    if (!iDriver && aValue)
     {
-        // get a handle to the driver
-        res = IOServiceOpen(iDriver, mach_task_self(), 0, &iHandle);
-        if (res != KERN_SUCCESS) {
-            THROW(SoundcardError);
-        }
+        // create the internal driver instance
+        iDriver = new Driver(iService);
 
-        // open - is this necessary?
-        IOConnectCallScalarMethod(iHandle, eOpen, 0, 0, 0, 0);
-        SetEndpoint(iEndpoint);
-        SetTtl(iTtl);
-        SetActive(iActive);
+        // set the current state of the driver
+        iDriver->SetEndpoint(iEndpoint);
+        iDriver->SetTtl(iTtl);
+        iDriver->SetActive(iActive);
 
         // change the current audio output device to be the ohSoundcard driver
         AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &propBytes, &iDevicePrevious);
         AudioHardwareSetProperty(kAudioHardwarePropertyDefaultOutputDevice, propBytes, &iDeviceSoundcard);
-
-        iHandleOpen = true;
     }
-    else
+    else if (iDriver && !aValue)
     {
         // change the current audio output device to be what it was previously
         AudioHardwareSetProperty(kAudioHardwarePropertyDefaultOutputDevice, propBytes, &iDevicePrevious);
 
-        // close the handle to the driver
-        IOServiceClose(iHandle);
+        // make sure the driver stops sending data
+        iDriver->SetActive(false);
 
-        iHandleOpen = false;
+        // delete the internal driver instance
+        delete iDriver;
+        iDriver = 0;
     }
 }
 
@@ -150,12 +231,8 @@ void OhmSenderDriverMac::SetEndpoint(const Endpoint& aEndpoint)
 {
     iEndpoint = aEndpoint;
 
-    if (iHandleOpen)
-    {
-        uint64_t args[2];
-        args[0] = aEndpoint.Address();
-        args[1] = aEndpoint.Port();
-        IOConnectCallScalarMethod(iHandle, eSetEndpoint, args, 2, 0, 0);
+    if (iDriver) {
+        iDriver->SetEndpoint(aEndpoint);
     }
 }
 
@@ -163,10 +240,8 @@ void OhmSenderDriverMac::SetActive(TBool aValue)
 {
     iActive = aValue;
 
-    if (iHandleOpen)
-    {
-        uint64_t arg = aValue ? 1 : 0;
-        IOConnectCallScalarMethod(iHandle, eSetActive, &arg, 1, 0, 0);
+    if (iDriver) {
+        iDriver->SetActive(aValue);
     }
 }
 
@@ -174,14 +249,59 @@ void OhmSenderDriverMac::SetTtl(TUint aValue)
 {
     iTtl = aValue;
 
-    if (iHandleOpen)
-    {
+    if (iDriver) {
+        iDriver->SetTtl(aValue);
     }
 }
 
 void OhmSenderDriverMac::SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal)
 {
 }
+
+
+
+// Implementation of internal Driver class
+
+OhmSenderDriverMac::Driver::Driver(io_service_t aService)
+    : iHandle(0)
+{
+    // open a connection to communicate with the service
+    kern_return_t res = IOServiceOpen(aService, mach_task_self(), 0, &iHandle);
+    if (res != KERN_SUCCESS) {
+        THROW(SoundcardError);
+    }
+
+    // open the "hardware" device
+    IOConnectCallScalarMethod(iHandle, eOpen, 0, 0, 0, 0);
+}
+
+OhmSenderDriverMac::Driver::~Driver()
+{
+    // close the connection and the handle to the driver
+    IOConnectCallScalarMethod(iHandle, eClose, 0, 0, 0, 0);
+    IOServiceClose(iHandle);
+}
+
+void OhmSenderDriverMac::Driver::SetEndpoint(const Endpoint& aEndpoint)
+{
+    uint64_t args[2];
+    args[0] = aEndpoint.Address();
+    args[1] = aEndpoint.Port();
+    IOConnectCallScalarMethod(iHandle, eSetEndpoint, args, 2, 0, 0);
+}
+
+void OhmSenderDriverMac::Driver::SetActive(TBool aValue)
+{
+    uint64_t arg = aValue ? 1 : 0;
+    IOConnectCallScalarMethod(iHandle, eSetActive, &arg, 1, 0, 0);
+}
+
+void OhmSenderDriverMac::Driver::SetTtl(TUint aValue)
+{
+    uint64_t arg = aValue;
+    IOConnectCallScalarMethod(iHandle, eSetTtl, &arg, 1, 0, 0);
+}
+
 
 
 // Soundcard - platform specific implementation of OpenHome::Net::Soundcard

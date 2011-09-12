@@ -46,6 +46,7 @@ void ReceiverManager2Job::Execute()
 ReceiverManager2Receiver::ReceiverManager2Receiver(IReceiverManager2Handler& aHandler, ReceiverManager1Receiver& aReceiver)
 	: iHandler(aHandler)
 	, iReceiver(aReceiver)
+	, iActive(false)
 	, iMutex("RM2R")
 	, iRefCount(1)
 	, iUserData(0)
@@ -177,6 +178,8 @@ void ReceiverManager2Receiver::EventReceiverInitialEvent()
 	iServiceReceiver->PropertyUri(iUri);
 	iServiceReceiver->PropertyMetadata(iMetadata);
 
+	iActive = true;
+
 	iHandler.ReceiverAdded(*this);
 }
 
@@ -204,7 +207,10 @@ void ReceiverManager2Receiver::ChangedSelected()
 
 void ReceiverManager2Receiver::Removed()
 {
-	iHandler.ReceiverRemoved(*this);
+	if (iActive) {
+		iHandler.ReceiverRemoved(*this);
+	}
+
 	RemoveRef();
 }
 
