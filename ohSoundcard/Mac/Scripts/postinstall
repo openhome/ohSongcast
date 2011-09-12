@@ -1,9 +1,13 @@
 #!/bin/sh
 
+# ensure permissions for the driver are correctly set
+/usr/sbin/chown -R root:wheel /System/Library/Extensions/ohSoundcard.kext
+find /System/Library/Extensions/ohSoundcard.kext -type d -exec /bin/chmod 0755 {} \;
+find /System/Library/Extensions/ohSoundcard.kext -type d -exec /bin/chmod 0644 {} \;
 
-touch /System/Library/Extensions/ohSoundcard.kext
+# load the driver
+touch /System/Library/Extensions
 
-killall -HUP kextd
-
-defaults write /Library/Preferences/com.apple.loginwindow AutoLaunchedApplicationDictionary -array-add '{ "Path" = "/Applications/ohSoundcard.app"; "Hide" = "0"; }'
+# launch the agent application
+launchctl load /Library/LaunchAgents/org.openhome.ohSoundcard.plist
 

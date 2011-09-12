@@ -17,6 +17,7 @@ public:
     virtual bool start(IOService* aProvider);
     virtual void stop(IOService* aProvider);
     virtual IOReturn clientClose();
+    virtual IOReturn clientDied();
 
 private:
     static const IOExternalMethodDispatch iMethods[eNumDriverMethods];
@@ -25,20 +26,17 @@ private:
 
     static IOReturn DispatchOpen(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
     static IOReturn DispatchClose(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
-    static IOReturn DispatchSetEnabled(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
     static IOReturn DispatchSetActive(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
     static IOReturn DispatchSetEndpoint(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
     static IOReturn DispatchSetTtl(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
 
     IOReturn Open();
     IOReturn Close();
-    IOReturn SetEnabled(uint64_t aEnabled);
     IOReturn SetActive(uint64_t aActive);
     IOReturn SetEndpoint(uint64_t aIpAddress, uint64_t aPort);
     IOReturn SetTtl(uint64_t aTtl);
 
     IOReturn DeviceOk();
-    IOReturn GetEngine(AudioEngine** aEngine);
     
 private:
     AudioDevice* iDevice;

@@ -1,14 +1,6 @@
 #!/bin/sh
 
+# stop the agent application
+launchctl unload /Library/LaunchAgents/org.openhome.ohSoundcard.plist
 
-# quit the soundcard app
-osascript -e 'tell app "ohSoundcard" to quit'
-
-# unload the driver
-kextunload /System/Library/Extensions/ohSoundcard.kext
-if [ $? != 0 ]; then
-    kextunload /System/Library/Extensions/ohSoundcard.kext
-fi
-
-exit 0
 

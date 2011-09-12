@@ -65,7 +65,7 @@ $(outputdir)%.o : %.cpp
 $(outputdir)%.o : %.c
 	$(compiler) $(arch_flags) $(kernel_c_flags) $< -o $@
 
-objects = $(outputdir)AudioDevice.o $(outputdir)AudioEngine.o $(outputdir)AudioUserClient.o $(outputdir)AudioClip.o
+objects = $(outputdir)AudioDevice.o $(outputdir)AudioEngine.o $(outputdir)AudioUserClient.o $(outputdir)AudioClip.o $(outputdir)Songcast.o
 
 $(outputdir)ohSoundcard : $(objects) $(outputdir)ohSoundcard_info.o
 	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(linkflags2) $(outputdir)ohSoundcard_info.o $(linkflags3) -o $@
