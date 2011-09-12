@@ -17,9 +17,9 @@ bool AudioDevice::initHardware(IOService* aProvider)
     }
 
     // set device names
-    setDeviceName("OpenHome Songcast Device");
-    setDeviceShortName("ohSongcastDevice");
-    setManufacturerName("OpenHome.org");
+    setDeviceName(BRANDING_AUDIODEVICE_DEVICENAME);
+    setDeviceShortName(BRANDING_AUDIODEVICE_DEVICESHORTNAME);
+    setManufacturerName(BRANDING_AUDIODEVICE_MANUFACTURERNAME);
 
     // create, initialise and activate the audio engine
     AudioEngine* engine = new AudioEngine();

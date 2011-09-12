@@ -1,5 +1,10 @@
 
 
+# Variable to define the name of the product - this will change the name of the
+# build kext etc...
+product_name=ohSoundcard
+
+
 ifeq ($(release), 1)
 debug_specific_flags = -Os
 else
@@ -41,7 +46,7 @@ linkflags2 = -mmacosx-version-min=10.6 -lcpp_kext -Xlinker -kext -nostdlib -lkmo
 linkflags3 = -lkmod -lcc_kext
 
 
-default : make_outputdir $(outputdir)ohSoundcard.kext
+default : make_outputdir $(outputdir)$(product_name).kext
 
 
 make_outputdir :
@@ -52,7 +57,7 @@ ifeq ($(arch), universal)
 
 # Rule for building the universal binary from the x86_64, i386 and ppc binaries
 
-$(outputdir)ohSoundcard : $(objdir)x86_64/Driver/ohSoundcard $(objdir)i386/Driver/ohSoundcard $(objdir)ppc/Driver/ohSoundcard
+$(outputdir)$(product_name) : $(objdir)x86_64/Driver/$(product_name) $(objdir)i386/Driver/$(product_name) $(objdir)ppc/Driver/$(product_name)
 	lipo -create $^ -output $@
 
 else
@@ -67,16 +72,16 @@ $(outputdir)%.o : %.c
 
 objects = $(outputdir)AudioDevice.o $(outputdir)AudioEngine.o $(outputdir)AudioUserClient.o $(outputdir)AudioClip.o $(outputdir)Songcast.o
 
-$(outputdir)ohSoundcard : $(objects) $(outputdir)KextInfo.o
+$(outputdir)$(product_name) : $(objects) $(outputdir)KextInfo.o
 	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(linkflags2) $(outputdir)KextInfo.o $(linkflags3) -o $@
 
 endif
 
 
-$(outputdir)ohSoundcard.kext : $(outputdir)ohSoundcard Info.plist
-	mkdir -p $(outputdir)ohSoundcard.kext/Contents/MacOs/
-	cp $< $(outputdir)ohSoundcard.kext/Contents/MacOs/
-	cp Info.plist $(outputdir)ohSoundcard.kext/Contents/
+$(outputdir)$(product_name).kext : $(outputdir)$(product_name) Info.plist
+	mkdir -p $(outputdir)$(product_name).kext/Contents/MacOs/
+	cp $< $(outputdir)$(product_name).kext/Contents/MacOs/
+	cp Info.plist $(outputdir)$(product_name).kext/Contents/
 
 
 

@@ -5,8 +5,7 @@
 #include <IOKit/IOUserClient.h>
 #include "AudioDevice.h"
 
-#define AudioUserClient org_openhome_ohSoundcard_userclient
-#define AudioUserClientName "org_openhome_ohSoundcard_userclient"
+#define AudioUserClient BRANDING_AUDIOUSERCLIENT_CLASS
 
 
 class AudioUserClient : public IOUserClient

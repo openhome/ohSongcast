@@ -1,4 +1,5 @@
 #include "AudioEngine.h"
+#include "Branding.h"
 #include <IOKit/audio/IOAudioStream.h>
 #include <IOKit/IOLib.h>
 
@@ -73,7 +74,7 @@ bool AudioEngine::initHardware(IOService* aProvider)
         return false;
     }
     
-    setDescription("OpenHome Songcast Driver");
+    setDescription(BRANDING_AUDIOENGINE_DESCRIPTION);
     setNumSampleFramesPerBuffer(BLOCKS * BLOCK_FRAMES);
     setSampleRate(&iSampleRate);
 
