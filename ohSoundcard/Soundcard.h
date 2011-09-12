@@ -38,7 +38,8 @@ enum EReceiverStatus {
 typedef void (STDCALL *ReceiverCallback)(void* aPtr, ECallbackType aType, THandle aReceiver);
 typedef void (STDCALL *SubnetCallback)(void* aPtr, ECallbackType aType, THandle aSubnet);
 
-DllExport THandle STDCALL SoundcardCreate(uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr);
+DllExport THandle STDCALL SoundcardCreateOpenHome(uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr);
+DllExport THandle STDCALL SoundcardCreate(const char* aSoundcardId, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
 DllExport void STDCALL SoundcardSetSubnet(THandle aSoundcard, uint32_t aValue);
 DllExport void STDCALL SoundcardSetChannel(THandle aSoundcard, uint32_t aValue);
 DllExport void STDCALL SoundcardSetTtl(THandle aSoundcard, uint32_t aValue);
@@ -134,14 +135,12 @@ private:
 
 class DllExportClass Soundcard : public IReceiverManager3Handler
 {
-	static const TUint kMaxUdnBytes = 100;
+public:
+	static const TUint kMaxUdnBytes = 200;
 
 public:
-    // This static function is the only part of this class that is required to be implemented
-    // in platform specific code
-	static Soundcard* Create(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr);
+    Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
 
-public:
     void SetSubnet(TIpAddress aValue);
 	void SetChannel(TUint aValue);
     void SetTtl(TUint aValue);
@@ -154,8 +153,6 @@ public:
 	~Soundcard();
 
 private:
-	Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const Brx& aComputer, IOhmSenderDriver* aDriver);
-
 	void SubnetListChanged();
 	TBool UpdateAdapter();
 

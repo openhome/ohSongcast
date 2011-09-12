@@ -9,11 +9,6 @@ using namespace OpenHome::Net;
 
 // C interface
 
-THandle STDCALL SoundcardCreate(uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr)
-{
-	return (Soundcard::Create(aSubnet, aChannel, aTtl, (aMulticast == 0) ? false : true, (aEnabled == 0) ? false : true, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr));
-}
-
 void STDCALL SoundcardSetSubnet(THandle aSoundcard, uint32_t aValue)
 {
 	((Soundcard*)aSoundcard)->SetSubnet(aValue);
@@ -283,7 +278,7 @@ Subnet::~Subnet()
     
 // Soundcard
 
-Soundcard::Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const Brx& aComputer, IOhmSenderDriver* aDriver)
+Soundcard::Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
 	: iMutex("SCRD")
 	, iClosing(false)
 	, iSubnet(aSubnet)
@@ -298,12 +293,21 @@ Soundcard::Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMult
 	//Debug::SetLevel(Debug::kMedia);
 
 	Bws<kMaxUdnBytes> udn;
+    Bws<kMaxUdnBytes> name;
 	Bws<kMaxUdnBytes + 1> friendly;
+    Bws<kMaxUdnBytes + 1> description;
 
-	udn.Replace("ohSoundcard-");
+    name.Replace(aComputer);
+    name.Append(" (");
+    name.Append(aManufacturer);
+    name.Append(" Songcaster)");
+    // TODO: manufacturer will need to be parsed and spaces replaced with -
+    udn.Replace(aManufacturer);
+	udn.Append("-Songcaster-");
 	udn.Append(aComputer);
 	friendly.Replace(udn);
-	friendly.Append('\0');
+    description.Replace(aManufacturer);
+    description.Append(" Songcaster");
 
 	InitialisationParams* initParams = InitialisationParams::Create();
 
@@ -326,15 +330,15 @@ Soundcard::Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMult
 	iDevice = new DvDeviceStandard(udn);
     
 	iDevice->SetAttribute("Upnp.Domain", "av.openhome.org");
-    iDevice->SetAttribute("Upnp.Type", "Soundcard");
+    iDevice->SetAttribute("Upnp.Type", "Songcaster");
     iDevice->SetAttribute("Upnp.Version", "1");
-    iDevice->SetAttribute("Upnp.FriendlyName", (TChar*)friendly.Ptr());
-    iDevice->SetAttribute("Upnp.Manufacturer", "Openhome");
-    iDevice->SetAttribute("Upnp.ManufacturerUrl", "http://www.openhome.org");
-    iDevice->SetAttribute("Upnp.ModelDescription", "OpenHome Soundcard");
-    iDevice->SetAttribute("Upnp.ModelName", "ohSoundcard");
+    iDevice->SetAttribute("Upnp.FriendlyName", (TChar*)friendly.PtrZ());
+    iDevice->SetAttribute("Upnp.Manufacturer", (TChar*)description.PtrZ());
+    iDevice->SetAttribute("Upnp.ManufacturerUrl", (TChar*)aManufacturerUrl);
+    iDevice->SetAttribute("Upnp.ModelDescription", (TChar*)description.PtrZ());
+    iDevice->SetAttribute("Upnp.ModelName", (TChar*)description.PtrZ());
     iDevice->SetAttribute("Upnp.ModelNumber", "1");
-    iDevice->SetAttribute("Upnp.ModelUrl", "http://www.openhome.org");
+    iDevice->SetAttribute("Upnp.ModelUrl", (TChar*)aModelUrl);
     iDevice->SetAttribute("Upnp.SerialNumber", "");
     iDevice->SetAttribute("Upnp.Upc", "");
 
@@ -342,7 +346,7 @@ Soundcard::Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMult
 
 	Brn icon(icon_png, icon_png_len);
 
-	iSender = new OhmSender(*iDevice, *iDriver, aComputer, aChannel, iAdapter, aTtl, aMulticast, aEnabled, icon, Brn("image/png"), aPreset);
+	iSender = new OhmSender(*iDevice, *iDriver, name, aChannel, iAdapter, aTtl, aMulticast, aEnabled, icon, Brn("image/png"), aPreset);
 	
 	iDevice->SetEnabled();
 

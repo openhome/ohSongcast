@@ -1,12 +1,15 @@
 #ifndef HEADER_SOUNDCARDDRIVER
 #define HEADER_SOUNDCARDDRIVER
 
+#define INITGUID  // For PKEY_AudioEndpoint_GUID
+
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Net/Core/OhNet.h>
 #include <Windows.h>
 
 #include "../../Ohm.h"
 #include "../../OhmSender.h"
+#include "../Soundcard.h"
 
 namespace OpenHome {
 namespace Net {
@@ -14,10 +17,10 @@ namespace Net {
 class OhmSenderDriverWindows : public IOhmSenderDriver
 {
 public:
-	OhmSenderDriverWindows();
+	OhmSenderDriverWindows(const char* aHardwareId);
 
 private:    
-	TBool FindDriver();
+	TBool FindDriver(const char* aHardwareId);
 	TBool InstallDriver();
 	TBool FindEndpoint();
 	void SetDefaultAudioPlaybackDevice();
