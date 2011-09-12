@@ -81,6 +81,7 @@ public:
 private:
 	IReceiverManager2Handler& iHandler;
 	ReceiverManager1Receiver& iReceiver;
+	TBool iActive;
 	mutable Mutex iMutex;
 	CpProxyAvOpenhomeOrgReceiver1* iServiceReceiver;
     TUint iRefCount;

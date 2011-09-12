@@ -188,12 +188,14 @@ ReceiverManager3::~ReceiverManager3()
 
 void ReceiverManager3::ReceiverAdded(ReceiverManager2Receiver& aReceiver)
 {
+    LOG(kTopology, "ReceiverManager3::ReceiverAdded\n");
 	ReceiverManager3Receiver* receiver = new ReceiverManager3Receiver(iHandler, aReceiver, *this);
 	aReceiver.SetUserData(receiver);
 }
 
 void ReceiverManager3::ReceiverChanged(ReceiverManager2Receiver& aReceiver)
 {
+    LOG(kTopology, "ReceiverManager3::ReceiverChanged\n");
 	ReceiverManager3Receiver* receiver = (ReceiverManager3Receiver*)(aReceiver.UserData());
 	ASSERT(receiver);
 	receiver->Changed();
@@ -201,6 +203,7 @@ void ReceiverManager3::ReceiverChanged(ReceiverManager2Receiver& aReceiver)
 
 void ReceiverManager3::ReceiverRemoved(ReceiverManager2Receiver& aReceiver)
 {
+    LOG(kTopology, "ReceiverManager3::ReceiverRemoved\n");
 	ReceiverManager3Receiver* receiver = (ReceiverManager3Receiver*)(aReceiver.UserData());
     LOG(kTopology, "ReceiverManager3::~ReceiverRemoved %x\n", receiver);
 	ASSERT(receiver);

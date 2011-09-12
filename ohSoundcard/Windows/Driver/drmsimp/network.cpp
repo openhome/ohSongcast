@@ -83,7 +83,7 @@ CWinsock* CWinsock::Create(NETWORK_CALLBACK aCallback, void* aContext)
 			WskDeregister(&winsock->iRegistration);
 		}
 
-		ExFreePool(winsock);
+		ExFreePoolWithTag(winsock, '1ten');
 	}
 
 	return (NULL);
@@ -91,9 +91,11 @@ CWinsock* CWinsock::Create(NETWORK_CALLBACK aCallback, void* aContext)
 
 void CWinsock::Close()
 {
+	WskReleaseProviderNPI(&iRegistration);
+
 	WskDeregister(&iRegistration);
 
-	ExFreePool(this);
+	ExFreePoolWithTag(this, '1ten');
 }
 
 void CWinsock::Init(void* aContext)
@@ -154,10 +156,7 @@ CSocketOhm::CSocketOhm()
 	iHeader.iMsgType = 3;
 	iHeader.iAudioHeaderBytes = 50;
 	iHeader.iAudioNetworkTimestamp = 0;
-	iHeader.iAudioMediaLatency = kMediaLatencyMs >> 24 & 0x000000ff;
-	iHeader.iAudioMediaLatency += kMediaLatencyMs >> 8 & 0x0000ff00;
-	iHeader.iAudioMediaLatency += kMediaLatencyMs << 8 & 0x00ff0000;
-	iHeader.iAudioMediaLatency += kMediaLatencyMs << 24 & 0xff000000;
+	iHeader.iAudioMediaLatency = 0;
 	iHeader.iAudioMediaTimestamp = 0;
 	iHeader.iAudioSampleStartHi = 0;
 	iHeader.iAudioSampleStartLo = 0;
@@ -448,6 +447,14 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 		}
 	}
 
+	// set media latency
+
+	ULONG latency = kMediaLatencyMs * iTimestampMultiplier / 1000;
+	iHeader.iAudioMediaLatency = latency >> 24 & 0x000000ff;
+	iHeader.iAudioMediaLatency += latency >> 8 & 0x0000ff00;
+	iHeader.iAudioMediaLatency += latency << 8 & 0x00ff0000;
+	iHeader.iAudioMediaLatency += latency << 24 & 0xff000000;
+
 	// use last timestamp for this message
 
 	ULONGLONG timestamp = iPerformanceCounter;
@@ -510,6 +517,50 @@ NTSTATUS CSocketOhm::SendComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID
 	IoFreeIrp(aIrp);
 	IoFreeMdl(udpsend->iBuf.Mdl);
 	ExFreePool(aContext);
+
+	// Always return STATUS_MORE_PROCESSING_REQUIRED to
+	// terminate the completion processing of the IRP.
+
+	return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
+void CSocketOhm::Close()
+{
+	PIRP irp;
+
+	// Allocate an IRP
+
+	irp = IoAllocateIrp(1, FALSE);
+
+	// Check result
+
+	if (irp == NULL)
+	{
+        return;
+    }
+
+	KEVENT closed;
+
+	KeInitializeEvent(&closed, NotificationEvent, false);
+
+	// Set the completion routine for the IRP
+
+	IoSetCompletionRoutine(irp,	CloseComplete, &closed, TRUE, TRUE, TRUE);
+
+	((PWSK_PROVIDER_BASIC_DISPATCH)(iSocket->Dispatch))->WskCloseSocket(iSocket, irp);
+
+	KeWaitForSingleObject(&closed, Executive, KernelMode, false, NULL); // null = wait forever (no timeout)
+}
+
+NTSTATUS CSocketOhm::CloseComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext)
+{
+    UNREFERENCED_PARAMETER(aDeviceObject);
+
+	IoFreeIrp(aIrp);
+
+	PKEVENT closed = (PKEVENT)aContext;
+
+	KeSetEvent(closed, 0, false);
 
 	// Always return STATUS_MORE_PROCESSING_REQUIRED to
 	// terminate the completion processing of the IRP.
