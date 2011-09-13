@@ -18,7 +18,7 @@ using OpenHome.Soundcard;
 
             try
             {
-                Soundcard soundcard = new Soundcard(0, 1, 1, false, enabled, 99, this, this);
+                Soundcard soundcard = new Soundcard("av.openhome.org", 0, 1, 1, false, enabled, 99, this, this, "OpeHome", "http://www.openhome.org", "http://www.openhome.org");
 
                 while (true)
                 {

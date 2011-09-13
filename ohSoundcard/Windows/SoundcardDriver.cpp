@@ -12,6 +12,8 @@
 #include <Shellapi.h>
 #include <Functiondiscoverykeys_devpkey.h>
 #include <mmdeviceapi.h>
+#include <wchar.h>
+
 
 
 EXCEPTION(SoundcardError);
@@ -20,42 +22,15 @@ using namespace OpenHome;
 using namespace OpenHome::Net;
 
 
-// {AD6CDF4F-C8A3-429d-A25D-0C896AF8B0BB}
-//static GUID OHSOUNDCARD_GUID = { 0x0, 0x0, 0x0, { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0 } };//{ 0xad6cdf4f, 0xc8a3, 0x429d, { 0xa2, 0x5d, 0xc, 0x89, 0x6a, 0xf8, 0xb0, 0xbb } };
-
 // {2685C863-5E57-4D9A-86EC-2EC9B7BBBCFD}
 DEFINE_GUID(OHSOUNDCARD_GUID, 0x2685C863, 0x5E57, 0x4D9A, 0x86, 0xEC, 0x2E, 0xC9, 0xB7, 0xBB, 0xBC, 0xFD);
 
 // C interface
 
-/*static bool TryParseGuid(const char* aGuidString, GUID& aGuid)
-{
-    GUID rawGuid;
-    wchar_t temp[39];
-    MultiByteToWideChar(CP_ACP, 0, aGuidString, -1, temp, 39);
-    HRESULT hr = CLSIDFromString(temp, &rawGuid);
-    if(FAILED(hr))
-    {
-        return false;
-    }
-    aGuid = rawGuid;
-    return true;
-}*/
-
-THandle STDCALL SoundcardCreateOpenHome(uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr)
-{
-    //GUID guid = {0x2685C863, 0x5E57, 0x4D9A, { 0x86, 0xEC, 0x2E, 0xC9, 0xB7, 0xBB, 0xBC, 0xFD } };
-    return SoundcardCreate("{D6BAC7AB-8758-43A9-917F-D702501F4DB0}\\ohSoundcard", aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
-}
-
-
-THandle STDCALL SoundcardCreate(const char* aSoundcardId, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
+THandle STDCALL SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
 {
 	try {
-        printf("%s\n", aSoundcardId);
-        /*if(!TryParseGuid(aSoundcardId, OHSOUNDCARD_GUID)) {
-            THROW(SoundcardError);
-        }*/
+        printf("%s\n", aDomain);
         
         // get the computer name
         Bws<Soundcard::kMaxUdnBytes> computer;
@@ -68,7 +43,7 @@ THandle STDCALL SoundcardCreate(const char* aSoundcardId, uint32_t aSubnet, uint
         computer.SetBytes(bytes);
         
         // create the sender driver
-        OhmSenderDriverWindows* driver = new OhmSenderDriverWindows(aSoundcardId);
+        OhmSenderDriverWindows* driver = new OhmSenderDriverWindows(aDomain, aManufacturer);
 
         // create the soundcard
 		Soundcard* soundcard = new Soundcard(aSubnet, aChannel, aTtl, (aMulticast == 0) ? false : true, (aEnabled == 0) ? false : true, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl);
@@ -89,23 +64,18 @@ static const TUint KSPROPERTY_OHSOUNDCARD_ACTIVE = 2;
 static const TUint KSPROPERTY_OHSOUNDCARD_ENDPOINT = 3;
 static const TUint KSPROPERTY_OHSOUNDCARD_TTL = 4;
 
-OhmSenderDriverWindows::OhmSenderDriverWindows(const char* aHardwareId)
+OhmSenderDriverWindows::OhmSenderDriverWindows(const char* aDomain, const char* aManufacturer)
 {
-	if (!FindDriver(aHardwareId)) {
-		if (!InstallDriver()) {
-			THROW(SoundcardError);
-		}
-		if (!FindDriver(aHardwareId)) {
-			THROW(SoundcardError);
-		}
+	if (!FindDriver(aDomain)) {
+		THROW(SoundcardError);
 	}
 
-	if (!FindEndpoint()) {
+	if (!FindEndpoint(aManufacturer)) {
 		THROW(SoundcardError);
 	}
 }
 
-TBool OhmSenderDriverWindows::FindEndpoint()
+TBool OhmSenderDriverWindows::FindEndpoint(const char* aManufacturer)
 {
 	HRESULT hr = CoInitialize(NULL);
 
@@ -163,13 +133,19 @@ TBool OhmSenderDriverWindows::FindEndpoint()
 								
 									PropVariantInit(&friendlyName);
 									
-									hr = pStore->GetValue(PKEY_Device_FriendlyName, &friendlyName);
+									hr = pStore->GetValue(PKEY_DeviceInterface_FriendlyName, &friendlyName);
                                     
                                     wprintf(L"friendlyName: %s\n", friendlyName.pwszVal);
 									
 									if (SUCCEEDED(hr))
 									{
-										if (!wcscmp(friendlyName.pwszVal, L"Speakers (Linn Songcaster)"))
+										wchar_t model[200];
+
+										MultiByteToWideChar(CP_ACP, 0, aManufacturer, -1, model, sizeof(model));
+
+										wcscpy(model + wcslen(model), L" Songcaster");
+
+										if (!wcscmp(friendlyName.pwszVal, model))
 										{
 											wcscpy(iEndpointId, wstrID);
 											PropVariantClear(&friendlyName);
@@ -199,40 +175,6 @@ TBool OhmSenderDriverWindows::FindEndpoint()
 	}
 
 	return (false);
-}
-
-TBool OhmSenderDriverWindows::InstallDriver()
-{
-	SHELLEXECUTEINFO shellExecuteInfo;
-
-    shellExecuteInfo.cbSize  = sizeof(SHELLEXECUTEINFO);
-    shellExecuteInfo.lpFile = "Install.exe";
-	shellExecuteInfo.fMask = SEE_MASK_NOCLOSEPROCESS;     
-    shellExecuteInfo.hwnd = NULL;  
-    shellExecuteInfo.lpVerb = "open";
-    shellExecuteInfo.lpParameters = NULL;
-    shellExecuteInfo.lpDirectory = NULL;   
-    shellExecuteInfo.nShow = SW_HIDE;
-    shellExecuteInfo.hInstApp = 0;
-
-    ShellExecuteEx(&shellExecuteInfo);
-     
-	int ret = (int)shellExecuteInfo.hInstApp;
-
-	if (ret <= 32) {
-		return (false);
-	}
-
-	if (shellExecuteInfo.hProcess ==NULL)
-	{
-		return (false);
-	}
-
-	WaitForSingleObject(shellExecuteInfo.hProcess, INFINITE);
-
-    CloseHandle(shellExecuteInfo.hProcess);
-
-	return (true);
 }
 
 void OhmSenderDriverWindows::SetDefaultAudioPlaybackDevice()
@@ -277,8 +219,13 @@ void OhmSenderDriverWindows::SetEndpointEnabled(TBool aValue)
 	}
 }
 
-TBool OhmSenderDriverWindows::FindDriver(const char* aHardwareId)
+TBool OhmSenderDriverWindows::FindDriver(const char* aDomain)
 {
+	char hwid[200];
+
+	strcpy(hwid, aDomain);
+	strcpy(hwid + strlen(hwid), "/songcaster");
+
     HDEVINFO deviceInfoSet = SetupDiGetClassDevs(&KSCATEGORY_AUDIO, 0, 0, DIGCF_DEVICEINTERFACE | DIGCF_PROFILE | DIGCF_PRESENT);
 
 	if (deviceInfoSet == 0) {
@@ -312,7 +259,7 @@ TBool OhmSenderDriverWindows::FindDriver(const char* aHardwareId)
             char buffer[1024];
             if (SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, NULL, (LPBYTE)buffer, 1024, NULL)) {
                 printf("%s\n", buffer);
-                if(strcmp(aHardwareId, buffer) == 0) {
+                if(strcmp(hwid, buffer) == 0) {
                     try
                     {
                         printf("Found a valid driver: %s\n", deviceInterfaceDetailData->DevicePath);

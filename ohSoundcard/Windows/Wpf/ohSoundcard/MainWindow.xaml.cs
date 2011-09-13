@@ -80,7 +80,7 @@ namespace OpenHome.Soundcard
 
             try
             {
-                iSoundcard = new Soundcard(iConfigurationWindow.Subnet, iConfigurationWindow.MulticastChannel, iConfigurationWindow.Ttl, iConfigurationWindow.Multicast, iConfigurationWindow.Enabled, iConfigurationWindow.Preset, iMediaPlayerWindow.ReceiverList, iConfigurationWindow.SubnetList);
+                iSoundcard = new Soundcard("av.openhome.org", iConfigurationWindow.Subnet, iConfigurationWindow.MulticastChannel, iConfigurationWindow.Ttl, iConfigurationWindow.Multicast, iConfigurationWindow.Enabled, iConfigurationWindow.Preset, iMediaPlayerWindow.ReceiverList, iConfigurationWindow.SubnetList, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
             }
             catch (SoundcardError e)
             {

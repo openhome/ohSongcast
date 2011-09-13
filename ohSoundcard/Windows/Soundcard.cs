@@ -220,9 +220,7 @@ namespace OpenHome.Soundcard
         private delegate void DelegateSubnetCallback(IntPtr aPtr, ECallbackType aType, IntPtr aSubnet);
 
         [DllImport("ohSoundcard.dll")]
-        static extern unsafe IntPtr SoundcardCreateOpenHome(uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr);
-        [DllImport("ohSoundcard.dll")]
-        static extern unsafe IntPtr SoundcardCreate(string aSoundcardId, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl);
+        static extern unsafe IntPtr SoundcardCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl);
         [DllImport("ohSoundcard.dll")]
         static extern void SoundcardSetSubnet(IntPtr aHandle, uint aValue);
         [DllImport("ohSoundcard.dll")]
@@ -244,7 +242,7 @@ namespace OpenHome.Soundcard
         [DllImport("ohSoundcard.dll")]
         static extern void SoundcardDestroy(IntPtr aHandle);
 
-        public unsafe Soundcard(uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler)
+        public unsafe Soundcard(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler, string aManufacturer, string aManufacturerUrl, string aModelUrl)
         {
             iReceiverHandler = aReceiverHandler;
             iSubnetHandler = aSubnetHandler;
@@ -252,23 +250,7 @@ namespace OpenHome.Soundcard
             iSubnetCallback = new DelegateSubnetCallback(SubnetCallback);
             iReceiverList = new List<Receiver>();
             iSubnetList = new List<Subnet>();
-            iHandle = SoundcardCreateOpenHome(aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero);
-
-            if (iHandle == IntPtr.Zero)
-            {
-                throw (new SoundcardError());
-            }
-        }
-        
-        public unsafe Soundcard(string aSoundcardId, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler, string aManufacturer, string aManufacturerUrl, string aModelUrl)
-        {
-            iReceiverHandler = aReceiverHandler;
-            iSubnetHandler = aSubnetHandler;
-            iReceiverCallback = new DelegateReceiverCallback(ReceiverCallback);
-            iSubnetCallback = new DelegateSubnetCallback(SubnetCallback);
-            iReceiverList = new List<Receiver>();
-            iSubnetList = new List<Subnet>();
-            iHandle = SoundcardCreate(aSoundcardId, aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl);
+            iHandle = SoundcardCreate(aDomain, aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl);
 
             if (iHandle == IntPtr.Zero)
             {
