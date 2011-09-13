@@ -10,9 +10,9 @@ endif
 arch_flags = -arch x86_64
 arch_linkflags = -arch x86_64
 outputdir = $(objdir)x86_64/Prefs/
-contentsdir = $(outputdir)ohSoundcard.prefPane/Contents/
-macosdir = $(outputdir)ohSoundcard.prefPane/Contents/MacOS/
-resourcedir = $(outputdir)ohSoundcard.prefPane/Contents/Resources/
+contentsdir = $(outputdir)$(product_name).prefPane/Contents/
+macosdir = $(outputdir)$(product_name).prefPane/Contents/MacOS/
+resourcedir = $(outputdir)$(product_name).prefPane/Contents/Resources/
 
 
 compiler = gcc
@@ -31,7 +31,7 @@ ibtool = ibtool
 ibtool_flags = --errors --warnings --notices --output-format human-readable-text --sdk /Developer/SDKs/MacOSX10.6.sdk
 
 
-default : make_outputdir $(outputdir)ohSoundcard.prefPane
+default : make_outputdir $(outputdir)$(product_name).prefPane
 
 
 make_outputdir :
@@ -47,9 +47,9 @@ $(outputdir)%.o : %.m
 $(outputdir)Preferences.o : ../Preferences.m
 	$(compiler) $(arch_flags) $(objc_flags) $< -o $@
 
-objects = $(outputdir)ohSoundcardPref.o $(outputdir)Preferences.o
+objects = $(outputdir)SongcasterPrefPane.o $(outputdir)Preferences.o
 
-$(outputdir)ohSoundcard : $(objects)
+$(outputdir)$(product_name) : $(objects)
 	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(linkflags2) -o $@
 
 $(resourcedir)%.strings : %.strings
@@ -58,7 +58,7 @@ $(resourcedir)%.strings : %.strings
 $(resourcedir)%.nib : %.xib
 	$(ibtool) $(ibtool_flags) --compile $@ $<
 
-$(outputdir)ohSoundcard.prefPane : $(outputdir)ohSoundcard $(resourcedir)NonLocalizable.strings $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/ohSoundcardPref.nib Info.plist Icon.png IconLarge.png green.tiff red.tiff
+$(outputdir)$(product_name).prefPane : $(outputdir)$(product_name) $(resourcedir)NonLocalizable.strings $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/SongcasterPrefPane.nib Info.plist Icon.png IconLarge.png green.tiff red.tiff
 	cp $< $(macosdir)
 	cp Icon.png $(resourcedir)
 	cp IconLarge.png $(resourcedir)

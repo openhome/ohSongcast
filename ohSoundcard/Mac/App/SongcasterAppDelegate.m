@@ -1,8 +1,8 @@
 
-#import "ohSoundcardAppDelegate.h"
+#import "SongcasterAppDelegate.h"
 
 
-@implementation ohSoundcardAppDelegate
+@implementation SongcasterAppDelegate
 
 @synthesize menu;
 @synthesize menuItemStatus;

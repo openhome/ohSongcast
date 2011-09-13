@@ -23,7 +23,7 @@
 
 
 // Main class for the preference pane
-@interface ohSoundcardPref : NSPreferencePane 
+@interface SongcasterPrefPane : NSPreferencePane 
 {
     IBOutlet NSImageView* icon;
     IBOutlet NSButton* buttonOnOff;

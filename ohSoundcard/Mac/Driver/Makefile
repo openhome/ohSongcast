@@ -1,10 +1,5 @@
 
 
-# Variable to define the name of the product - this will change the name of the
-# build kext etc...
-product_name=ohSoundcard
-
-
 ifeq ($(release), 1)
 debug_specific_flags = -Os
 else
@@ -79,8 +74,8 @@ endif
 
 
 $(outputdir)$(product_name).kext : $(outputdir)$(product_name) Info.plist
-	mkdir -p $(outputdir)$(product_name).kext/Contents/MacOs/
-	cp $< $(outputdir)$(product_name).kext/Contents/MacOs/
+	mkdir -p $(outputdir)$(product_name).kext/Contents/MacOS/
+	cp $< $(outputdir)$(product_name).kext/Contents/MacOS/
 	cp Info.plist $(outputdir)$(product_name).kext/Contents/
 
 

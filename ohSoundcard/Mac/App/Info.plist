@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>ohSoundcard</string>
+	<string>ohSongcaster</string>
 	<key>CFBundleIconFile</key>
 	<string>Icon.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.openhome.ohSoundcard</string>
+	<string>org.openhome.av.songcaster</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>ohSoundcard</string>
+	<string>ohSongcaster</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

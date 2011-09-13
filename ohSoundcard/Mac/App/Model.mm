@@ -68,7 +68,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     uint32_t ttl = 4;
     uint32_t multicast = 0;
     uint32_t preset = 0;
-    iSoundcard = SoundcardCreateOpenHome(subnet, channel, ttl, multicast, iEnabled ? 1 : 0, preset, ReceiverListCallback, iReceiverList, ModelSubnetCallback, self);
+    iSoundcard = SoundcardCreate("av.openhome.org", subnet, channel, ttl, multicast, iEnabled ? 1 : 0, preset, ReceiverListCallback, iReceiverList, ModelSubnetCallback, self, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
 }
 
 

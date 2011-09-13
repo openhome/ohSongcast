@@ -1,5 +1,5 @@
 
-#import "ohSoundcardPref.h"
+#import "SongcasterPrefPane.h"
 
 
 // Class for storing static resources used by table cell
@@ -20,7 +20,7 @@
 
 
 // Implementation of preference pane
-@implementation ohSoundcardPref
+@implementation SongcasterPrefPane
 
 @synthesize icon;
 @synthesize buttonOnOff;

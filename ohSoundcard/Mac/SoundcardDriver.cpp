@@ -3,6 +3,7 @@
 
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Net/Core/OhNet.h>
+#include <OpenHome/Private/Parser.h>
 
 #include "../../Ohm.h"
 #include "../../OhmSender.h"
@@ -19,7 +20,7 @@ namespace Net {
 class OhmSenderDriverMac : public IOhmSenderDriver
 {
 public:
-    OhmSenderDriverMac();
+    OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriverName);
 
 private:
     // IOhmSenderDriver
@@ -60,6 +61,8 @@ private:
     };
 
     Driver* iDriver;
+    Brhz iDriverClassName;
+    Brhz iDriverName;
 };
 
 
@@ -73,7 +76,7 @@ using namespace OpenHome;
 using namespace OpenHome::Net;
 
 
-OhmSenderDriverMac::OhmSenderDriverMac()
+OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriverName)
     : iDeviceSoundcard(0)
     , iDevicePrevious(0)
     , iService(0)
@@ -84,6 +87,8 @@ OhmSenderDriverMac::OhmSenderDriverMac()
     , iActive(false)
     , iTtl(4)
     , iDriver(0)
+    , iDriverClassName(aClassName)
+    , iDriverName(aDriverName)
 {
     // register for notifications of the driver becoming available
     iNotificationPort = IONotificationPortCreate(kIOMasterPortDefault);
@@ -92,7 +97,7 @@ OhmSenderDriverMac::OhmSenderDriverMac()
 
     IOServiceAddMatchingNotification(iNotificationPort,
                                      kIOFirstMatchNotification,
-                                     IOServiceMatching(AudioDeviceName),
+                                     IOServiceMatching(iDriverClassName.CString()),
                                      DriverFound, this,
                                      &iNotification);
 
@@ -103,7 +108,7 @@ OhmSenderDriverMac::OhmSenderDriverMac()
     }
 
     // find the service for the driver
-    iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(AudioDeviceName));
+    iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(iDriverClassName.CString()));
     if (iService != 0)
     {
         FindAudioDevice();
@@ -125,7 +130,7 @@ void OhmSenderDriverMac::DriverFound()
         return;
 
     // get the IOService for the driver
-    iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(AudioDeviceName));
+    iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(iDriverClassName.CString()));
 
     try
     {
@@ -158,8 +163,8 @@ void OhmSenderDriverMac::FindAudioDevice()
     UInt32 deviceCount = propBytes / sizeof(AudioDeviceID);
 
 
-    // look for the ohSoundcard device
-    CFStringRef ohDriverName = CFStringCreateWithCString(NULL, "OpenHome Songcast Driver", kCFStringEncodingMacRoman);
+    // look for the audio device
+    CFStringRef ohDriverName = CFStringCreateWithCString(NULL, iDriverName.CString(), kCFStringEncodingMacRoman);
 
     bool found = false;
     for (UInt32 i=0 ; i<deviceCount ; i++)
@@ -209,7 +214,7 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
         iDriver->SetTtl(iTtl);
         iDriver->SetActive(iActive);
 
-        // change the current audio output device to be the ohSoundcard driver
+        // change the current audio output device to be the soundcard driver
         AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &propBytes, &iDevicePrevious);
         AudioHardwareSetProperty(kAudioHardwarePropertyDefaultOutputDevice, propBytes, &iDeviceSoundcard);
     }
@@ -306,14 +311,7 @@ void OhmSenderDriverMac::Driver::SetTtl(TUint aValue)
 
 // Platform specific parts of the C interface
 
-THandle SoundcardCreateOpenHome(uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr)
-{
-    const char* ohSoundcardId = NULL;
-    return SoundcardCreate(ohSoundcardId, aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
-}
-
-
-THandle SoundcardCreate(const char* aSoundcardId, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
+THandle SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
 {
     // get the computer name
     struct utsname name;
@@ -332,10 +330,29 @@ THandle SoundcardCreate(const char* aSoundcardId, uint32_t aSubnet, uint32_t aCh
         }
     }
 
+    // build the audio device driver name
+    Bws<64> driverName;
+    driverName.Append(aManufacturer);
+    driverName.Append(" Songcaster");
+
+    // build the audio device class name for the driver
+    Bws<64> className("songcaster");
+    Brn domain(aDomain);
+    Parser parser(domain);
+    while (!parser.Finished())
+    {
+        Brn part = parser.Next('.');
+
+        Bws<64> temp(className);
+        className.Replace(part);
+        className.Append("_");
+        className.Append(temp);
+    }
+
     // create the driver
     OhmSenderDriverMac* driver;
     try {
-        driver = new OhmSenderDriverMac();
+        driver = new OhmSenderDriverMac(className, driverName);
     }
     catch (SoundcardError) {
         return 0;

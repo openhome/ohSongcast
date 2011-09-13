@@ -3,7 +3,7 @@
 
 # stop the agent application
 
-launchFile="/Library/LaunchAgents/org.openhome.ohSoundcard.plist"
+launchFile="/Library/LaunchAgents/org.openhome.av.songcaster.plist"
 if [ -e "$launchFile" ]
 then
   launchctl unload "$launchFile"
@@ -12,7 +12,7 @@ fi
 
 # unload the driver
 
-driver="/System/Library/Extensions/ohSoundcard.kext"
+driver="/System/Library/Extensions/ohSongcaster.kext"
 if [ -e "$driver" ]
 then
   kextunload "$driver"
@@ -27,7 +27,7 @@ fi
 
 rm -rf "$launchFile"
 rm -rf "$driver"
-rm -rf /Library/PreferencePanes/ohSoundcard.prefPane
-rm -rf /Library/OpenHome/ohSoundcard.app
+rm -rf /Library/PreferencePanes/ohSongcaster.prefPane
+rm -rf /Library/OpenHome/ohSongcaster.app
 
 

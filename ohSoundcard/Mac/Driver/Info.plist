@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>ohSoundcard</string>
+	<string>ohSongcaster</string>
 	<key>CFBundleIconFile</key>
 	<string></string>
 	<key>CFBundleIdentifier</key>
-	<string>org.openhome.ohSoundcard</string>
+	<string>org.openhome.av.songcaster</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>ohSoundcard</string>
+	<string>ohSongcaster</string>
 	<key>CFBundlePackageType</key>
 	<string>KEXT</string>
 	<key>CFBundleShortVersionString</key>
@@ -24,20 +24,20 @@
 	<string>1</string>
 	<key>IOKitPersonalities</key>
 	<dict>
-		<key>ohSoundcard</key>
+		<key>ohSongcaster</key>
 		<dict>
 			<key>IOUserClientClass</key>
-			<string>org_openhome_ohSoundcard_userclient</string>
+			<string>org_openhome_av_songcaster_userclient</string>
 			<key>IOResourceMatch</key>
 			<string>IOKit</string>
 			<key>IOMatchCategory</key>
-			<string>org_openhome_ohSoundcard</string>
+			<string>org_openhome_av_songcaster</string>
 			<key>IOProviderClass</key>
 			<string>IOResources</string>
 			<key>IOClass</key>
-			<string>org_openhome_ohSoundcard</string>
+			<string>org_openhome_av_songcaster</string>
 			<key>CFBundleIdentifier</key>
-			<string>org.openhome.ohSoundcard</string>
+			<string>org.openhome.av.songcaster</string>
 		</dict>
 	</dict>
     <key>OSBundleLibraries_x86_64</key>

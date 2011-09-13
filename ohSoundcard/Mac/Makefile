@@ -8,9 +8,10 @@ endif
 
 
 export objdir = $(CURDIR)/Build/Obj/Mac/$(build_dir)/
+export product_name = ohSongcaster
 
 
-default : make_objdir_x86_64 make_objdir_i386 make_objdir_ppc make_objdir_universal $(objdir)Installer/ohSoundcard.pkg
+default : make_objdir_x86_64 make_objdir_i386 make_objdir_ppc make_objdir_universal $(objdir)Installer/$(product_name).pkg
 
 
 .PHONY : clean
@@ -44,15 +45,15 @@ app :
 prefs :
 	$(MAKE) -C Prefs
 
-$(objdir)Installer/ohSoundcard.pkg : driver app prefs
+$(objdir)Installer/$(product_name).pkg : driver app prefs
 	mkdir -p $(objdir)Installer/Dst/System/Library/Extensions/
 	mkdir -p $(objdir)Installer/Dst/Library/PreferencePanes/
 	mkdir -p $(objdir)Installer/Dst/Library/OpenHome/
 	mkdir -p $(objdir)Installer/Dst/Library/LaunchAgents/
-	cp -R $(objdir)Universal/Driver/ohSoundcard.kext $(objdir)Installer/Dst/System/Library/Extensions/
-	cp -R $(objdir)x86_64/Prefs/ohSoundcard.prefPane $(objdir)Installer/Dst/Library/PreferencePanes/
-	cp -R $(objdir)x86_64/App/ohSoundcard.app $(objdir)Installer/Dst/Library/OpenHome/
-	cp LaunchAgent.plist  $(objdir)Installer/Dst/Library/LaunchAgents/org.openhome.ohSoundcard.plist
-	pkgbuild --identifier org.openhome.ohSoundcard --install-location / --root $(objdir)Installer/Dst --component-plist PkgComponent.plist --scripts Scripts $@
+	cp -R $(objdir)Universal/Driver/$(product_name).kext $(objdir)Installer/Dst/System/Library/Extensions/
+	cp -R $(objdir)x86_64/Prefs/$(product_name).prefPane $(objdir)Installer/Dst/Library/PreferencePanes/
+	cp -R $(objdir)x86_64/App/$(product_name).app $(objdir)Installer/Dst/Library/OpenHome/
+	cp LaunchAgent.plist  $(objdir)Installer/Dst/Library/LaunchAgents/org.openhome.av.songcaster.plist
+	pkgbuild --identifier org.openhome.av.songcaster --install-location / --root $(objdir)Installer/Dst --component-plist PkgComponent.plist --scripts Scripts $@
 
 

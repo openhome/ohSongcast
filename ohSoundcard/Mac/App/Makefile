@@ -12,9 +12,9 @@ endif
 arch_flags = -arch x86_64
 arch_linkflags = -arch x86_64
 outputdir = $(objdir)x86_64/App/
-contentsdir = $(outputdir)ohSoundcard.app/Contents/
-macosdir = $(outputdir)ohSoundcard.app/Contents/MacOS/
-resourcedir = $(outputdir)ohSoundcard.app/Contents/Resources/
+contentsdir = $(outputdir)$(product_name).app/Contents/
+macosdir = $(outputdir)$(product_name).app/Contents/MacOS/
+resourcedir = $(outputdir)$(product_name).app/Contents/Resources/
 
 
 compiler = gcc
@@ -34,7 +34,7 @@ ibtool = ibtool
 ibtool_flags = --errors --warnings --notices --output-format human-readable-text --sdk /Developer/SDKs/MacOSX10.6.sdk
 
 
-default : make_outputdir $(outputdir)ohSoundcard.app
+default : make_outputdir $(outputdir)$(product_name).app
 
 
 make_outputdir :
@@ -53,9 +53,9 @@ $(outputdir)%.o : %.mm
 $(outputdir)Preferences.o : ../Preferences.m
 	$(compiler) $(arch_flags) $(objc_flags) $< -o $@
 
-objects = $(outputdir)main.o $(outputdir)ohSoundcardAppDelegate.o $(outputdir)Model.o $(outputdir)Preferences.o $(outputdir)ReceiverList.o $(outputdir)Receiver.o
+objects = $(outputdir)main.o $(outputdir)SongcasterAppDelegate.o $(outputdir)Model.o $(outputdir)Preferences.o $(outputdir)ReceiverList.o $(outputdir)Receiver.o
 
-$(outputdir)ohSoundcard : $(objects)
+$(outputdir)$(product_name) : $(objects)
 	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(libohSoundcard) $(linkflags2) -o $@
 
 $(resourcedir)%.strings : %.strings
@@ -64,7 +64,7 @@ $(resourcedir)%.strings : %.strings
 $(resourcedir)%.nib : %.xib
 	$(ibtool) $(ibtool_flags) --compile $@ $<
 
-$(outputdir)ohSoundcard.app : $(outputdir)ohSoundcard $(resourcedir)NonLocalizable.strings $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib Info.plist MenuIconOff.png MenuIconOn.png Icon.icns $(libohSoundcard)
+$(outputdir)$(product_name).app : $(outputdir)$(product_name) $(resourcedir)NonLocalizable.strings $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib Info.plist MenuIconOff.png MenuIconOn.png Icon.icns $(libohSoundcard)
 	cp $< $(macosdir)
 	cp $(libohSoundcard) $(macosdir)
 	cp MenuIconOff.png $(resourcedir)
