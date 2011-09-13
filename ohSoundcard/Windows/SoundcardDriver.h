@@ -17,12 +17,11 @@ namespace Net {
 class OhmSenderDriverWindows : public IOhmSenderDriver
 {
 public:
-	OhmSenderDriverWindows(const char* aHardwareId);
+	OhmSenderDriverWindows(const char* aDomain, const char* aManufacturer);
 
 private:    
-	TBool FindDriver(const char* aHardwareId);
-	TBool InstallDriver();
-	TBool FindEndpoint();
+	TBool FindDriver(const char* aDomain);
+	TBool FindEndpoint(const char* aManufacturer);
 	void SetDefaultAudioPlaybackDevice();
 	void SetEndpointEnabled(TBool aValue);
 

@@ -41,8 +41,13 @@ static const TUint KSPROPERTY_OHSOUNDCARD_ACTIVE = 2;
 static const TUint KSPROPERTY_OHSOUNDCARD_ENDPOINT = 3;
 static const TUint KSPROPERTY_OHSOUNDCARD_TTL = 4;
 
-TBool FindDriver(const char* aHardwareId)
+TBool FindDriver(const char* aDomain)
 {
+	char hwid[200];
+
+	strcpy(hwid, aDomain);
+	strcpy(hwid + strlen(hwid), "/songcaster");
+
     HDEVINFO deviceInfoSet = SetupDiGetClassDevs(&KSCATEGORY_AUDIO, 0, 0, DIGCF_DEVICEINTERFACE | DIGCF_PROFILE | DIGCF_PRESENT);
 
 	if (deviceInfoSet == 0) {
@@ -76,7 +81,7 @@ TBool FindDriver(const char* aHardwareId)
             char buffer[1024];
             if (SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, NULL, (LPBYTE)buffer, 1024, NULL)) {
                 printf("%s\n", buffer);
-                if(strcmp(aHardwareId, buffer) == 0) {
+                if(strcmp(hwid, buffer) == 0) {
                     try
                     {
                         printf("Found a valid driver: %s\n", deviceInterfaceDetailData->DevicePath);
@@ -119,9 +124,14 @@ TBool FindDriver(const char* aHardwareId)
 	return (false);
 }
 
-TBool InstallDriver(const char* aHardwareId, const char* aInfFilename)
+TBool InstallDriver(const char* aDomain, const char* aInfFilename)
 {
-	printf("Installing %s from %s\n", aHardwareId, aInfFilename);
+	char hwid[200];
+
+	strcpy(hwid, aDomain);
+	strcpy(hwid + strlen(hwid), "/songcaster");
+
+	printf("Installing %s from %s\n", hwid, aInfFilename);
 
 	HDEVINFO deviceInfoSet = SetupDiCreateDeviceInfoList(&KSCATEGORY_AUDIO, 0);
 
@@ -160,8 +170,8 @@ TBool InstallDriver(const char* aHardwareId, const char* aInfFilename)
     if (!SetupDiSetDeviceRegistryProperty(deviceInfoSet,
         &deviceInfoData,
         SPDRP_HARDWAREID,
-        (LPBYTE)aHardwareId,
-        (lstrlen(aHardwareId))))
+        (LPBYTE)hwid,
+        (lstrlen(hwid))))
     {
 		printf("3 %d\n", GetLastError());
         SetupDiDestroyDeviceInfoList(deviceInfoSet);
@@ -229,7 +239,7 @@ TBool InstallDriver(const char* aHardwareId, const char* aInfFilename)
 	printf(inf);
 	printf("\n");
 
-	if (!updateFunction(NULL, aHardwareId, inf, INSTALLFLAG_FORCE, &reboot)) {
+	if (!updateFunction(NULL, hwid, inf, INSTALLFLAG_FORCE, &reboot)) {
 		printf("9 %d\n", GetLastError());
         FreeLibrary(newDevDll);
 		return (false);
@@ -240,9 +250,14 @@ TBool InstallDriver(const char* aHardwareId, const char* aInfFilename)
 	return (true);
 }
 
-TBool DeleteDriver(const char* aHardwareId, const char* aInfFilename)
+TBool DeleteDriver(const char* aDomain, const char* aInfFilename)
 {
-	printf("Deleting %s from %s\n", aHardwareId, aInfFilename);
+	char hwid[200];
+
+	strcpy(hwid, aDomain);
+	strcpy(hwid + strlen(hwid), "/songcaster");
+
+	printf("Deleting %s from %s\n", hwid, aInfFilename);
     
     HDEVINFO deviceInfoSet = SetupDiGetClassDevs(&KSCATEGORY_AUDIO, 0, 0, DIGCF_DEVICEINTERFACE | DIGCF_PROFILE | DIGCF_PRESENT);
 
@@ -261,7 +276,7 @@ TBool DeleteDriver(const char* aHardwareId, const char* aInfFilename)
         char buffer[1024];
         if (SetupDiGetDeviceRegistryProperty(deviceInfoSet, &deviceInfoData, SPDRP_HARDWAREID, NULL, (LPBYTE)buffer, 1024, NULL)) {
             printf("%s\n", buffer);
-            if(strcmp(aHardwareId, buffer) == 0) {
+            if (strcmp(hwid, buffer) == 0) {
                 if (SetupDiBuildDriverInfoList(deviceInfoSet, &deviceInfoData, SPDIT_COMPATDRIVER)) {
                     SP_DRVINFO_DATA driverInfoData;
                     
@@ -310,7 +325,7 @@ TBool DeleteDriver(const char* aHardwareId, const char* aInfFilename)
                 }
         
                 if(SetupDiCallClassInstaller(DIF_REMOVE, deviceInfoSet, &deviceInfoData)) {
-                    printf("Deleted device with hardware id %d\n", aHardwareId);
+                    printf("Deleted device with hardware id %d\n", hwid);
                 }
                 else {
                     printf("4 %d\n", GetLastError());

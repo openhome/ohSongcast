@@ -99,7 +99,7 @@ int CDECL main(int /* aArgc */, char** /* aArgv[] */)
     TBool disabled = false;
     TUint preset = 99;
 
-	THandle soundcard = SoundcardCreateOpenHome(subnet, channel, ttl, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0);
+	THandle soundcard = SoundcardCreate("av.openhome.org", subnet, channel, ttl, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
 
 	if (soundcard == 0) {
 		printf("Soundcard error\n");
