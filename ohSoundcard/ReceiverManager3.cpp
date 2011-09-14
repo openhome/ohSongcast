@@ -30,11 +30,7 @@ ReceiverManager3Receiver::ReceiverManager3Receiver(IReceiverManager3Handler& aHa
 
 ReceiverManager3Receiver::EStatus ReceiverManager3Receiver::EvaluateStatus()
 {
-	if (iReceiver.Selected()) {
-		return (iManager.Status(iReceiver));
-	}
-
-	return (eDisconnected);
+	return (iManager.Status(iReceiver));
 }
 
 const Brx& ReceiverManager3Receiver::Udn() const
@@ -142,6 +138,10 @@ void ReceiverManager3::SetMetadata(const Brx& aMetadata)
 
 ReceiverManager3Receiver::EStatus ReceiverManager3::Status(ReceiverManager2Receiver& aReceiver)
 {
+    if (!aReceiver.Selected()) {
+        return (ReceiverManager3Receiver::eDisconnected);
+    }
+
 	Bws<kMaxUriBytes> uri;
 	aReceiver.SenderUri(uri);
 
@@ -153,14 +153,14 @@ ReceiverManager3Receiver::EStatus ReceiverManager3::Status(ReceiverManager2Recei
 	aReceiver.TransportState(state);
 
 	if (state == Brn("Stopped") ) {
-		return (ReceiverManager3Receiver::eDisconnected);
+		return (ReceiverManager3Receiver::eStopped);
 	}
 
 	if (state == Brn("Buffering") ) {
-		return (ReceiverManager3Receiver::eConnecting);
+		return (ReceiverManager3Receiver::eBuffering);
 	}
 
-	return (ReceiverManager3Receiver::eConnected);
+	return (ReceiverManager3Receiver::ePlaying);
 }
 
 void ReceiverManager3::Play(ReceiverManager2Receiver& aReceiver)
