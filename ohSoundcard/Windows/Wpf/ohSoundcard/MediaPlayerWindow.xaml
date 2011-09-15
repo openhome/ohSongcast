@@ -228,7 +228,7 @@
                 </LinearGradientBrush>
             </Border.Background>
             <Canvas>
-                <TextBlock TextAlignment="Left" FontFamily="Arial Black" FontWeight="Bold" FontSize="22" Canvas.Left="15" Canvas.Top="8" Text="Media Players" />
+                <TextBlock TextAlignment="Left" FontFamily="Arial Black" FontWeight="Bold" FontSize="22" Canvas.Left="15" Canvas.Top="8" Text="Receivers" />
                 <Line Stroke="Black" StrokeThickness="5" Y1="40" Y2="40" X2="460"></Line>
                 <ListBox x:Name="listBoxReceivers" Canvas.Left="6" Canvas.Top="48" Height="336" Width="446" Background="{x:Null}" BorderBrush="{x:Null}">
                     <ListBox.Resources>

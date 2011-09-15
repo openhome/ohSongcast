@@ -90,6 +90,18 @@ void STDCALL loggerSubnet(void* /* aPtr */, ECallbackType aType, THandle aSubnet
 	}
 }
 
+void STDCALL loggerConfigurationChanged(void* /* aPtr */, THandle aSoundcard)
+{
+	TUint subnet = SoundcardSubnet(aSoundcard);
+	TUint channel = SoundcardChannel(aSoundcard);
+	TUint ttl = SoundcardTtl(aSoundcard);
+	TUint multicast = SoundcardMulticast(aSoundcard);
+	TUint enabled = SoundcardEnabled(aSoundcard);
+	TUint preset = SoundcardPreset(aSoundcard);
+
+	printf("Configuration changed: subnet=%x, channel=%d, ttl=%d, multicast=%d, enabled=%d, preset=%d\n", subnet, channel, ttl, multicast, enabled, preset);
+}
+
 int CDECL main(int /* aArgc */, char** /* aArgv[] */)
 {
 	TIpAddress subnet = 522;
@@ -99,7 +111,7 @@ int CDECL main(int /* aArgc */, char** /* aArgv[] */)
     TBool disabled = false;
     TUint preset = 99;
 
-	THandle soundcard = SoundcardCreate("av.openhome.org", subnet, channel, ttl, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+	THandle soundcard = SoundcardCreate("av.openhome.org", subnet, channel, ttl, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0, loggerConfigurationChanged, 0, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
 
 	if (soundcard == 0) {
 		printf("Soundcard error\n");
@@ -135,12 +147,10 @@ int CDECL main(int /* aArgc */, char** /* aArgv[] */)
             if (multicast) {
                 multicast = false;
                 SoundcardSetMulticast(soundcard, false);
-                printf("unicast\n");
             }
             else {
                 multicast = true;
                 SoundcardSetMulticast(soundcard, true);
-                printf("multicast\n");
             }
         }
 
@@ -148,12 +158,10 @@ int CDECL main(int /* aArgc */, char** /* aArgv[] */)
             if (disabled) {
                 disabled = false;
                 SoundcardSetEnabled(soundcard, true);
-                printf("enabled\n");
             }
             else {
                 disabled = true;
                 SoundcardSetEnabled(soundcard, false);
-                printf("disabled\n");
             }
         }
     }

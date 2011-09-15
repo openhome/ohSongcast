@@ -37,17 +37,29 @@ enum EReceiverStatus {
  */
 typedef void (STDCALL *ReceiverCallback)(void* aPtr, ECallbackType aType, THandle aReceiver);
 typedef void (STDCALL *SubnetCallback)(void* aPtr, ECallbackType aType, THandle aSubnet);
+typedef void (STDCALL *ConfigurationChangedCallback)(void* aPtr, THandle aSoundcard);
 
-DllExport THandle STDCALL SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
+DllExport THandle STDCALL SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
+
+DllExport uint32_t STDCALL SoundcardSubnet(THandle aSoundcard);
+DllExport uint32_t STDCALL SoundcardChannel(THandle aSoundcard);
+DllExport uint32_t STDCALL SoundcardTtl(THandle aSoundcard);
+DllExport uint32_t STDCALL SoundcardMulticast(THandle aSoundcard);
+DllExport uint32_t STDCALL SoundcardEnabled(THandle aSoundcard);
+DllExport uint32_t STDCALL SoundcardPreset(THandle aSoundcard);
+
 DllExport void STDCALL SoundcardSetSubnet(THandle aSoundcard, uint32_t aValue);
 DllExport void STDCALL SoundcardSetChannel(THandle aSoundcard, uint32_t aValue);
 DllExport void STDCALL SoundcardSetTtl(THandle aSoundcard, uint32_t aValue);
 DllExport void STDCALL SoundcardSetMulticast(THandle aSoundcard, uint32_t aValue);
 DllExport void STDCALL SoundcardSetEnabled(THandle aSoundcard, uint32_t aValue);
 DllExport void STDCALL SoundcardSetPreset(THandle aSoundcard, uint32_t aValue);
+
 DllExport void STDCALL SoundcardSetTrack(THandle aSoundcard, const char* aUri, const char* aMetadata, uint64_t aSamplesTotal, uint64_t aSampleStart);
 DllExport void STDCALL SoundcardSetMetatext(THandle aSoundcard, const char* aValue);
+
 DllExport void STDCALL SoundcardRefreshReceivers(THandle aSoundcard);
+
 DllExport void STDCALL SoundcardDestroy(THandle aSoundcard);
 
 DllExport const char* STDCALL ReceiverUdn(THandle aReceiver);
@@ -138,9 +150,16 @@ public:
 	static const TUint kMaxUdnBytes = 200;
 
 public:
-    Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
+    Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
 
-    void SetSubnet(TIpAddress aValue);
+	TIpAddress GetSubnet();
+	TUint GetChannel();
+	TUint GetTtl();
+	TBool GetMulticast();
+	TBool GetEnabled();
+	TUint GetPreset();
+
+	void SetSubnet(TIpAddress aValue);
 	void SetChannel(TUint aValue);
     void SetTtl(TUint aValue);
     void SetMulticast(TBool aValue);
@@ -161,19 +180,26 @@ private:
 	virtual void ReceiverRemoved(ReceiverManager3Receiver& aReceiver);
 
 private:
+	TIpAddress iSubnet;
+	TUint iChannel;
+	TUint iTtl;
+	TBool iMulticast;
+	TBool iEnabled;
+	TUint iPreset;
+	ReceiverCallback iReceiverCallback;
+	void* iReceiverPtr;
+	SubnetCallback iSubnetCallback;
+	void* iSubnetPtr;
+	ConfigurationChangedCallback iConfigurationChangedCallback;
+	void* iConfigurationChangedPtr;
 	Mutex iMutex;
 	TBool iClosing;
-	TIpAddress iSubnet;
 	TIpAddress iAdapter;
 	std::vector<Subnet*> iSubnetList;
 	OhmSender* iSender;
 	IOhmSenderDriver* iDriver;
 	DvDeviceStandard* iDevice;
 	ReceiverManager3* iReceiverManager;
-	ReceiverCallback iReceiverCallback;
-	void* iReceiverPtr;
-	SubnetCallback iSubnetCallback;
-	void* iSubnetPtr;
 };
 
 } // namespace Net

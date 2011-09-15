@@ -9,6 +9,36 @@ using namespace OpenHome::Net;
 
 // C interface
 
+uint32_t STDCALL SoundcardSubnet(THandle aSoundcard)
+{
+	return (((Soundcard*)aSoundcard)->GetSubnet());
+}
+
+uint32_t STDCALL SoundcardChannel(THandle aSoundcard)
+{
+	return (((Soundcard*)aSoundcard)->GetChannel());
+}
+
+uint32_t STDCALL SoundcardTtl(THandle aSoundcard)
+{
+	return (((Soundcard*)aSoundcard)->GetTtl());
+}
+
+uint32_t STDCALL SoundcardMulticast(THandle aSoundcard)
+{
+	return (((Soundcard*)aSoundcard)->GetMulticast() ? 1 : 0);
+}
+
+uint32_t STDCALL SoundcardEnabled(THandle aSoundcard)
+{
+	return (((Soundcard*)aSoundcard)->GetEnabled() ? 1 : 0);
+}
+
+uint32_t STDCALL SoundcardPreset(THandle aSoundcard)
+{
+	return (((Soundcard*)aSoundcard)->GetPreset());
+}
+
 void STDCALL SoundcardSetSubnet(THandle aSoundcard, uint32_t aValue)
 {
 	((Soundcard*)aSoundcard)->SetSubnet(aValue);
@@ -278,17 +308,24 @@ Subnet::~Subnet()
     
 // Soundcard
 
-Soundcard::Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
-	: iMutex("SCRD")
-	, iClosing(false)
-	, iSubnet(aSubnet)
-	, iAdapter(0)
-	, iSender(0)
-    , iDriver(aDriver)
+Soundcard::Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
+	: iSubnet(aSubnet)
+	, iChannel(aChannel)
+	, iTtl(aTtl)
+	, iMulticast(aMulticast)
+	, iEnabled(aEnabled)
+	, iPreset(aPreset)
 	, iReceiverCallback(aReceiverCallback)
 	, iReceiverPtr(aReceiverPtr)
 	, iSubnetCallback(aSubnetCallback)
 	, iSubnetPtr(aSubnetPtr)
+	, iConfigurationChangedCallback(aConfigurationChangedCallback)
+	, iConfigurationChangedPtr(aConfigurationChangedPtr)
+	, iMutex("SCRD")
+	, iClosing(false)
+	, iAdapter(0)
+	, iSender(0)
+    , iDriver(aDriver)
 {
 	//Debug::SetLevel(Debug::kMedia);
 
@@ -462,39 +499,164 @@ TBool Soundcard::UpdateAdapter()
 	return (false);
 }
 
+TIpAddress Soundcard::GetSubnet()
+{
+	iMutex.Wait();
+	TIpAddress subnet = iSubnet;
+	iMutex.Signal();
+	return (subnet);
+}
+
+TUint Soundcard::GetChannel()
+{
+	iMutex.Wait();
+	TUint channel = iChannel;
+	iMutex.Signal();
+	return (channel);
+}
+
+TUint Soundcard::GetTtl()
+{
+	iMutex.Wait();
+	TUint ttl = iTtl;
+	iMutex.Signal();
+	return (ttl);
+}
+
+TBool Soundcard::GetMulticast()
+{
+	iMutex.Wait();
+	TBool multicast = iMulticast;
+	iMutex.Signal();
+	return (multicast);
+}
+
+TBool Soundcard::GetEnabled()
+{
+	iMutex.Wait();
+	TBool enabled = iEnabled;
+	iMutex.Signal();
+	return (enabled);
+}
+
+TUint Soundcard::GetPreset()
+{
+	iMutex.Wait();
+	TUint preset = iPreset;
+	iMutex.Signal();
+	return (preset);
+}
+
 void Soundcard::SetSubnet(TIpAddress aValue)
 {
+	iMutex.Wait();
+
+	if (iSubnet == aValue) {
+		iMutex.Signal();
+		return;
+	}
+
 	iSubnet = aValue;
+
+	iMutex.Signal();
 
 	UpnpLibrary::SetCurrentSubnet(iSubnet);
 
 	ASSERT(UpdateAdapter());
+
+	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
 void Soundcard::SetChannel(TUint aValue)
 {
+	iMutex.Wait();
+
+	if (iChannel == aValue) {
+		iMutex.Signal();
+		return;
+	}
+
+	iChannel = aValue;
+
+	iMutex.Signal();
+
 	iSender->SetChannel(aValue);
+
+	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
 void Soundcard::SetTtl(TUint aValue)
 {
+	iMutex.Wait();
+
+	if (iTtl == aValue) {
+		iMutex.Signal();
+		return;
+	}
+
+	iTtl = aValue;
+
+	iMutex.Signal();
+
 	iSender->SetTtl(aValue);
+
+	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
 void Soundcard::SetMulticast(TBool aValue)
 {
+	iMutex.Wait();
+
+	if (iMulticast == aValue) {
+		iMutex.Signal();
+		return;
+	}
+
+	iMulticast = aValue;
+
+	iMutex.Signal();
+
 	iSender->SetMulticast(aValue);
+
 	iReceiverManager->SetMetadata(iSender->SenderMetadata());
+
+	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
 void Soundcard::SetEnabled(TBool aValue)
 {
+	iMutex.Wait();
+
+	if (iEnabled == aValue) {
+		iMutex.Signal();
+		return;
+	}
+
+	iEnabled = aValue;
+
+	iMutex.Signal();
+
 	iSender->SetEnabled(aValue);
+
+	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
 void Soundcard::SetPreset(TUint aValue)
 {
+	iMutex.Wait();
+
+	if (iPreset == aValue) {
+		iMutex.Signal();
+		return;
+	}
+
+	iPreset = aValue;
+
+	iMutex.Signal();
+
 	iSender->SetPreset(aValue);
+
+	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
 void Soundcard::SetTrack(const TChar* aUri, const TChar* aMetadata, TUint64 aSamplesTotal, TUint64 aSampleStart)

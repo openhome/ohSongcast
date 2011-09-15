@@ -777,7 +777,11 @@ void MpusStop()
 
 void MpusStopLocked()
 {
-	Socket->Send(&MpusAddress, (UCHAR*) 0, 0, 1, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels);
+	UCHAR silence[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	ULONG bytes = MpusAudioBitDepth * MpusAudioChannels / 8;
+
+	Socket->Send(&MpusAddress, silence, bytes, 1, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels);
 
 	MpusSendFormat = 1;
 }
@@ -798,6 +802,7 @@ void MpusUpdateEndpointLocked()
 
 void MpusUpdateTtlLocked()
 {
+	Socket->SetTtl(MpusTtl);
 }
 
 //=============================================================================
