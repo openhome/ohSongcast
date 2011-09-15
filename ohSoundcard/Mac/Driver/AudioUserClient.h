@@ -4,6 +4,7 @@
 
 #include <IOKit/IOUserClient.h>
 #include "AudioDevice.h"
+#include "AudioDeviceInterface.h"
 
 #define AudioUserClient BRANDING_AUDIOUSERCLIENT_CLASS
 

@@ -2,9 +2,11 @@
 #define HEADER_AUDIODEVICE
 
 #include <IOKit/audio/IOAudioDevice.h>
-#include "AudioDeviceInterface.h"
+#include "Branding.h"
 #include "Songcast.h"
 
+
+#define AudioDevice BRANDING_AUDIODEVICE_CLASS
 
 
 class AudioDevice : public IOAudioDevice

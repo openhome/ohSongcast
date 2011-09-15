@@ -3,7 +3,7 @@
 #import "Model.h"
 
 
-@interface ohSoundcardAppDelegate : NSObject <NSApplicationDelegate, IModelObserver>
+@interface SongcasterAppDelegate : NSObject <NSApplicationDelegate, IModelObserver>
 {
     IBOutlet NSMenu* menu;
     IBOutlet NSMenuItem* menuItemStatus;

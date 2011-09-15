@@ -4,7 +4,7 @@
 <array>
     <dict>
         <key>RootRelativeBundlePath</key>
-        <string>System/Library/Extensions/ohSoundcard.kext</string>
+        <string>System/Library/Extensions/ohSongcaster.kext</string>
         <key>BundleIsRelocatable</key>
         <false/>
         <key>BundleIsVersionChecked</key>
@@ -16,7 +16,7 @@
     </dict>
     <dict>
         <key>RootRelativeBundlePath</key>
-        <string>Library/OpenHome/ohSoundcard.app</string>
+        <string>Library/OpenHome/ohSongcaster.app</string>
         <key>BundleIsRelocatable</key>
         <false/>
         <key>BundleIsVersionChecked</key>
@@ -28,7 +28,7 @@
     </dict>
     <dict>
         <key>RootRelativeBundlePath</key>
-        <string>Library/PreferencePanes/ohSoundcard.prefPane</string>
+        <string>Library/PreferencePanes/ohSongcaster.prefPane</string>
         <key>BundleIsRelocatable</key>
         <false/>
         <key>BundleIsVersionChecked</key>

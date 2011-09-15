@@ -1,14 +1,14 @@
 
-/* Menu item 1 - soundcard status is on - %@ is the name of the app */
+/* Menu item 1 - status is on - %@ is the name of the app */
 "MenuStatusOn" = "%@: On";
 
-/* Menu item 1 - soundcard status is off - %@ is the name of the app */
+/* Menu item 1 - status is off - %@ is the name of the app */
 "MenuStatusOff" = "%@: Off";
 
-/* Menu item 2 - turn soundcard off - %@ is the name of the app */
+/* Menu item 2 - turn off - %@ is the name of the app */
 "MenuTurnOff" = "Turn %@ Off";
 
-/* Menu item 2 - turn soundcard on - %@ is the name of the app */
+/* Menu item 2 - turn on - %@ is the name of the app */
 "MenuTurnOn" = "Turn %@ On";
 
 /* Menu item 3 - reconnect all receivers */

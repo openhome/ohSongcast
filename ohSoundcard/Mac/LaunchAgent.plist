@@ -10,8 +10,8 @@
 		<true/>
 	</dict>
 	<key>Label</key>
-	<string>org.openhome.ohSoundcard</string>
+	<string>org.openhome.av.songcaster</string>
 	<key>Program</key>
-	<string>/Library/OpenHome/ohSoundcard.app/Contents/MacOS/ohSoundcard</string>
+	<string>/Library/OpenHome/ohSongcaster.app/Contents/MacOS/ohSongcaster</string>
 </dict>
 </plist>

@@ -1,13 +1,13 @@
 #!/bin/sh
 
 # ensure permissions for the driver are correctly set
-/usr/sbin/chown -R root:wheel /System/Library/Extensions/ohSoundcard.kext
-find /System/Library/Extensions/ohSoundcard.kext -type d -exec /bin/chmod 0755 {} \;
-find /System/Library/Extensions/ohSoundcard.kext -type f -exec /bin/chmod 0644 {} \;
+/usr/sbin/chown -R root:wheel /System/Library/Extensions/ohSongcaster.kext
+find /System/Library/Extensions/ohSongcaster.kext -type d -exec /bin/chmod 0755 {} \;
+find /System/Library/Extensions/ohSongcaster.kext -type f -exec /bin/chmod 0644 {} \;
 
 # load the driver
-kextload /System/Library/Extensions/ohSoundcard.kext
+#kextload /System/Library/Extensions/ohSongcaster.kext
 
 # launch the agent application
-launchctl load /Library/LaunchAgents/org.openhome.ohSoundcard.plist
+#launchctl load /Library/LaunchAgents/org.openhome.av.songcaster.plist
 

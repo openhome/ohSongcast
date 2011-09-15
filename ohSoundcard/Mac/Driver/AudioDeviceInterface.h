@@ -1,12 +1,6 @@
 #ifndef HEADER_AUDIODEVICEINTERFACE
 #define HEADER_AUDIODEVICEINTERFACE
 
-#include "Branding.h"
-
-
-#define AudioDevice BRANDING_AUDIODEVICE_CLASS
-#define AudioDeviceName BRANDING_AUDIODEVICE_CLASSNAME
-
 
 enum EDriverMethod
 {

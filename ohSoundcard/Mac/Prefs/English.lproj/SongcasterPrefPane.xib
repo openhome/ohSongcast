@@ -25,7 +25,7 @@
 		<object class="NSMutableArray" key="IBDocument.RootObjects" id="409411428">
 			<bool key="EncodedWithXMLCoder">YES</bool>
 			<object class="NSCustomObject" id="294453543">
-				<string key="NSClassName">ohSoundcardPref</string>
+				<string key="NSClassName">SongcasterPrefPane</string>
 			</object>
 			<object class="NSCustomObject" id="308860122">
 				<string key="NSClassName">FirstResponder</string>
@@ -1083,7 +1083,7 @@
 					<string key="superclassName">NSTextFieldCell</string>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier" id="119693039">
 						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">ohSoundcardPref.h</string>
+						<string key="minorKey">SongcasterPrefPane.h</string>
 					</object>
 				</object>
 				<object class="IBPartialClassDescription">
@@ -1103,7 +1103,7 @@
 					</object>
 				</object>
 				<object class="IBPartialClassDescription">
-					<string key="className">ohSoundcardPref</string>
+					<string key="className">SongcasterPrefPane</string>
 					<string key="superclassName">NSPreferencePane</string>
 					<object class="NSMutableDictionary" key="actions">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -1790,7 +1790,7 @@
 			<integer value="3000" key="NS.object.0"/>
 		</object>
 		<bool key="IBDocument.PluginDeclaredDependenciesTrackSystemTargetVersion">YES</bool>
-		<string key="IBDocument.LastKnownRelativeProjectPath">../ohSoundcard.xcodeproj</string>
+		<string key="IBDocument.LastKnownRelativeProjectPath">../SongcasterPrefPane.xcodeproj</string>
 		<int key="IBDocument.defaultPropertyAccessControl">3</int>
 		<object class="NSMutableDictionary" key="IBDocument.LastKnownImageSizes">
 			<bool key="EncodedWithXMLCoder">YES</bool>
