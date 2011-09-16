@@ -28,8 +28,9 @@ namespace OpenHome.Soundcard
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, IRefreshHandler, IConfigurationChangedHandler
+    public partial class MainWindow : Window, IRefreshHandler, IConfigurationChangedHandler, INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
 
         private ExtendedNotifyIcon iExtendedNotifyIcon; // global class scope for the icon as it needs to exist foer the lifetime of the window
         private Storyboard iStoryBoardFadeIn;
@@ -43,6 +44,8 @@ namespace OpenHome.Soundcard
         public MainWindow()
         {
             InitializeComponent();
+
+            this.DataContext = this;
 
             iExtendedNotifyIcon = new ExtendedNotifyIcon(Properties.Resources.Icon);
             iExtendedNotifyIcon.Click += EventNotifyIconClick;
@@ -96,11 +99,8 @@ namespace OpenHome.Soundcard
 
             bool value = iConfigurationWindow.Enabled;
 
-            Power.IsChecked = value;
-
             iMediaPlayerWindow.SetEnabled(value);
 
-            Power.Click += new RoutedEventHandler(EventPowerClick);
             Settings.Click += new RoutedEventHandler(EventSettingsClick);
             Receivers.Click += new RoutedEventHandler(EventReceiversClick);
 
@@ -109,11 +109,45 @@ namespace OpenHome.Soundcard
             iMediaPlayerWindow.Topmost = true;
         }
 
+        public bool Enabled
+        {
+            get
+            {
+                return (iConfigurationWindow.Enabled);
+            }
+            set
+            {
+                iSoundcard.SetEnabled(value);
+                iMediaPlayerWindow.SetEnabled(value);
+            }
+        }
+
         public void ConfigurationChanged(IConfiguration aConfiguration)
         {
-            bool value = iSoundcard.Enabled();
-            iMediaPlayerWindow.SetEnabled(value);
-            iConfigurationWindow.ConfigurationChanged(aConfiguration);
+            Dispatcher.BeginInvoke(new Action(SafeConfigurationChanged));
+        }
+
+        public void SafeConfigurationChanged()
+        {
+            bool enabledChanged = false;
+
+            if (iConfigurationWindow.Enabled != iSoundcard.Enabled())
+            {
+                enabledChanged = true;
+            }
+
+            iConfigurationWindow.ConfigurationChanged(iSoundcard);
+
+            iMediaPlayerWindow.SetEnabled(iConfigurationWindow.Enabled);
+
+            if (enabledChanged)
+            {
+                if (PropertyChanged != null)
+                {
+                    PropertyChanged(this, new PropertyChangedEventArgs("Enabled"));
+                }
+            }
+
         }
 
         public void Refresh()
@@ -150,13 +184,6 @@ namespace OpenHome.Soundcard
         private void EventContextMenuExit(object sender, EventArgs e)
         {
             this.Close();
-        }
-
-        private void EventPowerClick(object sender, RoutedEventArgs e)
-        {
-            bool value = Power.IsChecked.Value;
-            iSoundcard.SetEnabled(value);
-            iMediaPlayerWindow.SetEnabled(value);
         }
 
         private void EventSettingsClick(object sender, RoutedEventArgs e)

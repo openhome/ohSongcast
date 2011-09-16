@@ -168,6 +168,7 @@ public:
     void SetTrack(const TChar* aUri, const TChar* aMetadata, TUint64 aSamplesTotal, TUint64 aSampleStart);
 	void SetMetatext(const TChar* aValue);
 	void RefreshReceivers();
+
 	~Soundcard();
 
 private:

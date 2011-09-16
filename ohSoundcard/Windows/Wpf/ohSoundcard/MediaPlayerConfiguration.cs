@@ -50,35 +50,25 @@ namespace OpenHome.Soundcard
         {
             iEnabled = aValue;
 
-            UpdateStatus();
-
             if (iReceiver != null)
-            {   
-                EnactAttached();
-            }
-        }
-
-        private void EnactAttached()
-        {
-            if (iAttached)
             {
                 if (iEnabled)
                 {
-                    Play();
+                    if (iAttached)
+                    {
+                        Play();
+                    }
                 }
                 else
                 {
-                    Standby();
-                }
-            }
-            else
-            {
-                if (iStatus == "Playing")
-                {
-                    Stop();
+                    if (iReceiver.Status != EReceiverStatus.eDisconnected)
+                    {
+                        Standby();
+                    }
                 }
             }
 
+            UpdateStatus();
         }
 
         public void Initialise(bool aEnabled)
@@ -152,9 +142,15 @@ namespace OpenHome.Soundcard
                 changed = true;
             }
 
-            UpdateStatus();
+            if (iEnabled)
+            {
+                if (iAttached)
+                {
+                    Play();
+                }
+            }
 
-            EnactAttached();
+            UpdateStatus();
 
             return (changed);
         }

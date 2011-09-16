@@ -275,7 +275,7 @@
                 <!--<ToggleButton x:Name="Help" Canvas.Left="262" Canvas.Top="32" Height="40" IsChecked="False" Template="{DynamicResource ButtonControlTemplateHelp}" Width="40" />-->
                 <ToggleButton x:Name="Settings" Canvas.Left="309" Canvas.Top="32" Height="40" Width="40" IsChecked="False" Template="{DynamicResource ButtonControlTemplateSettings}" />
                 <ToggleButton x:Name="Receivers" Canvas.Left="355" Canvas.Top="32" Height="40" Width="40" IsChecked="False" Template="{DynamicResource ButtonControlTemplateReceivers}" />
-                <ToggleButton x:Name="Power" Canvas.Left="400" Canvas.Top="32" Height="40" Width="40" IsChecked="False" Template="{DynamicResource ButtonControlTemplatePower}" />
+                <ToggleButton Canvas.Left="400" Canvas.Top="32" Height="40" Width="40" IsChecked="{Binding Path=Enabled}" Template="{DynamicResource ButtonControlTemplatePower}" />
             </Canvas>
         </Border>
     </Canvas>
