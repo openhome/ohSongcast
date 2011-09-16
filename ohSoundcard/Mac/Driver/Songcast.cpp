@@ -103,7 +103,10 @@ void SongcastSocket::Send(SongcastAudioMessage& aMsg)
     msg.msg_flags = 0;
     
     size_t bytesSent;
-    sock_send(iSocket, &msg, 0, &bytesSent);
+    errno_t ret = sock_send(iSocket, &msg, 0, &bytesSent);
+    if (ret != 0) {
+        IOLog("Songcaster SongcastSocket[%p]::Send() sock_send returned %d\n", this, ret);
+    }
 
     // set state to inactive if pending
     if (iState == eSongcastStatePendingInactiveHalt) {
