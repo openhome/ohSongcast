@@ -66,10 +66,12 @@ static const TUint KSPROPERTY_OHSOUNDCARD_TTL = 4;
 
 OhmSenderDriverWindows::OhmSenderDriverWindows(const char* aDomain, const char* aManufacturer)
 {
+	printf("Find driver\n");
 	if (!FindDriver(aDomain)) {
 		THROW(SoundcardError);
 	}
 
+	printf("Find endpoint\n");
 	if (!FindEndpoint(aManufacturer)) {
 		THROW(SoundcardError);
 	}
@@ -77,101 +79,123 @@ OhmSenderDriverWindows::OhmSenderDriverWindows(const char* aDomain, const char* 
 
 TBool OhmSenderDriverWindows::FindEndpoint(const char* aManufacturer)
 {
+	bool uninitialise = true;
+
 	HRESULT hr = CoInitialize(NULL);
 
+	printf("CoInitialize %d\n", hr);
+
+	if (hr == 0x80010106)
+	{
+		uninitialise = false;
+	}
+	else if (!SUCCEEDED(hr))
+	{
+		return (false);
+	}
+
+
+	IMMDeviceEnumerator *pEnum = NULL;
+	// Create a multimedia device enumerator.
+	hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pEnum);
+		
+	printf("CoCreateInstance %d\n", hr);
+	
 	if (SUCCEEDED(hr))
 	{
-		IMMDeviceEnumerator *pEnum = NULL;
-		// Create a multimedia device enumerator.
-		hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pEnum);
+		IMMDeviceCollection *pDevices;
 		
+		// Enumerate the output devices.
+			
+		hr = pEnum->EnumAudioEndpoints(eRender, DEVICE_STATEMASK_ALL | 0x10000000, &pDevices);
+			
+		printf("EnumAudioEndpoints %d\n", hr);
+
 		if (SUCCEEDED(hr))
 		{
-			IMMDeviceCollection *pDevices;
-		
-			// Enumerate the output devices.
+			UINT count;
 			
-			hr = pEnum->EnumAudioEndpoints(eRender, DEVICE_STATEMASK_ALL | 0x10000000, &pDevices);
-			
+			pDevices->GetCount(&count);
+            printf("count: %d\n", count);
+				
 			if (SUCCEEDED(hr))
 			{
-				UINT count;
-			
-				pDevices->GetCount(&count);
-                printf("count: %d\n", count);
-				
-				if (SUCCEEDED(hr))
+				for (unsigned i = 0; i < count; i++)
 				{
-					for (unsigned i = 0; i < count; i++)
-					{
-						IMMDevice *pDevice;
+					IMMDevice *pDevice;
 				
-						hr = pDevices->Item(i, &pDevice);
+					hr = pDevices->Item(i, &pDevice);
 						
+					if (SUCCEEDED(hr))
+					{
+						LPWSTR wstrID = NULL;
+						
+						hr = pDevice->GetId(&wstrID);
+                            
+                        wprintf(L"id: %s\n", wstrID);
+							
 						if (SUCCEEDED(hr))
 						{
-							LPWSTR wstrID = NULL;
-						
-							hr = pDevice->GetId(&wstrID);
-                            
-                            wprintf(L"id: %s\n", wstrID);
+							IPropertyStore *pStore;
 							
+							hr = pDevice->OpenPropertyStore(STGM_READ, &pStore);
+								
 							if (SUCCEEDED(hr))
 							{
-								IPropertyStore *pStore;
-							
-								hr = pDevice->OpenPropertyStore(STGM_READ, &pStore);
+                                PROPVARIANT var;
+                                PropVariantInit(&var);
+                                hr = pStore->GetValue(PKEY_AudioEndpoint_GUID, &var);
+                                wprintf(L"%s\n", var.pwszVal);
+                                
+								PROPVARIANT friendlyName;
 								
+								PropVariantInit(&friendlyName);
+									
+								hr = pStore->GetValue(PKEY_DeviceInterface_FriendlyName, &friendlyName);
+                                    
+                                wprintf(L"friendlyName: %s\n", friendlyName.pwszVal);
+									
 								if (SUCCEEDED(hr))
 								{
-                                    PROPVARIANT var;
-                                    PropVariantInit(&var);
-                                    hr = pStore->GetValue(PKEY_AudioEndpoint_GUID, &var);
-                                    wprintf(L"%s\n", var.pwszVal);
-                                
-									PROPVARIANT friendlyName;
-								
-									PropVariantInit(&friendlyName);
-									
-									hr = pStore->GetValue(PKEY_DeviceInterface_FriendlyName, &friendlyName);
-                                    
-                                    wprintf(L"friendlyName: %s\n", friendlyName.pwszVal);
-									
-									if (SUCCEEDED(hr))
+									wchar_t model[200];
+
+									MultiByteToWideChar(CP_ACP, 0, aManufacturer, -1, model, sizeof(model));
+
+									wcscpy(model + wcslen(model), L" Songcaster");
+
+									if (!wcscmp(friendlyName.pwszVal, model))
 									{
-										wchar_t model[200];
-
-										MultiByteToWideChar(CP_ACP, 0, aManufacturer, -1, model, sizeof(model));
-
-										wcscpy(model + wcslen(model), L" Songcaster");
-
-										if (!wcscmp(friendlyName.pwszVal, model))
-										{
-											wcscpy(iEndpointId, wstrID);
-											PropVariantClear(&friendlyName);
-											pStore->Release();
-											pDevice->Release();
-											pDevices->Release();
-											pEnum->Release();
-											return (true);
-										}
-
+										wcscpy(iEndpointId, wstrID);
 										PropVariantClear(&friendlyName);
+										pStore->Release();
+										pDevice->Release();
+										pDevices->Release();
+										pEnum->Release();
+										if (uninitialise) {
+											CoUninitialize();
+										}
+										return (true);
 									}
 
-									pStore->Release();
+									PropVariantClear(&friendlyName);
 								}
-                                
-                                CoTaskMemFree(wstrID);
+
+								pStore->Release();
 							}
-							pDevice->Release();
+                                
+                            CoTaskMemFree(wstrID);
 						}
+						pDevice->Release();
 					}
 				}
-				pDevices->Release();
 			}
-			pEnum->Release();
+			pDevices->Release();
 		}
+		pEnum->Release();
+	}
+
+	if (uninitialise) {
+		CoUninitialize();
 	}
 
 	return (false);
@@ -285,7 +309,13 @@ TBool OhmSenderDriverWindows::FindDriver(const char* aDomain)
                                 SetupDiDestroyDeviceInfoList(deviceInfoSet);
                                 return (true);
                             }
+
+							printf("Invalid driver version %d\n", version);
                         }
+						else {
+							printf("DeviceIoControl error\n");
+						}
+
                     }
                     catch (...)
                     {

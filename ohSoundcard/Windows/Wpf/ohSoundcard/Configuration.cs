@@ -58,7 +58,7 @@ namespace OpenHome.Soundcard
             Configuration configuration = new Configuration();
             configuration.Subnet = 0;
             configuration.Multicast = false;
-            configuration.MulticastChannel = (uint)(new Random().Next(65535) + 1);
+            configuration.Channel = (uint)(new Random().Next(65535) + 1);
             configuration.Ttl = 1;
             configuration.Preset = 0;
             configuration.SetPath(aPath);
@@ -114,7 +114,7 @@ namespace OpenHome.Soundcard
 
         [XmlElement("MulticastChannel")]
 
-        public uint MulticastChannel
+        public uint Channel
         {
             get
             {
