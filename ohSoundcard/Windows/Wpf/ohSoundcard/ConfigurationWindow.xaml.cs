@@ -71,6 +71,14 @@ namespace OpenHome.Soundcard
             Channel = aConfiguration.Channel();
             Ttl = aConfiguration.Ttl();
             Preset = aConfiguration.Preset();
+
+            bool enabled = aConfiguration.Enabled();
+
+            if (iConfiguration.Enabled != enabled)
+            {
+                iConfiguration.Enabled = enabled;
+                iConfiguration.Save();
+            }
         }
 
         void EventSubnetListCountChanged(object sender, EventArgs e)
