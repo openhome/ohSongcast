@@ -211,7 +211,7 @@ namespace OpenHome.Soundcard
                             Play();
                         }
 
-                        if (!iAttached && !iEnabled)
+                        if (!iAttached && iReceiver.Status != EReceiverStatus.eDisconnected)
                         {
                             Standby();
                         }
