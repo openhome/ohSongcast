@@ -35,7 +35,7 @@ link_dll = link /nologo $(link_flag_debug) /map Ws2_32.lib Iphlpapi.lib /dll
 link_dll_service = link /nologo $(link_flag_debug)  /map $(objdir)ohNet.lib Ws2_32.lib Iphlpapi.lib /dll
 csplatform = x86
 csharp = csc /nologo /platform:$(csplatform) /nostdlib /reference:%SystemRoot%\microsoft.net\framework\v2.0.50727\mscorlib.dll
-publiccsdir = Public\Cs^\
+publiccsdir = Public\Cs^\csharp
 dirsep = ^\
 installdir = $(PROGRAMFILES)\ohNet
 installlibdir = $(installdir)\lib
@@ -71,14 +71,6 @@ $(objdir)$(dllprefix)ohSoundcard.net.$(dllext) : $(objdir)$(dllprefix)ohSoundcar
 		/out:$(objdir)$(dllprefix)ohSoundcard.net.$(dllext) \
 		ohSoundcard\Windows\Soundcard.cs
 
-$(objdir)TestSoundcardCs.$(exeext) : $(objdir)$(dllprefix)ohSoundcard.net.$(dllext) ohSoundcard\Windows\TestSoundcardCs.cs
-	$(csharp) /target:exe /debug+ \
-		/out:$(objdir)TestSoundcardCs.$(exeext) \
-		/reference:System.dll \
-		/reference:System.Net.dll \
-		/reference:$(objdir)$(dllprefix)ohSoundcard.net.$(dllext)  \
-		ohSoundcard\Windows\TestSoundcardCs.cs
-
 $(objdir)ohSoundcard.$(exeext) : $(objdir)$(dllprefix)ohSoundcard.net.$(dllext) ohSoundcard\Windows\Wpf\ohSoundcard\ReceiverList.cs ohSoundcard\Windows\Wpf\ohSoundcard\ExtendedNotifyIcon.cs ohSoundcard\Windows\Wpf\ohSoundcard\App.xaml.cs ohSoundcard\Windows\Wpf\ohSoundcard\MainWindow.xaml.cs
 	$(csharp) /target:exe /debug+ \
 		/out:$(objdir)ohSoundcard.$(exeext) \
@@ -100,6 +92,14 @@ $(objdir)ohSoundcard.$(exeext) : $(objdir)$(dllprefix)ohSoundcard.net.$(dllext) 
 $(objdir)TestSoundcard.$(exeext) : $(objdir)$(dllprefix)ohSoundcard.$(dllext) ohSoundcard\TestSoundcard.cpp
 	$(compiler)TestSoundcard.$(objext) -c $(cflags) $(includes) ohSoundcard\TestSoundcard.cpp
 	$(link) $(linkoutput)$(objdir)TestSoundcard.$(exeext) $(objdir)ohSoundcard.$(libext) $(objdir)TestSoundcard.$(objext) 
+
+$(objdir)TestSoundcardCs.$(exeext) : $(objdir)$(dllprefix)ohSoundcard.net.$(dllext) ohSoundcard\Windows\TestSoundcardCs.cs
+	$(csharp) /target:exe /debug+ \
+		/out:$(objdir)TestSoundcardCs.$(exeext) \
+		/reference:System.dll \
+		/reference:System.Net.dll \
+		/reference:$(objdir)$(dllprefix)ohSoundcard.net.$(dllext)  \
+		ohSoundcard\Windows\TestSoundcardCs.cs
 
 $(objdir)/Install32.$(exeext) : ohSoundcard/Windows/Install.cpp
 	$(compiler)/Install32.$(objext) -c $(cflags) $(includes) ohSoundcard/Windows/Install.cpp

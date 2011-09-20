@@ -3,7 +3,7 @@ using System.Net;
 
 using OpenHome.Soundcard;
 
-    class Program : IReceiverHandler, ISubnetHandler
+    class Program : IReceiverHandler, ISubnetHandler, IConfigurationChangedHandler
     {
         public static void Main(string[] args)
         {
@@ -18,7 +18,7 @@ using OpenHome.Soundcard;
 
             try
             {
-                Soundcard soundcard = new Soundcard("av.openhome.org", 0, 1, 1, false, enabled, 99, this, this, "OpeHome", "http://www.openhome.org", "http://www.openhome.org");
+                Soundcard soundcard = new Soundcard("av.openhome.org", 0, 1, 1, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
 
                 while (true)
                 {
@@ -34,12 +34,10 @@ using OpenHome.Soundcard;
                         if (enabled)
                         {
                             enabled = false;
-                            Console.WriteLine("Disabled");
                         }
                         else
                         {
                             enabled = true;
-                            Console.WriteLine("Enabled");
                         }
 
                         soundcard.SetEnabled(enabled);
@@ -54,6 +52,11 @@ using OpenHome.Soundcard;
             {
                 Console.WriteLine(e.Message);
             }
+        }
+
+        public void ConfigurationChanged(IConfiguration aConfiguration)
+        {
+            Console.WriteLine("Configuration changed: channel={0}, ttl={1}, multicast={2}, enabled={3}", aConfiguration.Channel(), aConfiguration.Ttl(), aConfiguration.Multicast(), aConfiguration.Enabled());
         }
 
         public void ReceiverAdded(IReceiver aReceiver)

@@ -14,20 +14,17 @@
 #include <mmdeviceapi.h>
 #include <wchar.h>
 
-
-
 EXCEPTION(SoundcardError);
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
-
 
 // {2685C863-5E57-4D9A-86EC-2EC9B7BBBCFD}
 DEFINE_GUID(OHSOUNDCARD_GUID, 0x2685C863, 0x5E57, 0x4D9A, 0x86, 0xEC, 0x2E, 0xC9, 0xB7, 0xBB, 0xBC, 0xFD);
 
 // C interface
 
-THandle STDCALL SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
+THandle STDCALL SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
 {
 	try {
         printf("%s\n", aDomain);
@@ -42,11 +39,17 @@ THandle STDCALL SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t 
         
         computer.SetBytes(bytes);
         
+		TBool enabled = (aEnabled == 0) ? false : true;
+		TBool multicast = (aMulticast == 0) ? false : true;
+
         // create the sender driver
-        OhmSenderDriverWindows* driver = new OhmSenderDriverWindows(aDomain, aManufacturer);
+        OhmSenderDriverWindows* driver = new OhmSenderDriverWindows(aDomain, aManufacturer, enabled);
 
         // create the soundcard
-		Soundcard* soundcard = new Soundcard(aSubnet, aChannel, aTtl, (aMulticast == 0) ? false : true, (aEnabled == 0) ? false : true, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl);
+		Soundcard* soundcard = new Soundcard(aSubnet, aChannel, aTtl, multicast, enabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl);
+
+		driver->SetSoundcard(*soundcard);
+
 		return (soundcard);
 	}
 	catch (SoundcardError)
@@ -64,7 +67,11 @@ static const TUint KSPROPERTY_OHSOUNDCARD_ACTIVE = 2;
 static const TUint KSPROPERTY_OHSOUNDCARD_ENDPOINT = 3;
 static const TUint KSPROPERTY_OHSOUNDCARD_TTL = 4;
 
-OhmSenderDriverWindows::OhmSenderDriverWindows(const char* aDomain, const char* aManufacturer)
+OhmSenderDriverWindows::OhmSenderDriverWindows(const char* aDomain, const char* aManufacturer, TBool aEnabled)
+	: iEnabled(aEnabled)
+	, iRefCount(1)
+	, iSoundcard(NULL)
+	, iDeviceEnumerator(NULL)
 {
 	if (!FindDriver(aDomain)) {
 		THROW(SoundcardError);
@@ -75,103 +82,134 @@ OhmSenderDriverWindows::OhmSenderDriverWindows(const char* aDomain, const char* 
 	}
 }
 
+OhmSenderDriverWindows::~OhmSenderDriverWindows()
+{
+	iDeviceEnumerator->UnregisterEndpointNotificationCallback(this);
+	iDeviceEnumerator->Release();
+}
+
+void OhmSenderDriverWindows::SetSoundcard(Soundcard& aSoundcard)
+{
+	iSoundcard = &aSoundcard;
+	iDeviceEnumerator->RegisterEndpointNotificationCallback(this);
+}
+
 TBool OhmSenderDriverWindows::FindEndpoint(const char* aManufacturer)
 {
+	bool uninitialise = true;
+
 	HRESULT hr = CoInitialize(NULL);
 
+	printf("CoInitialize %d\n", hr);
+
+	if (hr == 0x80010106)
+	{
+		uninitialise = false;
+	}
+	else if (!SUCCEEDED(hr))
+	{
+		return (false);
+	}
+
+	// Create a multimedia device enumerator.
+	hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&iDeviceEnumerator);
+		
+	printf("CoCreateInstance %d\n", hr);
+	
 	if (SUCCEEDED(hr))
 	{
-		IMMDeviceEnumerator *pEnum = NULL;
-		// Create a multimedia device enumerator.
-		hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pEnum);
+		IMMDeviceCollection *pDevices;
 		
+		// Enumerate the output devices.
+			
+		hr = iDeviceEnumerator->EnumAudioEndpoints(eRender, DEVICE_STATEMASK_ALL | 0x10000000, &pDevices);
+			
+		printf("EnumAudioEndpoints %d\n", hr);
+
 		if (SUCCEEDED(hr))
 		{
-			IMMDeviceCollection *pDevices;
-		
-			// Enumerate the output devices.
+			UINT count;
 			
-			hr = pEnum->EnumAudioEndpoints(eRender, DEVICE_STATEMASK_ALL | 0x10000000, &pDevices);
-			
+			pDevices->GetCount(&count);
+            printf("count: %d\n", count);
+				
 			if (SUCCEEDED(hr))
 			{
-				UINT count;
-			
-				pDevices->GetCount(&count);
-                printf("count: %d\n", count);
-				
-				if (SUCCEEDED(hr))
+				for (unsigned i = 0; i < count; i++)
 				{
-					for (unsigned i = 0; i < count; i++)
-					{
-						IMMDevice *pDevice;
+					IMMDevice *pDevice;
 				
-						hr = pDevices->Item(i, &pDevice);
+					hr = pDevices->Item(i, &pDevice);
 						
+					if (SUCCEEDED(hr))
+					{
+						LPWSTR wstrID = NULL;
+						
+						hr = pDevice->GetId(&wstrID);
+                            
+                        wprintf(L"id: %s\n", wstrID);
+							
 						if (SUCCEEDED(hr))
 						{
-							LPWSTR wstrID = NULL;
-						
-							hr = pDevice->GetId(&wstrID);
-                            
-                            wprintf(L"id: %s\n", wstrID);
+							IPropertyStore *pStore;
 							
+							hr = pDevice->OpenPropertyStore(STGM_READ, &pStore);
+								
 							if (SUCCEEDED(hr))
 							{
-								IPropertyStore *pStore;
-							
-								hr = pDevice->OpenPropertyStore(STGM_READ, &pStore);
+                                PROPVARIANT var;
+                                PropVariantInit(&var);
+                                hr = pStore->GetValue(PKEY_AudioEndpoint_GUID, &var);
+                                wprintf(L"%s\n", var.pwszVal);
+                                
+								PROPVARIANT friendlyName;
 								
+								PropVariantInit(&friendlyName);
+									
+								hr = pStore->GetValue(PKEY_DeviceInterface_FriendlyName, &friendlyName);
+                                    
+                                wprintf(L"friendlyName: %s\n", friendlyName.pwszVal);
+									
 								if (SUCCEEDED(hr))
 								{
-                                    PROPVARIANT var;
-                                    PropVariantInit(&var);
-                                    hr = pStore->GetValue(PKEY_AudioEndpoint_GUID, &var);
-                                    wprintf(L"%s\n", var.pwszVal);
-                                
-									PROPVARIANT friendlyName;
-								
-									PropVariantInit(&friendlyName);
-									
-									hr = pStore->GetValue(PKEY_DeviceInterface_FriendlyName, &friendlyName);
-                                    
-                                    wprintf(L"friendlyName: %s\n", friendlyName.pwszVal);
-									
-									if (SUCCEEDED(hr))
+									wchar_t model[200];
+
+									MultiByteToWideChar(CP_ACP, 0, aManufacturer, -1, model, sizeof(model));
+
+									wcscpy(model + wcslen(model), L" Songcaster");
+
+									if (!wcscmp(friendlyName.pwszVal, model))
 									{
-										wchar_t model[200];
-
-										MultiByteToWideChar(CP_ACP, 0, aManufacturer, -1, model, sizeof(model));
-
-										wcscpy(model + wcslen(model), L" Songcaster");
-
-										if (!wcscmp(friendlyName.pwszVal, model))
-										{
-											wcscpy(iEndpointId, wstrID);
-											PropVariantClear(&friendlyName);
-											pStore->Release();
-											pDevice->Release();
-											pDevices->Release();
-											pEnum->Release();
-											return (true);
-										}
-
+										wcscpy(iEndpointId, wstrID);
 										PropVariantClear(&friendlyName);
+										pStore->Release();
+										pDevice->Release();
+										pDevices->Release();
+										if (uninitialise) {
+											CoUninitialize();
+										}
+										return (true);
 									}
 
-									pStore->Release();
+									PropVariantClear(&friendlyName);
 								}
-                                
-                                CoTaskMemFree(wstrID);
+
+								pStore->Release();
 							}
-							pDevice->Release();
+                                
+                            CoTaskMemFree(wstrID);
 						}
+						pDevice->Release();
 					}
 				}
-				pDevices->Release();
 			}
-			pEnum->Release();
+			pDevices->Release();
 		}
+		iDeviceEnumerator->Release();
+	}
+
+	if (uninitialise) {
+		CoUninitialize();
 	}
 
 	return (false);
@@ -285,7 +323,13 @@ TBool OhmSenderDriverWindows::FindDriver(const char* aDomain)
                                 SetupDiDestroyDeviceInfoList(deviceInfoSet);
                                 return (true);
                             }
+
+							printf("Invalid driver version %d\n", version);
                         }
+						else {
+							printf("DeviceIoControl error\n");
+						}
+
                     }
                     catch (...)
                     {
@@ -304,6 +348,8 @@ TBool OhmSenderDriverWindows::FindDriver(const char* aDomain)
 
 void OhmSenderDriverWindows::SetEnabled(TBool aValue)
 {
+	iEnabled = aValue;
+
     KSPROPERTY prop;
 				
 	prop.Set = OHSOUNDCARD_GUID;
@@ -377,3 +423,79 @@ void OhmSenderDriverWindows::SetTrackPosition(TUint64 /*aSamplesTotal*/, TUint64
 {
 }
 
+ULONG STDCALL OhmSenderDriverWindows::AddRef()
+{
+    return (InterlockedIncrement(&iRefCount));
+}
+
+ULONG STDCALL OhmSenderDriverWindows::Release()
+{
+	return (InterlockedDecrement(&iRefCount));
+}
+
+HRESULT STDCALL OhmSenderDriverWindows::QueryInterface(REFIID aId, VOID** aInterface)
+{
+    if (aId == IID_IUnknown)
+    {
+        AddRef();
+        *aInterface = (IUnknown*)this;
+    }
+    else if (aId == __uuidof(IMMNotificationClient))
+    {
+        AddRef();
+        *aInterface = (IMMNotificationClient*)this;
+    }
+    else
+    {
+        *aInterface = NULL;
+        return E_NOINTERFACE;
+    }
+
+    return S_OK;
+}
+
+// Callback methods for device-event notifications.
+
+HRESULT STDCALL OhmSenderDriverWindows::OnDefaultDeviceChanged(EDataFlow aFlow, ERole aRole, LPCWSTR aDeviceId)
+{
+	if (aFlow == eRender && aRole == eMultimedia) {
+		TBool enabled = (wcscmp(iEndpointId, aDeviceId) == 0);
+		iSoundcard->SetEnabled(enabled);
+	}
+
+    return S_OK;
+}
+
+HRESULT STDCALL OhmSenderDriverWindows::OnDeviceAdded(LPCWSTR /*aDeviceId*/)
+{
+    return S_OK;
+};
+
+HRESULT STDCALL OhmSenderDriverWindows::OnDeviceRemoved(LPCWSTR /*aDeviceId*/)
+{
+    return S_OK;
+}
+
+HRESULT STDCALL OhmSenderDriverWindows::OnDeviceStateChanged(LPCWSTR aDeviceId, DWORD aNewState)
+{
+	if ((wcscmp(iEndpointId, aDeviceId) == 0)) {
+		switch (aNewState) {
+		case DEVICE_STATE_ACTIVE:
+			iSoundcard->SetEnabled(true);
+			break;
+		case DEVICE_STATE_DISABLED:
+		case DEVICE_STATE_NOTPRESENT:
+		case DEVICE_STATE_UNPLUGGED:
+			iSoundcard->SetEnabled(false);
+		default:
+			break;
+		}
+	}
+
+	return S_OK;
+}
+
+HRESULT STDCALL OhmSenderDriverWindows::OnPropertyValueChanged(LPCWSTR /*aDeviceId*/, const PROPERTYKEY /*aKey*/)
+{
+    return S_OK;
+}

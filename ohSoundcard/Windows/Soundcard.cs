@@ -9,9 +9,24 @@ namespace OpenHome.Soundcard
     public class SoundcardError : Exception
     {
         internal SoundcardError()
-            : base("ohSoundcard audio driver not installed")
+            : base("Songcaster audio driver not installed")
         {
         }
+    }
+
+    public interface IConfiguration
+    {
+        uint Subnet();
+        uint Channel();
+        uint Ttl();
+        bool Multicast();
+        bool Enabled(); 
+        uint Preset();
+    }
+
+    public interface IConfigurationChangedHandler
+    {
+        void ConfigurationChanged(IConfiguration aConfiguration);
     }
 
     public interface IReceiverHandler
@@ -207,7 +222,7 @@ namespace OpenHome.Soundcard
         string iAdapterName;
     }
 
-    public class Soundcard : IDisposable
+    public class Soundcard : IDisposable, IConfiguration
     {
         private enum ECallbackType
         {
@@ -218,9 +233,24 @@ namespace OpenHome.Soundcard
 
         private delegate void DelegateReceiverCallback(IntPtr aPtr, ECallbackType aType, IntPtr aReceiver);
         private delegate void DelegateSubnetCallback(IntPtr aPtr, ECallbackType aType, IntPtr aSubnet);
+        private delegate void DelegateConfigurationChangedCallback(IntPtr aPtr, IntPtr aSoundcard);
 
         [DllImport("ohSoundcard.dll")]
-        static extern unsafe IntPtr SoundcardCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl);
+        static extern unsafe IntPtr SoundcardCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, DelegateConfigurationChangedCallback aConfigurationChangedCallback, IntPtr aConfigurationChangedPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl);
+
+        [DllImport("ohSoundcard.dll")]
+        static extern uint SoundcardSubnet(IntPtr aHandle);
+        [DllImport("ohSoundcard.dll")]
+        static extern uint SoundcardChannel(IntPtr aHandle);
+        [DllImport("ohSoundcard.dll")]
+        static extern uint SoundcardTtl(IntPtr aHandle);
+        [DllImport("ohSoundcard.dll")]
+        static extern bool SoundcardMulticast(IntPtr aHandle);
+        [DllImport("ohSoundcard.dll")]
+        static extern bool SoundcardEnabled(IntPtr aHandle);
+        [DllImport("ohSoundcard.dll")]
+        static extern uint SoundcardPreset(IntPtr aHandle);
+        
         [DllImport("ohSoundcard.dll")]
         static extern void SoundcardSetSubnet(IntPtr aHandle, uint aValue);
         [DllImport("ohSoundcard.dll")]
@@ -242,15 +272,17 @@ namespace OpenHome.Soundcard
         [DllImport("ohSoundcard.dll")]
         static extern void SoundcardDestroy(IntPtr aHandle);
 
-        public unsafe Soundcard(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler, string aManufacturer, string aManufacturerUrl, string aModelUrl)
+        public unsafe Soundcard(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler, IConfigurationChangedHandler aConfigurationChangedHandler, string aManufacturer, string aManufacturerUrl, string aModelUrl)
         {
             iReceiverHandler = aReceiverHandler;
             iSubnetHandler = aSubnetHandler;
+            iConfigurationChangedHandler = aConfigurationChangedHandler;
             iReceiverCallback = new DelegateReceiverCallback(ReceiverCallback);
             iSubnetCallback = new DelegateSubnetCallback(SubnetCallback);
+            iConfigurationChangedCallback = new DelegateConfigurationChangedCallback(ConfigurationChangedCallback);
             iReceiverList = new List<Receiver>();
             iSubnetList = new List<Subnet>();
-            iHandle = SoundcardCreate(aDomain, aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl);
+            iHandle = SoundcardCreate(aDomain, aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, iConfigurationChangedCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl);
 
             if (iHandle == IntPtr.Zero)
             {
@@ -356,6 +388,41 @@ namespace OpenHome.Soundcard
             }
         }
 
+        private void ConfigurationChangedCallback(IntPtr aPtr, IntPtr aSoundcard)
+        {
+            iConfigurationChangedHandler.ConfigurationChanged(this);
+        }
+
+        public uint Subnet()
+        {
+            return (SoundcardSubnet(iHandle));
+        }
+
+        public uint Channel()
+        {
+            return (SoundcardChannel(iHandle));
+        }
+
+        public uint Ttl()
+        {
+            return (SoundcardTtl(iHandle));
+        }
+
+        public bool Multicast()
+        {
+            return (SoundcardMulticast(iHandle));
+        }
+
+        public bool Enabled()
+        {
+            return (SoundcardEnabled(iHandle));
+        }
+
+        public uint Preset()
+        {
+            return (SoundcardPreset(iHandle));
+        }
+
         public void SetSubnet(uint aValue)
         {
             SoundcardSetSubnet(iHandle, aValue);
@@ -414,10 +481,12 @@ namespace OpenHome.Soundcard
 
         private IReceiverHandler iReceiverHandler;
         private ISubnetHandler iSubnetHandler;
+        private IConfigurationChangedHandler iConfigurationChangedHandler;
         private IntPtr iHandle;
         private List<Receiver> iReceiverList;
         private List<Subnet> iSubnetList;
         private DelegateReceiverCallback iReceiverCallback;
         private DelegateSubnetCallback iSubnetCallback;
+        private DelegateConfigurationChangedCallback iConfigurationChangedCallback;
     }
 } // namespace OpenHome.Soundcard

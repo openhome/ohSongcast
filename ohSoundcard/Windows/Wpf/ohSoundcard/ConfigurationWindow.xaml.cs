@@ -10,16 +10,42 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using System.ComponentModel;
 
 namespace OpenHome.Soundcard
 {
+    public class NegateBoolean : IValueConverter
+    {
+        public object Convert(object aValue, Type aTargetType, object aParameter, System.Globalization.CultureInfo aCulture)
+        {
+            if (aTargetType != typeof(Nullable<bool>))
+            {
+                throw new InvalidOperationException("The target must be a boolean");
+            }
+
+            return (!(bool)aValue);
+        }
+
+        public object ConvertBack(object aValue, Type aTargetType, object aParameter, System.Globalization.CultureInfo aCulture)
+        {
+            if (aTargetType != typeof(bool))
+            {
+                throw new InvalidOperationException("The target must be a boolean");
+            }
+
+            return (!(bool)aValue);
+        }
+    }
+
     /// <summary>
     /// Interaction logic for SettingsWindow.xaml
     /// </summary>
-    public partial class ConfigurationWindow : Window
+    public partial class ConfigurationWindow : Window, IConfigurationChangedHandler, INotifyPropertyChanged
     {
         private Configuration iConfiguration;
         private SubnetList iSubnetList;
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public ConfigurationWindow()
         {
@@ -33,20 +59,26 @@ namespace OpenHome.Soundcard
 
             comboBoxNetwork.ItemsSource = iSubnetList;
 
-            textBlockInfo.Text = "V" + System.Windows.Forms.Application.ProductVersion;
-
-            radioButtonUnicast.IsChecked = !iConfiguration.Multicast;
-            radioButtonMulticast.IsChecked = iConfiguration.Multicast;
-            textBoxChannel.Text = iConfiguration.MulticastChannel.ToString();
-            sliderTtl.Value = iConfiguration.Ttl;
-            textBoxPreset.Text = iConfiguration.Preset.ToString();
+            this.DataContext = this;
 
             buttonChannelNew.Click += EventButtonChannelNewClick;
-            sliderTtl.ValueChanged += EventSliderTtlValueChanged;
-            textBoxPreset.TextChanged += EventTextBoxPresetTextChanged;
-            radioButtonUnicast.Checked += EventRadioButtonUnicastChecked;
-            radioButtonMulticast.Checked += EventRadioButtonMulticastChecked;
             comboBoxNetwork.SelectionChanged += EventComboBoxNetworkSelectionChanged;
+        }
+
+        public void ConfigurationChanged(IConfiguration aConfiguration)
+        {
+            Subnet = aConfiguration.Subnet();
+            Channel = aConfiguration.Channel();
+            Ttl = aConfiguration.Ttl();
+            Preset = aConfiguration.Preset();
+
+            bool enabled = aConfiguration.Enabled();
+
+            if (iConfiguration.Enabled != enabled)
+            {
+                iConfiguration.Enabled = enabled;
+                iConfiguration.Save();
+            }
         }
 
         void EventSubnetListCountChanged(object sender, EventArgs e)
@@ -100,60 +132,7 @@ namespace OpenHome.Soundcard
 
         private void EventButtonChannelNewClick(object sender, RoutedEventArgs e)
         {
-            uint value = (uint)(new Random().Next(65535) + 1);
-            textBoxChannel.Text = value.ToString();
-            iConfiguration.MulticastChannel = value;
-            iConfiguration.Save();
-            InformListeners(MulticastChannelChanged);
-        }
-
-        private void EventSliderTtlValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            iConfiguration.Ttl = (uint)sliderTtl.Value;
-            iConfiguration.Save();
-            InformListeners(TtlChanged);
-        }
-
-        private void EventTextBoxPresetTextChanged(object sender, TextChangedEventArgs e)
-        {
-            uint value;
-
-            if (uint.TryParse(textBoxPreset.Text, out value))
-            {
-                if (value != iConfiguration.Preset)
-                {
-                    iConfiguration.Preset = value;
-                    iConfiguration.Save();
-                    InformListeners(PresetChanged);
-                }
-            }
-
-            string svalue = iConfiguration.Preset.ToString();
-
-            if (textBoxPreset.Text != svalue)
-            {
-                textBoxPreset.Text = svalue;
-            }
-        }
-
-        private void EventRadioButtonUnicastChecked(object sender, RoutedEventArgs e)
-        {
-            if (iConfiguration.Multicast)
-            {
-                iConfiguration.Multicast = false;
-                iConfiguration.Save();
-                InformListeners(MulticastChanged);
-            }
-        }
-
-        private void EventRadioButtonMulticastChecked(object sender, RoutedEventArgs e)
-        {
-            if (!iConfiguration.Multicast)
-            {
-                iConfiguration.Multicast = true;
-                iConfiguration.Save();
-                InformListeners(MulticastChanged);
-            }
+            Channel = (uint)(new Random().Next(65535) + 1);
         }
 
         private void EventComboBoxNetworkSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -173,18 +152,39 @@ namespace OpenHome.Soundcard
             }
         }
 
-        public Action DefaultAutoplayChanged;
         public Action SubnetChanged;
         public Action MulticastChanged;
-        public Action MulticastChannelChanged;
+        public Action ChannelChanged;
         public Action TtlChanged;
         public Action PresetChanged;
+
+        public string Version
+        {
+            get
+            {
+                return ("Version " + System.Windows.Forms.Application.ProductVersion);
+            }
+        }
 
         public uint Subnet
         {
             get
             {
                 return (iConfiguration.Subnet);
+            }
+            set
+            {
+                if (iConfiguration.Subnet != value)
+                {
+                    iConfiguration.Subnet = value;
+                    iConfiguration.Save();
+                    InformListeners(SubnetChanged);
+
+                    if (PropertyChanged != null)
+                    {
+                        PropertyChanged(this, new PropertyChangedEventArgs("Subnet"));
+                    }
+                }
             }
         }
 
@@ -194,13 +194,41 @@ namespace OpenHome.Soundcard
             {
                 return (iConfiguration.Multicast);
             }
+            set
+            {
+                if (iConfiguration.Multicast != value)
+                {
+                    iConfiguration.Multicast = value;
+                    iConfiguration.Save();
+                    InformListeners(MulticastChanged);
+
+                    if (PropertyChanged != null)
+                    {
+                        PropertyChanged(this, new PropertyChangedEventArgs("Multicast"));
+                    }
+                }
+            }
         }
 
-        public uint MulticastChannel
+        public uint Channel
         {
             get
             {
-                return (iConfiguration.MulticastChannel);
+                return (iConfiguration.Channel);
+            }
+            set
+            {
+                if (iConfiguration.Channel != value)
+                {
+                    iConfiguration.Channel = value;
+                    iConfiguration.Save();
+                    InformListeners(ChannelChanged);
+
+                    if (PropertyChanged != null)
+                    {
+                        PropertyChanged(this, new PropertyChangedEventArgs("Channel"));
+                    }
+                }
             }
         }
 
@@ -210,6 +238,20 @@ namespace OpenHome.Soundcard
             {
                 return (iConfiguration.Ttl);
             }
+            set
+            {
+                if (iConfiguration.Ttl != value)
+                {
+                    iConfiguration.Ttl = value;
+                    iConfiguration.Save();
+                    InformListeners(TtlChanged);
+
+                    if (PropertyChanged != null)
+                    {
+                        PropertyChanged(this, new PropertyChangedEventArgs("Ttl"));
+                    }
+                }
+            }
         }
 
         public uint Preset
@@ -218,6 +260,20 @@ namespace OpenHome.Soundcard
             {
                 return (iConfiguration.Preset);
             }
+            set
+            {
+                if (iConfiguration.Preset != value)
+                {
+                    iConfiguration.Preset = value;
+                    iConfiguration.Save();
+                    InformListeners(PresetChanged);
+
+                    if (PropertyChanged != null)
+                    {
+                        PropertyChanged(this, new PropertyChangedEventArgs("Preset"));
+                    }
+                }
+            }
         }
 
         public bool Enabled
@@ -225,14 +281,6 @@ namespace OpenHome.Soundcard
             get
             {
                 return (iConfiguration.Enabled);
-            }
-            set
-            {
-                if (iConfiguration.Enabled != value)
-                {
-                    iConfiguration.Enabled = value;
-                    iConfiguration.Save();
-                }
             }
         }
     }

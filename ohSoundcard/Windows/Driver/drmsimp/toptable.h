@@ -119,12 +119,14 @@ PKSJACK_DESCRIPTION JackDescriptions[] =
 static
 PCPROPERTY_ITEM PropertiesMute[] =
 {
+/*
   {
     &KSPROPSETID_Audio,
     KSPROPERTY_AUDIO_MUTE,
     KSPROPERTY_TYPE_GET | KSPROPERTY_TYPE_SET | KSPROPERTY_TYPE_BASICSUPPORT,
     PropertyHandler_Topology
   },
+*/
   {
     &KSPROPSETID_Audio,
     KSPROPERTY_AUDIO_CPU_RESOURCES,

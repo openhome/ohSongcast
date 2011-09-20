@@ -271,11 +271,11 @@
                     <Path Stretch="Fill" Fill="#416DCD" Data="M 2400,3650L 2500,3650C 2520,3650 2520,3630 2510,3620C 2489,3599 2480,3620 2480,3620C 2480,3600 2470,3580 2440,3580C 2398.82,3580 2410,3620 2410,3620C 2400,3600 2370,3600 2370,3630C 2370,3640 2380,3650 2400,3650 Z " Height="70" Width="146.569" Canvas.Left="174" Canvas.Top="10" />
                     <Rectangle Stretch="Fill" StrokeThickness="40" StrokeLineJoin="Round" Stroke="#416DCD" Height="119.999" Width="120" Canvas.Left="64" Canvas.Top="220" />
                 </Canvas>
-                <TextBlock TextAlignment="Left" FontFamily="Arial Black" FontWeight="Bold" FontSize="22" Canvas.Left="70" Canvas.Top="51" Text="Soundcard" />
-                <ToggleButton x:Name="Help" Canvas.Left="262" Canvas.Top="32" Height="40" IsChecked="False" Template="{DynamicResource ButtonControlTemplateHelp}" Width="40" />
+                <TextBlock TextAlignment="Left" FontFamily="Arial Black" FontWeight="Bold" FontSize="22" Canvas.Left="70" Canvas.Top="51" Text="Songcaster" />
+                <!--<ToggleButton x:Name="Help" Canvas.Left="262" Canvas.Top="32" Height="40" IsChecked="False" Template="{DynamicResource ButtonControlTemplateHelp}" Width="40" />-->
                 <ToggleButton x:Name="Settings" Canvas.Left="309" Canvas.Top="32" Height="40" Width="40" IsChecked="False" Template="{DynamicResource ButtonControlTemplateSettings}" />
                 <ToggleButton x:Name="Receivers" Canvas.Left="355" Canvas.Top="32" Height="40" Width="40" IsChecked="False" Template="{DynamicResource ButtonControlTemplateReceivers}" />
-                <ToggleButton x:Name="Power" Canvas.Left="400" Canvas.Top="32" Height="40" Width="40" IsChecked="False" Template="{DynamicResource ButtonControlTemplatePower}" />
+                <ToggleButton Canvas.Left="400" Canvas.Top="32" Height="40" Width="40" IsChecked="{Binding Path=Enabled}" Template="{DynamicResource ButtonControlTemplatePower}" />
             </Canvas>
         </Border>
     </Canvas>

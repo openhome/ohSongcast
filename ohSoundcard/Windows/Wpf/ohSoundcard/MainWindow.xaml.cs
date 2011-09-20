@@ -28,8 +28,9 @@ namespace OpenHome.Soundcard
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window, IRefreshHandler
+    public partial class MainWindow : Window, IRefreshHandler, IConfigurationChangedHandler, INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
 
         private ExtendedNotifyIcon iExtendedNotifyIcon; // global class scope for the icon as it needs to exist foer the lifetime of the window
         private Storyboard iStoryBoardFadeIn;
@@ -43,6 +44,8 @@ namespace OpenHome.Soundcard
         public MainWindow()
         {
             InitializeComponent();
+
+            this.DataContext = this;
 
             iExtendedNotifyIcon = new ExtendedNotifyIcon(Properties.Resources.Icon);
             iExtendedNotifyIcon.Click += EventNotifyIconClick;
@@ -80,7 +83,7 @@ namespace OpenHome.Soundcard
 
             try
             {
-                iSoundcard = new Soundcard("av.openhome.org", iConfigurationWindow.Subnet, iConfigurationWindow.MulticastChannel, iConfigurationWindow.Ttl, iConfigurationWindow.Multicast, iConfigurationWindow.Enabled, iConfigurationWindow.Preset, iMediaPlayerWindow.ReceiverList, iConfigurationWindow.SubnetList, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+                iSoundcard = new Soundcard("av.openhome.org", iConfigurationWindow.Subnet, iConfigurationWindow.Channel, iConfigurationWindow.Ttl, iConfigurationWindow.Multicast, iConfigurationWindow.Enabled, iConfigurationWindow.Preset, iMediaPlayerWindow.ReceiverList, iConfigurationWindow.SubnetList, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
             }
             catch (SoundcardError e)
             {
@@ -90,23 +93,61 @@ namespace OpenHome.Soundcard
 
             iConfigurationWindow.SubnetChanged += EventSubnetChanged;
             iConfigurationWindow.MulticastChanged += EventMulticastChanged;
-            iConfigurationWindow.MulticastChannelChanged += EventMulticastChannelChanged;
+            iConfigurationWindow.ChannelChanged += EventMulticastChannelChanged;
             iConfigurationWindow.TtlChanged += EventTtlChanged;
             iConfigurationWindow.PresetChanged += EventPresetChanged;
 
             bool value = iConfigurationWindow.Enabled;
 
-            Power.IsChecked = value;
-
             iMediaPlayerWindow.SetEnabled(value);
 
-            Power.Click += new RoutedEventHandler(EventPowerClick);
             Settings.Click += new RoutedEventHandler(EventSettingsClick);
             Receivers.Click += new RoutedEventHandler(EventReceiversClick);
 
             this.Topmost = true;
             iConfigurationWindow.Topmost = true;
             iMediaPlayerWindow.Topmost = true;
+        }
+
+        public bool Enabled
+        {
+            get
+            {
+                return (iConfigurationWindow.Enabled);
+            }
+            set
+            {
+                iSoundcard.SetEnabled(value);
+                iMediaPlayerWindow.SetEnabled(value);
+            }
+        }
+
+        public void ConfigurationChanged(IConfiguration aConfiguration)
+        {
+            Dispatcher.BeginInvoke(new Action(SafeConfigurationChanged));
+        }
+
+        public void SafeConfigurationChanged()
+        {
+            bool enabledChanged = false;
+
+            if (iConfigurationWindow.Enabled != iSoundcard.Enabled())
+            {
+                enabledChanged = true;
+            }
+
+            iConfigurationWindow.ConfigurationChanged(iSoundcard);
+
+            iMediaPlayerWindow.SetEnabled(iConfigurationWindow.Enabled);
+
+            if (enabledChanged)
+            {
+                if (PropertyChanged != null)
+                {
+                    PropertyChanged(this, new PropertyChangedEventArgs("Enabled"));
+                }
+            }
+
         }
 
         public void Refresh()
@@ -123,12 +164,11 @@ namespace OpenHome.Soundcard
         private void EventMulticastChanged()
         {
             iSoundcard.SetMulticast(iConfigurationWindow.Multicast);
-
         }
 
         private void EventMulticastChannelChanged()
         {
-            iSoundcard.SetChannel(iConfigurationWindow.MulticastChannel);
+            iSoundcard.SetChannel(iConfigurationWindow.Channel);
         }
 
         private void EventTtlChanged()
@@ -144,14 +184,6 @@ namespace OpenHome.Soundcard
         private void EventContextMenuExit(object sender, EventArgs e)
         {
             this.Close();
-        }
-
-        private void EventPowerClick(object sender, RoutedEventArgs e)
-        {
-            bool value = Power.IsChecked.Value;
-            iConfigurationWindow.Enabled = value;
-            iSoundcard.SetEnabled(value);
-            iMediaPlayerWindow.SetEnabled(value);
         }
 
         private void EventSettingsClick(object sender, RoutedEventArgs e)

@@ -327,7 +327,37 @@ typedef struct
 void CSocketOhm::SetTtl(ULONG aValue)
 {
     UNREFERENCED_PARAMETER(aValue);
+
+	PIRP irp;
+
+	// Allocate an IRP
+
+	irp = IoAllocateIrp(1, FALSE);
+
+	// Check result
+
+	if (irp == NULL)
+	{
+        return;
+    }
+
+	IoSetCompletionRoutine(irp,	SetTtlComplete, NULL, TRUE, TRUE, TRUE);
+
+	SIZE_T returned;
+
+	((PWSK_PROVIDER_BASIC_DISPATCH)(iSocket->Dispatch))->WskControlSocket(iSocket, WskSetOption, IP_MULTICAST_TTL, IPPROTO_IP, 1, &aValue, 0, NULL, &returned, irp);
 }
+
+NTSTATUS CSocketOhm::SetTtlComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext)
+{
+    UNREFERENCED_PARAMETER(aDeviceObject);
+    UNREFERENCED_PARAMETER(aContext);
+
+	IoFreeIrp(aIrp);
+
+	return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
 
 /*
 void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels)
@@ -396,7 +426,7 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 
 	// Fill in multipus header
 
-	UCHAR flags = 6; // lossless + timestamped 
+	UCHAR flags = 2; // lossless, not timestamped 
 
 	if (aHalt != 0)
 	{

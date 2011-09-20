@@ -135,6 +135,7 @@ private:
 	static IO_COMPLETION_ROUTINE InitialiseComplete;
 	static IO_COMPLETION_ROUTINE SendComplete;
 	static IO_COMPLETION_ROUTINE CloseComplete;
+	static IO_COMPLETION_ROUTINE SetTtlComplete;
 
 	void SendPacket(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, ULONG aSampleRate, ULONG aBitDepth, ULONG aChannels);
 	static void CopyAudio(UCHAR* aDestination, UCHAR* aSource, ULONG aBytes, ULONG aBitDepth);

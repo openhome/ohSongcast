@@ -945,16 +945,8 @@ Return Value:
     {
         switch(NewState)
         {
-            case KSSTATE_PAUSE:
-            {
-                DPF(D_TERSE, ("KSSTATE_PAUSE"));
-
-                m_fDmaActive = FALSE;
-            }
-            break;
-
             case KSSTATE_RUN:
-            {
+				{
                 DPF(D_TERSE, ("KSSTATE_RUN"));
 
                 // Set the timer for DPC.
@@ -973,26 +965,39 @@ Return Value:
                 (
                     m_pTimer,
                     delay,
-                    0,
+                    10L,
                     m_pDpc
                 );
-            }
-            break;
+	
+				break;
+				}
 
-        case KSSTATE_STOP:
+            case KSSTATE_PAUSE:
 
-            DPF(D_TERSE, ("KSSTATE_STOP"));
+				DPF(D_TERSE, ("KSSTATE_PAUSE"));
 
-            KeCancelTimer( m_pTimer );
+				KeCancelTimer( m_pTimer );
 
-            m_fDmaActive                      = FALSE;
-            m_ulDmaPosition                   = 0;
-            m_ullElapsedTimeCarryForward      = 0;
-            m_ulByteDisplacementCarryForward  = 0;
+                m_fDmaActive = FALSE;
 
-			MpusStop();
+				MpusStop();
 
-            break;
+	            break;
+
+			case KSSTATE_STOP:
+
+				DPF(D_TERSE, ("KSSTATE_STOP"));
+
+				KeCancelTimer( m_pTimer );
+
+				m_fDmaActive                      = FALSE;
+				m_ulDmaPosition                   = 0;
+				m_ullElapsedTimeCarryForward      = 0;
+				m_ulByteDisplacementCarryForward  = 0;
+
+				MpusStop();
+
+				break;
         }
 
         m_ksState = NewState;
@@ -1070,11 +1075,11 @@ Return Value:
     UNREFERENCED_PARAMETER(SA1);
     UNREFERENCED_PARAMETER(SA2);
 
-    PCMiniportWaveCyclicStreamMSVAD pStream =
-        (PCMiniportWaveCyclicStreamMSVAD) DeferredContext;
+    PCMiniportWaveCyclicStreamMSVAD pStream = (PCMiniportWaveCyclicStreamMSVAD) DeferredContext;
 
     if (pStream && pStream->m_pMiniport && pStream->m_pMiniport->m_Port)
     {
+		/*
         pStream->m_ullTimerExpiry = pStream->m_ullTimerExpiry + 100000LL;
 
 		ULONGLONG expire = pStream->m_ullTimerExpiry;
@@ -1091,8 +1096,9 @@ Return Value:
             0,
             pStream->m_pDpc
         );
+		*/
 
-		 pStream->m_pMiniport->m_Port->Notify(pStream->m_pMiniport->m_ServiceGroup);
+		pStream->m_pMiniport->m_Port->Notify(pStream->m_pMiniport->m_ServiceGroup);
     }
 } // TimerNotify
 
