@@ -311,7 +311,7 @@ void OhmSenderDriverMac::Driver::SetTtl(TUint aValue)
 
 // Platform specific parts of the C interface
 
-THandle SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, void* aSubnetPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
+THandle SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
 {
     // get the computer name
     struct utsname name;
