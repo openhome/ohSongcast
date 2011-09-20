@@ -9,6 +9,7 @@ extern void ReceiverListCallback(void* aPtr, ECallbackType aType, THandle aRecei
 
 // Forward declarations of callback functions defined below
 void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
+void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
 
 
 
@@ -68,7 +69,7 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
     uint32_t ttl = 4;
     uint32_t multicast = 0;
     uint32_t preset = 0;
-    iSoundcard = SoundcardCreate("av.openhome.org", subnet, channel, ttl, multicast, iEnabled ? 1 : 0, preset, ReceiverListCallback, iReceiverList, ModelSubnetCallback, self, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+    iSoundcard = SoundcardCreate("av.openhome.org", subnet, channel, ttl, multicast, iEnabled ? 1 : 0, preset, ReceiverListCallback, iReceiverList, ModelSubnetCallback, self, ModelConfigurationChangedCallback, self, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
 }
 
 
@@ -344,6 +345,11 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
 {
 }
+
+void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard)
+{
+}
+
 
 
 
