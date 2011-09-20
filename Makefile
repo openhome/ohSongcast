@@ -61,28 +61,28 @@ make_obj_dir :
 clean :
 	rm -rf $(objdir)
 
-all : all_common $(objdir)$(dllprefix)ohSoundcard.$(dllext) $(objdir)TestSoundcard.$(exeext)
+all : all_common $(objdir)$(dllprefix)ohSongcaster.$(dllext) $(objdir)TestSoundcard.$(exeext)
 
 
 ifeq ($(MACHINE), Darwin)
 objects_soundcard_os = $(objdir)SoundcardDriver.$(objext)
 
-$(objdir)SoundcardDriver.$(objext) : ohSoundcard/Mac/SoundcardDriver.cpp
-	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSoundcard/Mac/SoundcardDriver.cpp
+$(objdir)SoundcardDriver.$(objext) : ohSongcaster/Mac/SoundcardDriver.cpp
+	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcaster/Mac/SoundcardDriver.cpp
 else
 objects_soundcard_os = $(objdir)SoundcardDriver.$(objext)
 
-$(objdir)SoundcardDriver.$(objext) : ohSoundcard/Posix/SoundcardDriver.cpp
-	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSoundcard/Posix/SoundcardDriver.cpp
+$(objdir)SoundcardDriver.$(objext) : ohSongcaster/Posix/SoundcardDriver.cpp
+	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcaster/Posix/SoundcardDriver.cpp
 endif
 
 
-$(objdir)$(dllprefix)ohSoundcard.$(dllext) : $(objects_songcast) $(objects_soundcard) $(objects_soundcard_os)
-	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSoundcard.$(dllext) $(objects_topology) $(objects_songcast) $(objects_soundcard) $(objects_soundcard_os) $(ohnetdir)$(libprefix)ohNetCore.$(libext)
+$(objdir)$(dllprefix)ohSongcaster.$(dllext) : $(objects_songcast) $(objects_soundcard) $(objects_soundcard_os)
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcaster.$(dllext) $(objects_topology) $(objects_songcast) $(objects_soundcard) $(objects_soundcard_os) $(ohnetdir)$(libprefix)ohNetCore.$(libext)
 
 
-$(objdir)TestSoundcard.$(exeext) : $(objdir)$(dllprefix)ohSoundcard.$(dllext) ohSoundcard/TestSoundcard.cpp
-	$(compiler)TestSoundcard.$(objext) -c $(cflags) $(includes) ohSoundcard/TestSoundcard.cpp
-	$(link) $(linkoutput)$(objdir)TestSoundcard.$(exeext) $(objdir)TestSoundcard.$(objext) $(objdir)$(dllprefix)ohSoundcard.$(dllext)
+$(objdir)TestSoundcard.$(exeext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster/TestSoundcard.cpp
+	$(compiler)TestSoundcard.$(objext) -c $(cflags) $(includes) ohSongcaster/TestSoundcard.cpp
+	$(link) $(linkoutput)$(objdir)TestSoundcard.$(exeext) $(objdir)TestSoundcard.$(objext) $(objdir)$(dllprefix)ohSongcaster.$(dllext)
 
 

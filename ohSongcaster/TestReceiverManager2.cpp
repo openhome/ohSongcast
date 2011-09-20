@@ -11,7 +11,7 @@
 #include <vector>
 #include <stdio.h>
 
-#include "ReceiverManager3.h"
+#include "ReceiverManager2.h"
 
 
 #ifdef _WIN32
@@ -24,16 +24,16 @@
 namespace OpenHome {
 namespace Net {
 
-	class ReceiverManager3Logger : IReceiverManager3Handler
+	class ReceiverManager2Logger : IReceiverManager2Handler
 	{
 	public:
-		ReceiverManager3Logger(const Brx& aUri);
-		virtual void ReceiverAdded(ReceiverManager3Receiver& aReceiver);
-		virtual void ReceiverChanged(ReceiverManager3Receiver& aReceiver);
-		virtual void ReceiverRemoved(ReceiverManager3Receiver& aReceiver);
-		~ReceiverManager3Logger();
+		ReceiverManager2Logger();
+		virtual void ReceiverAdded(ReceiverManager2Receiver& aReceiver);
+		virtual void ReceiverChanged(ReceiverManager2Receiver& aReceiver);
+		virtual void ReceiverRemoved(ReceiverManager2Receiver& aReceiver);
+		~ReceiverManager2Logger();
 	private:
-		ReceiverManager3* iReceiverManager;
+		ReceiverManager2* iReceiverManager;
 	};
 
 } // namespace Net
@@ -43,65 +43,63 @@ using namespace OpenHome;
 using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
 
-// ohz://239.255.255.250:51972/0026-0f21-88aa
-
-ReceiverManager3Logger::ReceiverManager3Logger(const Brx& aValue)
+ReceiverManager2Logger::ReceiverManager2Logger()
 {
-	iReceiverManager = new ReceiverManager3(*this, aValue, Brx::Empty());
+	iReceiverManager = new ReceiverManager2(*this);
 }
 
-ReceiverManager3Logger::~ReceiverManager3Logger()
+ReceiverManager2Logger::~ReceiverManager2Logger()
 {
 	delete (iReceiverManager);
 }
 
-void ReceiverManager3Logger::ReceiverAdded(ReceiverManager3Receiver& aReceiver)
+void ReceiverManager2Logger::ReceiverAdded(ReceiverManager2Receiver& aReceiver)
 {
     Print("Added   ");
     Print(aReceiver.Room());
     Print("(");
     Print(aReceiver.Group());
-    Print(") ");
-
-	switch(aReceiver.Status()) {
-	case ReceiverManager3Receiver::eDisconnected:
-		Print("Disconnected");
-		break;
-	case ReceiverManager3Receiver::eConnecting:
-		Print("Connecting");
-		break;
-	case ReceiverManager3Receiver::eConnected:
-		Print("Connected");
-		break;
+    Print(")");
+	if (aReceiver.Selected()) {
+		Print(" Selected ");
 	}
-
-	Print("\n");
+	else {
+		Print(" Not Selected ");
+	}
+	Bws<10000> state;
+	aReceiver.TransportState(state);
+	Print(state);
+    Print(" ");
+	Bws<10000> uri;
+	aReceiver.SenderUri(uri);
+	Print(uri);
+    Print("\n");
 }
 
-void ReceiverManager3Logger::ReceiverChanged(ReceiverManager3Receiver& aReceiver)
+void ReceiverManager2Logger::ReceiverChanged(ReceiverManager2Receiver& aReceiver)
 {
     Print("Changed ");
     Print(aReceiver.Room());
     Print("(");
     Print(aReceiver.Group());
-    Print(") ");
-
-	switch(aReceiver.Status()) {
-	case ReceiverManager3Receiver::eDisconnected:
-		Print("Disconnected");
-		break;
-	case ReceiverManager3Receiver::eConnecting:
-		Print("Connecting");
-		break;
-	case ReceiverManager3Receiver::eConnected:
-		Print("Connected");
-		break;
+    Print(")");
+	if (aReceiver.Selected()) {
+		Print(" Selected ");
 	}
-
+	else {
+		Print(" Not Selected ");
+	}
+	Bws<10000> state;
+	aReceiver.TransportState(state);
+	Print(state);
+    Print(" ");
+	Bws<10000> uri;
+	aReceiver.SenderUri(uri);
+	Print(uri);
     Print("\n");
 }
 
-void ReceiverManager3Logger::ReceiverRemoved(ReceiverManager3Receiver& aReceiver)
+void ReceiverManager2Logger::ReceiverRemoved(ReceiverManager2Receiver& aReceiver)
 {
     Print("Removed ");
     Print(aReceiver.Room());
@@ -121,11 +119,7 @@ int CDECL main(int aArgc, char* aArgv[])
 
     parser.AddOption(&optionDuration);
     
-    OptionString optionUri("-u", "--uri", Brx::Empty(), "Uri to monitor");
-
-    parser.AddOption(&optionUri);
-
-	if (!parser.Parse(aArgc, aArgv)) {
+    if (!parser.Parse(aArgc, aArgv)) {
         return (1);
     }
 
@@ -135,14 +129,13 @@ int CDECL main(int aArgc, char* aArgv[])
     UpnpLibrary::DestroySubnetList(subnetList);
     UpnpLibrary::StartCp(subnet);
 
-    Debug::SetLevel(Debug::kTopology);
+    // Debug::SetLevel(Debug::kTopology);
 
-	ReceiverManager3Logger* logger = new ReceiverManager3Logger(optionUri.Value());
+	ReceiverManager2Logger* logger = new ReceiverManager2Logger();
 	
     Blocker* blocker = new Blocker;
     blocker->Wait(optionDuration.Value());
-
-	delete blocker;
+    delete blocker;
 	
 	delete (logger);
 
