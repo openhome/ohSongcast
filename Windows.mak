@@ -45,7 +45,7 @@ rmdir = Scripts\rmdir.bat
 uset4 = no
 
 
-all: $(objdir)$(dllprefix)ohSoundcard.$(dllext) $(objdir)TestSoundcard.$(exeext) $(objdir)TestSoundcardCs.$(exeext) $(objdir)/Install32.$(exeext) all_common
+all: $(objdir)$(dllprefix)ohSongcaster.$(dllext) $(objdir)$(dllprefix)ohSongcaster.net.$(dllext) $(objdir)TestSongcaster.$(exeext) $(objdir)TestSongcasterCs.$(exeext) all_common
 
 
 # Include rules to build platform independent code
@@ -62,47 +62,23 @@ clean:
 	del /S /Q $(objdirbare)
 
 
-$(objdir)$(dllprefix)ohSoundcard.$(dllext) : $(objects_songcast) $(objects_soundcard) ohSoundcard\Windows\SoundcardDriver.cpp
-	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSoundcard\Windows\SoundcardDriver.cpp
-	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSoundcard.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_songcast) $(objects_soundcard) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
+$(objdir)$(dllprefix)ohSongcaster.$(dllext) : $(objects_songcast) $(objects_soundcard) ohSongcaster\Windows\SoundcardDriver.cpp
+	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcaster\Windows\SoundcardDriver.cpp
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcaster.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_songcast) $(objects_soundcard) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
 
-$(objdir)$(dllprefix)ohSoundcard.net.$(dllext) : $(objdir)$(dllprefix)ohSoundcard.$(dllext) ohSoundcard\Windows\Soundcard.cs
+$(objdir)$(dllprefix)ohSongcaster.net.$(dllext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster\Windows\Soundcard.cs
 	$(csharp) /unsafe /t:library \
-		/out:$(objdir)$(dllprefix)ohSoundcard.net.$(dllext) \
-		ohSoundcard\Windows\Soundcard.cs
+		/out:$(objdir)$(dllprefix)ohSongcaster.net.$(dllext) \
+		ohSongcaster\Windows\Soundcard.cs
 
-$(objdir)ohSoundcard.$(exeext) : $(objdir)$(dllprefix)ohSoundcard.net.$(dllext) ohSoundcard\Windows\Wpf\ohSoundcard\ReceiverList.cs ohSoundcard\Windows\Wpf\ohSoundcard\ExtendedNotifyIcon.cs ohSoundcard\Windows\Wpf\ohSoundcard\App.xaml.cs ohSoundcard\Windows\Wpf\ohSoundcard\MainWindow.xaml.cs
+$(objdir)TestSongcaster.$(exeext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster\TestSongcaster.cpp
+	$(compiler)TestSongcaster.$(objext) -c $(cflags) $(includes) ohSongcaster\TestSongcaster.cpp
+	$(link) $(linkoutput)$(objdir)TestSongcaster.$(exeext) $(objdir)ohSongcaster.$(libext) $(objdir)TestSongcaster.$(objext) 
+
+$(objdir)TestSongcasterCs.$(exeext) : $(objdir)$(dllprefix)ohSongcaster.net.$(dllext) ohSongcaster\Windows\TestSongcasterCs.cs
 	$(csharp) /target:exe /debug+ \
-		/out:$(objdir)ohSoundcard.$(exeext) \
-		/reference:WindowsBase.dll \
-		/reference:PresentationCore.dll \
-		/reference:PresentationFramework.dll \
+		/out:$(objdir)TestSongcasterCs.$(exeext) \
 		/reference:System.dll \
 		/reference:System.Net.dll \
-		/reference:System.Core.dll \
-		/reference:System.Drawing.dll \
-		/reference:System.Windows.Forms.dll \
-		/reference:System.Xaml.dll \
-		/reference:$(objdir)$(dllprefix)ohSoundcard.net.$(dllext)  \
-		ohSoundcard\Windows\Wpf\ohSoundcard\ReceiverList.cs \
-		ohSoundcard\Windows\Wpf\ohSoundcard\ExtendedNotifyIcon.cs \
-		ohSoundcard\Windows\Wpf\ohSoundcard\App.xaml.cs \
-		ohSoundcard\Windows\Wpf\ohSoundcard\MainWindow.xaml.cs \
- 	
-$(objdir)TestSoundcard.$(exeext) : $(objdir)$(dllprefix)ohSoundcard.$(dllext) ohSoundcard\TestSoundcard.cpp
-	$(compiler)TestSoundcard.$(objext) -c $(cflags) $(includes) ohSoundcard\TestSoundcard.cpp
-	$(link) $(linkoutput)$(objdir)TestSoundcard.$(exeext) $(objdir)ohSoundcard.$(libext) $(objdir)TestSoundcard.$(objext) 
-
-$(objdir)TestSoundcardCs.$(exeext) : $(objdir)$(dllprefix)ohSoundcard.net.$(dllext) ohSoundcard\Windows\TestSoundcardCs.cs
-	$(csharp) /target:exe /debug+ \
-		/out:$(objdir)TestSoundcardCs.$(exeext) \
-		/reference:System.dll \
-		/reference:System.Net.dll \
-		/reference:$(objdir)$(dllprefix)ohSoundcard.net.$(dllext)  \
-		ohSoundcard\Windows\TestSoundcardCs.cs
-
-$(objdir)/Install32.$(exeext) : ohSoundcard/Windows/Install.cpp
-	$(compiler)/Install32.$(objext) -c $(cflags) $(includes) ohSoundcard/Windows/Install.cpp
-	$(link) $(linkoutput)$(objdir)/Install32.$(exeext) $(objdir)/Install32.$(objext) setupapi.lib
-	signtool sign /v /a /t http://timestamp.verisign.com/scripts/timestamp.dll $(objdir)/Install32.$(exeext)
-
+		/reference:$(objdir)$(dllprefix)ohSongcaster.net.$(dllext)  \
+		ohSongcaster\Windows\TestSongcasterCs.cs

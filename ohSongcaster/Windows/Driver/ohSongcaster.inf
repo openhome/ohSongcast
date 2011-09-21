@@ -1,8 +1,8 @@
 ; Module Name:
-;   ohSoundcard.inf
+;   ohSongcaster.inf
 ;
 ; Abstract:
-;    INF file for installing the ohSoundcard driver
+;    INF file for installing the ohSongcaster driver
 ;
 
 [Version]
@@ -10,16 +10,16 @@ Signature="$CHICAGO$"
 Class=MEDIA
 ClassGUID={4d36e96c-e325-11ce-bfc1-08002be10318}
 Provider=%OPENHOME%
-CatalogFile=ohSoundcard.cat
+CatalogFile=ohSongcaster.cat
 DriverVer=06/01/2011, 1.0.0000.1
-DriverPackageDisplayName=%OHSOUNDCARD.PackageDisplayName%
+DriverPackageDisplayName=%OHSONGCASTER.PackageDisplayName%
 DriverPackageType=PlugAndPlay
 
 [SourceDisksNames]
-222="ohSoundcard installation media","",222
+222="ohSongcaster installation media","",222
 
 [SourceDisksFiles]
-ohSoundcard.sys=222
+ohSongcaster.sys=222
 
 ;;This syntax is only recognized on Windows XP and above- it is needed to install 64-bit drivers on
 ;;Windows Server 2003 Service Pack 1 and above.
@@ -33,58 +33,58 @@ ohSoundcard.sys=222
 ;;  All of the model sections referred to are undecorated or NT-decorated, hence work on all platforms
 
 [OpenHome]
-%OHSOUNDCARD.DeviceDescription%=OHSOUNDCARD, av.openhome.org/songcaster
+%OHSONGCASTER.DeviceDescription%=OHSONGCASTER, av.openhome.org/songcaster
 
 ;; This section enables installing on x64 systems
 
 [OpenHome.NTAMD64]
-%OHSOUNDCARD.DeviceDescription%=OHSOUNDCARD, av.openhome.org/songcaster
+%OHSONGCASTER.DeviceDescription%=OHSONGCASTER, av.openhome.org/songcaster
 
 ;;  This section enables installing on Itanium systems
 
 [OpenHome.NTIA64]
-%OHSOUNDCARD.DeviceDescription%=OHSOUNDCARD, av.openhome.org/songcaster
+%OHSONGCASTER.DeviceDescription%=OHSONGCASTER, av.openhome.org/songcaster
 
 [DestinationDirs]
-OHSOUNDCARD.CopyList=10,system32\drivers
+OHSONGCASTER.CopyList=10,system32\drivers
 
 ;======================================================
-; OHSOUNDCARD
+; OHSONGCASTER
 ;======================================================
-[OHSOUNDCARD]
+[OHSONGCASTER]
 Include=ks.inf,wdmaudio.inf
 Needs=KS.Registration, WDMAUDIO.Registration
-CopyFiles=OHSOUNDCARD.CopyList
-AddReg=OHSOUNDCARD.AddReg
+CopyFiles=OHSONGCASTER.CopyList
+AddReg=OHSONGCASTER.AddReg
 
-[OHSOUNDCARD.Interfaces]
-AddInterface=%KSCATEGORY_AUDIO%,%KSNAME_Wave%,OHSOUNDCARD.I.Wave
-AddInterface=%KSCATEGORY_RENDER%,%KSNAME_Wave%,OHSOUNDCARD.I.Wave
-AddInterface=%KSCATEGORY_AUDIO%,%KSNAME_Topology%,OHSOUNDCARD.I.Topo
+[OHSONGCASTER.Interfaces]
+AddInterface=%KSCATEGORY_AUDIO%,%KSNAME_Wave%,OHSONGCASTER.I.Wave
+AddInterface=%KSCATEGORY_RENDER%,%KSNAME_Wave%,OHSONGCASTER.I.Wave
+AddInterface=%KSCATEGORY_AUDIO%,%KSNAME_Topology%,OHSONGCASTER.I.Topo
 
-[OHSOUNDCARD.Services]
-AddService=ohSoundcard,0x00000002,OHSOUNDCARD_Service_Inst
+[OHSONGCASTER.Services]
+AddService=ohSongcaster,0x00000002,OHSONGCASTER_Service_Inst
 
-[OHSOUNDCARD.NT]
+[OHSONGCASTER.NT]
 Include=ks.inf,wdmaudio.inf
 Needs=KS.Registration, WDMAUDIO.Registration
-CopyFiles=OHSOUNDCARD.CopyList
-AddReg=OHSOUNDCARD.AddReg
+CopyFiles=OHSONGCASTER.CopyList
+AddReg=OHSONGCASTER.AddReg
 
-[OHSOUNDCARD.NT.Interfaces]
-AddInterface=%KSCATEGORY_AUDIO%,%KSNAME_Wave%,OHSOUNDCARD.I.Wave
-AddInterface=%KSCATEGORY_RENDER%,%KSNAME_Wave%,OHSOUNDCARD.I.Wave
-AddInterface=%KSCATEGORY_AUDIO%,%KSNAME_Topology%,OHSOUNDCARD.I.Topo
+[OHSONGCASTER.NT.Interfaces]
+AddInterface=%KSCATEGORY_AUDIO%,%KSNAME_Wave%,OHSONGCASTER.I.Wave
+AddInterface=%KSCATEGORY_RENDER%,%KSNAME_Wave%,OHSONGCASTER.I.Wave
+AddInterface=%KSCATEGORY_AUDIO%,%KSNAME_Topology%,OHSONGCASTER.I.Topo
 
-[OHSOUNDCARD.NT.Services]
-AddService=ohSoundcard,0x00000002,OHSOUNDCARD_Service_Inst
+[OHSONGCASTER.NT.Services]
+AddService=ohSongcaster,0x00000002,OHSONGCASTER_Service_Inst
 
-[OHSOUNDCARD.CopyList]
-ohSoundcard.sys
+[OHSONGCASTER.CopyList]
+ohSongcaster.sys
 
-[OHSOUNDCARD.AddReg]
+[OHSONGCASTER.AddReg]
 HKR,,AssociatedFilters,,"wdmaud,swmidi,redbook"
-HKR,,Driver,,ohSoundcard.sys
+HKR,,Driver,,ohSongcaster.sys
 
 HKR,Drivers,SubClasses,,"wave,midi,mixer"
 
@@ -94,42 +94,42 @@ HKR,Drivers\wave\wdmaud.drv,Driver,,wdmaud.drv
 HKR,Drivers\midi\wdmaud.drv,Driver,,wdmaud.drv
 HKR,Drivers\mixer\wdmaud.drv,Driver,,wdmaud.drv
 
-HKR,Drivers\wave\wdmaud.drv,Description,,%OHSOUNDCARD.DeviceDescription%
-HKR,Drivers\midi\wdmaud.drv,Description,,%OHSOUNDCARD.DeviceDescription%
-HKR,Drivers\mixer\wdmaud.drv,Description,,%OHSOUNDCARD.DeviceDescription%
+HKR,Drivers\wave\wdmaud.drv,Description,,%OHSONGCASTER.DeviceDescription%
+HKR,Drivers\midi\wdmaud.drv,Description,,%OHSONGCASTER.DeviceDescription%
+HKR,Drivers\mixer\wdmaud.drv,Description,,%OHSONGCASTER.DeviceDescription%
 
-[OHSOUNDCARD.I.Wave]
-AddReg=OHSOUNDCARD.I.Wave.AddReg
+[OHSONGCASTER.I.Wave]
+AddReg=OHSONGCASTER.I.Wave.AddReg
 
 ; HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\DeviceClasses\{6994AD04-93EF-11D0-A3CC-00A0C9223196}\##?#ROOT#MEDIA#0000#{6994ad04-93ef-11d0-a3cc-00a0c9223196}
 
-[OHSOUNDCARD.I.Wave.AddReg]
+[OHSONGCASTER.I.Wave.AddReg]
 HKR,,CLSID,,%Proxy.CLSID%
-HKR,,FriendlyName,,%OHSOUNDCARD.Wave.szPname%
+HKR,,FriendlyName,,%OHSONGCASTER.Wave.szPname%
 
-[OHSOUNDCARD.I.Topo]
-AddReg=OHSOUNDCARD.I.Topo.AddReg
+[OHSONGCASTER.I.Topo]
+AddReg=OHSONGCASTER.I.Topo.AddReg
 
-[OHSOUNDCARD.I.Topo.AddReg]
+[OHSONGCASTER.I.Topo.AddReg]
 HKR,,CLSID,,%Proxy.CLSID%
-HKR,,FriendlyName,,%OHSOUNDCARD.Topo.szPname%
+HKR,,FriendlyName,,%OHSONGCASTER.Topo.szPname%
 
-[OHSOUNDCARD_Service_Inst]
-DisplayName=%OHSOUNDCARD.DeviceDescription%
+[OHSONGCASTER_Service_Inst]
+DisplayName=%OHSONGCASTER.DeviceDescription%
 ServiceType=1
 StartType=3
 ErrorControl=1
-ServiceBinary=%10%\system32\drivers\ohSoundcard.sys
+ServiceBinary=%10%\system32\drivers\ohSongcaster.sys
 
 ;======================================================
 ; COMMON
 ;======================================================
 [Strings]
 OPENHOME="OpenHome"
-OHSOUNDCARD.PackageDisplayName="OpenHome Songcaster"
-OHSOUNDCARD.DeviceDescription="OpenHome Songcaster"
-OHSOUNDCARD.Wave.szPname="OpenHome Songcaster Wave"
-OHSOUNDCARD.Topo.szPname="OpenHome Songcaster Topology"
+OHSONGCASTER.PackageDisplayName="OpenHome Songcaster"
+OHSONGCASTER.DeviceDescription="OpenHome Songcaster"
+OHSONGCASTER.Wave.szPname="OpenHome Songcaster Wave"
+OHSONGCASTER.Topo.szPname="OpenHome Songcaster Topology"
 
 Proxy.CLSID="{17CCA71B-ECD7-11D0-B908-00A0C9223196}"
 KSCATEGORY_AUDIO="{6994AD04-93EF-11D0-A3CC-00A0C9223196}"
