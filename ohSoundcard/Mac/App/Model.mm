@@ -337,6 +337,17 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
 }
 
 
+- (void) configurationChanged
+{
+    bool enabled = (SoundcardEnabled(iSoundcard) != 0);
+
+    if (enabled != [self enabled])
+    {
+        [self setEnabled:enabled];
+    }
+}
+
+
 @end
 
 
@@ -348,6 +359,8 @@ void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
 
 void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard)
 {
+    Model* model = (Model*)aPtr;
+    [model configurationChanged];
 }
 
 

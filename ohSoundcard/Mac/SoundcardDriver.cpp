@@ -21,6 +21,9 @@ class OhmSenderDriverMac : public IOhmSenderDriver
 {
 public:
     OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriverName);
+    virtual ~OhmSenderDriverMac();
+
+    void SetSoundcard(Soundcard& aSoundcard);
 
 private:
     // IOhmSenderDriver
@@ -32,10 +35,14 @@ private:
 
     static void DriverFound(void* aPtr, io_iterator_t aIterator);
     void DriverFound();
-    void FindAudioDevice();
+
+    static OSStatus DefaultDeviceChanged(AudioHardwarePropertyID aId, void* aPtr);
+    void DefaultDeviceChanged();
 
     AudioDeviceID iDeviceSoundcard;
     AudioDeviceID iDevicePrevious;
+
+    Soundcard* iSoundcard;
 
     io_service_t iService;
     io_iterator_t iNotification;
@@ -76,9 +83,118 @@ using namespace OpenHome;
 using namespace OpenHome::Net;
 
 
+// static class to wrap some of the messy audio hardware functions
+class AudioHardware
+{
+public:
+    static AudioDeviceID Device(const Brhz& aDeviceName)
+    {
+        // get list of all devices
+        AudioDeviceID deviceIds[MAX_AUDIO_DEVICES];
+        UInt32 deviceCount = MAX_AUDIO_DEVICES;
+
+        OSStatus err = DeviceList(deviceIds, deviceCount);
+        if (err != 0) {
+            return kAudioDeviceUnknown;
+        }
+
+        // search for device with the given name
+        CFStringRef deviceName = CFStringCreateWithCString(NULL, aDeviceName.CString(), kCFStringEncodingMacRoman);
+
+        AudioDeviceID found = kAudioDeviceUnknown;
+
+        for (UInt32 i=0 ; i<deviceCount ; i++)
+        {
+            CFStringRef name;
+            UInt32 propBytes = sizeof(CFStringRef);
+            err = AudioDeviceGetProperty(deviceIds[i], 0, false, kAudioObjectPropertyName, &propBytes, &name);
+
+            if (err == 0 && CFStringCompare(name, deviceName, 0) == kCFCompareEqualTo)
+            {
+                found = deviceIds[i];
+            }
+
+            CFRelease(name);
+
+            if (found != kAudioDeviceUnknown)
+                break;
+        }
+
+        CFRelease(deviceName);
+
+        return found;
+    }
+
+
+    static AudioDeviceID CurrentDevice()
+    {
+        UInt32 propBytes = sizeof(AudioDeviceID);
+        AudioDeviceID device;
+        OSStatus err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &propBytes, &device);
+        return (err == 0) ? device : kAudioDeviceUnknown;
+    }
+
+
+    static void SetCurrentDevice(AudioDeviceID aId)
+    {
+        UInt32 propBytes = sizeof(AudioDeviceID);
+        AudioHardwareSetProperty(kAudioHardwarePropertyDefaultOutputDevice, propBytes, &aId);
+    }
+
+
+    static AudioDeviceID FirstNonSoundcardDevice(AudioDeviceID aSoundcard)
+    {
+        // get list of all devices
+        AudioDeviceID deviceIds[MAX_AUDIO_DEVICES];
+        UInt32 deviceCount = MAX_AUDIO_DEVICES;
+
+        OSStatus err = DeviceList(deviceIds, deviceCount);
+        if (err != 0) {
+            return kAudioDeviceUnknown;
+        }
+
+        // look for the first output device that is not the soundcard
+        for (UInt32 i=0 ; i<deviceCount ; i++)
+        {
+            if (deviceIds[i] != aSoundcard)
+            {
+                UInt32 propBytes = 0;
+                OSStatus err = AudioDeviceGetPropertyInfo(deviceIds[i], 0, false, kAudioDevicePropertyStreams, &propBytes, 0);
+                if (err == 0 && propBytes > 0)
+                {
+                    return deviceIds[i];
+                }
+            }
+        }
+
+        return kAudioDeviceUnknown;
+    }
+
+private:
+
+    static OSStatus DeviceList(AudioDeviceID* aArray, UInt32& aCount)
+    {
+        UInt32 propBytes = aCount * sizeof(AudioDeviceID);
+
+        OSStatus ret = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &propBytes, aArray);
+
+        if (ret == 0) {
+            aCount = propBytes / sizeof(AudioDeviceID);
+        }
+
+        return ret;
+    }
+
+    static const int MAX_AUDIO_DEVICES = 32;
+};
+
+
+// OhmSenderDriverMac implementation
+
 OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriverName)
-    : iDeviceSoundcard(0)
-    , iDevicePrevious(0)
+    : iDeviceSoundcard(kAudioDeviceUnknown)
+    , iDevicePrevious(kAudioDeviceUnknown)
+    , iSoundcard(0)
     , iService(0)
     , iNotification(0)
     , iNotificationPort(0)
@@ -107,16 +223,44 @@ OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriver
         IOObjectRelease(obj);
     }
 
+    // register for notification of default device changes
+    AudioHardwareAddPropertyListener(kAudioHardwarePropertyDefaultOutputDevice, DefaultDeviceChanged, this);
+
     // find the service for the driver
     iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(iDriverClassName.CString()));
     if (iService != 0)
     {
-        FindAudioDevice();
+        iDeviceSoundcard = AudioHardware::Device(iDriverName);
 
-        // notification no longer required
+        if (iDeviceSoundcard != kAudioDeviceUnknown)
+        {
+            // notification not required
+            IONotificationPortDestroy(iNotificationPort);
+            iNotificationPort = 0;
+        }
+        else
+        {
+            // device not yet found
+            iService = 0;
+        }
+    }
+}
+
+OhmSenderDriverMac::~OhmSenderDriverMac()
+{
+    // stop notifications
+    AudioHardwareRemovePropertyListener(kAudioHardwarePropertyDefaultOutputDevice, DefaultDeviceChanged);
+
+    if (iNotificationPort)
+    {
         IONotificationPortDestroy(iNotificationPort);
         iNotificationPort = 0;
     }
+}
+
+void OhmSenderDriverMac::SetSoundcard(Soundcard& aSoundcard)
+{
+    iSoundcard = &aSoundcard;
 }
 
 void OhmSenderDriverMac::DriverFound(void* aPtr, io_iterator_t aIterator)
@@ -132,63 +276,41 @@ void OhmSenderDriverMac::DriverFound()
     // get the IOService for the driver
     iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(iDriverClassName.CString()));
 
-    try
+    // get the audio device for the soundcard
+    iDeviceSoundcard = AudioHardware::Device(iDriverName);
+
+    if (iDeviceSoundcard != kAudioDeviceUnknown)
     {
-        // lookup the AudioDevice for the driver
-        FindAudioDevice();
+        // set the state of the driver
+        SetEnabled(iEnabled);
+    
+        // notifications are no longer required
+        IONotificationPortDestroy(iNotificationPort);
+        iNotificationPort = 0;
     }
-    catch (SoundcardError)
+    else
     {
+        // device not found
         iService = 0;
-        return;
     }
-
-    // set the state of the driver
-    SetEnabled(iEnabled);
-
-    // notifications are no longer required
-    IONotificationPortDestroy(iNotificationPort);
-    iNotificationPort = 0;
 }
 
-void OhmSenderDriverMac::FindAudioDevice()
+OSStatus OhmSenderDriverMac::DefaultDeviceChanged(AudioHardwarePropertyID aId, void* aPtr)
 {
-    // get the list of audio devices
-    const int MAX_AUDIO_DEVICES = 32;
-    AudioDeviceID deviceIds[MAX_AUDIO_DEVICES];
-    UInt32 propBytes = MAX_AUDIO_DEVICES * sizeof(AudioDeviceID);
-    if (AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &propBytes, &deviceIds) != 0) {
-        THROW(SoundcardError);
-    }
-    UInt32 deviceCount = propBytes / sizeof(AudioDeviceID);
-
-
-    // look for the audio device
-    CFStringRef ohDriverName = CFStringCreateWithCString(NULL, iDriverName.CString(), kCFStringEncodingMacRoman);
-
-    bool found = false;
-    for (UInt32 i=0 ; i<deviceCount ; i++)
+    if (aId == kAudioHardwarePropertyDefaultOutputDevice)
     {
-        // get the name of the device
-        CFStringRef name;
-        propBytes = sizeof(CFStringRef);
-        AudioDeviceGetProperty(deviceIds[i], 0, false, kAudioObjectPropertyName, &propBytes, &name);
-
-        found = (CFStringCompare(name, ohDriverName, 0) == kCFCompareEqualTo);
-        CFRelease(name);
-
-        if (found)
-        {
-            iDeviceSoundcard = deviceIds[i];
-            break;
-        }
+        ((OhmSenderDriverMac*)aPtr)->DefaultDeviceChanged();
     }
+    return 0;
+}
 
-    // clean up
-    CFRelease(ohDriverName);
+void OhmSenderDriverMac::DefaultDeviceChanged()
+{
+    if (iDeviceSoundcard != kAudioDeviceUnknown)
+    {
+        AudioDeviceID current = AudioHardware::CurrentDevice();
 
-    if (!found) {
-        THROW(SoundcardError);
+        iSoundcard->SetEnabled(current == iDeviceSoundcard);
     }
 }
 
@@ -202,11 +324,16 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
     if (!iService)
         return;
 
-    UInt32 propBytes = sizeof(AudioDeviceID);
-
-    if (!iDriver && aValue)
+    if (aValue)
     {
-        // create the internal driver instance
+        // initialise the audio driver with the current state
+        if (iDriver)
+        {
+            iDriver->SetActive(false);
+            delete iDriver;
+            iDriver = 0;
+        }
+
         iDriver = new Driver(iService);
 
         // set the current state of the driver
@@ -214,21 +341,53 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
         iDriver->SetTtl(iTtl);
         iDriver->SetActive(iActive);
 
-        // change the current audio output device to be the soundcard driver
-        AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &propBytes, &iDevicePrevious);
-        AudioHardwareSetProperty(kAudioHardwarePropertyDefaultOutputDevice, propBytes, &iDeviceSoundcard);
+
+        // change the current audio output device to be the soundcard device
+        AudioDeviceID current = AudioHardware::CurrentDevice();
+
+        // change the current audio device only if it is not already set
+        if (current != iDeviceSoundcard)
+        {
+            iDevicePrevious = current;
+
+            AudioHardware::SetCurrentDevice(iDeviceSoundcard);
+        }
     }
-    else if (iDriver && !aValue)
+    else
     {
         // change the current audio output device to be what it was previously
-        AudioHardwareSetProperty(kAudioHardwarePropertyDefaultOutputDevice, propBytes, &iDevicePrevious);
+        AudioDeviceID current = AudioHardware::CurrentDevice();
 
-        // make sure the driver stops sending data
-        iDriver->SetActive(false);
+        if (current == iDeviceSoundcard)
+        {
+            if (iDevicePrevious != kAudioDeviceUnknown)
+            {
+                // reset the audio device to the previous value
+                AudioHardware::SetCurrentDevice(iDevicePrevious);
+            }
+            else
+            {
+                // the previous audio device was not stored
+                AudioDeviceID device = AudioHardware::FirstNonSoundcardDevice(iDeviceSoundcard);
 
-        // delete the internal driver instance
-        delete iDriver;
-        iDriver = 0;
+                if (device != kAudioDeviceUnknown)
+                {
+                    AudioHardware::SetCurrentDevice(device);
+                }
+            }
+        }
+
+
+        // make the driver inactive
+        if (iDriver)
+        {
+            // make sure the driver stops sending data
+            iDriver->SetActive(false);
+
+            // delete the internal driver instance
+            delete iDriver;
+            iDriver = 0;
+        }
     }
 }
 
@@ -359,6 +518,8 @@ THandle SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel
     }
 
     Soundcard* soundcard = new Soundcard(aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl);
+
+    driver->SetSoundcard(*soundcard);
 
 	return soundcard;
 }
