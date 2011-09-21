@@ -39,8 +39,9 @@ namespace OpenHome.Soundcard
     public enum EReceiverStatus
     {
         eDisconnected,
-        eConnecting,
-        eConnected
+        eStopped,
+        eBuffering,
+        ePlaying
     }
 
     public interface IReceiver

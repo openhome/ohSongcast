@@ -23,8 +23,9 @@ enum ECallbackType {
 
 enum EReceiverStatus {
 	eDisconnected,
-	eConnecting,
-	eConnected
+	eStopped,
+	eBuffering,
+	ePlaying
 };
 
 /**
