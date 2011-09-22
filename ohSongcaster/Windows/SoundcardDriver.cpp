@@ -1,5 +1,4 @@
 #include "SoundcardDriver.h"
-#include "../Soundcard.h"
 #include "PolicyConfig.h"
 
 #include <OpenHome/Private/Arch.h>
@@ -14,7 +13,7 @@
 #include <mmdeviceapi.h>
 #include <wchar.h>
 
-EXCEPTION(SoundcardError);
+EXCEPTION(SongcasterError);
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
@@ -24,17 +23,17 @@ DEFINE_GUID(OHSOUNDCARD_GUID, 0x2685C863, 0x5E57, 0x4D9A, 0x86, 0xEC, 0x2E, 0xC9
 
 // C interface
 
-THandle STDCALL SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
+THandle STDCALL SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
 {
 	try {
         printf("%s\n", aDomain);
         
         // get the computer name
-        Bws<Soundcard::kMaxUdnBytes> computer;
+        Bws<Songcaster::kMaxUdnBytes> computer;
         TUint bytes = computer.MaxBytes();
 
         if (!GetComputerName((LPSTR)computer.Ptr(), (LPDWORD)&bytes)) {
-            THROW(SoundcardError);
+            THROW(SongcasterError);
         }
         
         computer.SetBytes(bytes);
@@ -46,13 +45,13 @@ THandle STDCALL SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t 
         OhmSenderDriverWindows* driver = new OhmSenderDriverWindows(aDomain, aManufacturer, enabled);
 
         // create the soundcard
-		Soundcard* soundcard = new Soundcard(aSubnet, aChannel, aTtl, multicast, enabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl);
+		Songcaster* songcaster = new Songcaster(aSubnet, aChannel, aTtl, multicast, enabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl);
 
-		driver->SetSoundcard(*soundcard);
+		driver->SetSongcaster(*songcaster);
 
-		return (soundcard);
+		return (songcaster);
 	}
-	catch (SoundcardError)
+	catch (SongcasterError)
     {
 	}
 
@@ -70,15 +69,15 @@ static const TUint KSPROPERTY_OHSOUNDCARD_TTL = 4;
 OhmSenderDriverWindows::OhmSenderDriverWindows(const char* aDomain, const char* aManufacturer, TBool aEnabled)
 	: iEnabled(aEnabled)
 	, iRefCount(1)
-	, iSoundcard(NULL)
+	, iSongcaster(NULL)
 	, iDeviceEnumerator(NULL)
 {
 	if (!FindDriver(aDomain)) {
-		THROW(SoundcardError);
+		THROW(SongcasterError);
 	}
 
 	if (!FindEndpoint(aManufacturer)) {
-		THROW(SoundcardError);
+		THROW(SongcasterError);
 	}
 }
 
@@ -88,9 +87,9 @@ OhmSenderDriverWindows::~OhmSenderDriverWindows()
 	iDeviceEnumerator->Release();
 }
 
-void OhmSenderDriverWindows::SetSoundcard(Soundcard& aSoundcard)
+void OhmSenderDriverWindows::SetSongcaster(Songcaster& aSongcaster)
 {
-	iSoundcard = &aSoundcard;
+	iSongcaster = &aSongcaster;
 	iDeviceEnumerator->RegisterEndpointNotificationCallback(this);
 }
 
@@ -460,7 +459,7 @@ HRESULT STDCALL OhmSenderDriverWindows::OnDefaultDeviceChanged(EDataFlow aFlow, 
 {
 	if (aFlow == eRender && aRole == eMultimedia) {
 		TBool enabled = (wcscmp(iEndpointId, aDeviceId) == 0);
-		iSoundcard->SetEnabled(enabled);
+		iSongcaster->SetEnabled(enabled);
 	}
 
     return S_OK;
@@ -481,12 +480,12 @@ HRESULT STDCALL OhmSenderDriverWindows::OnDeviceStateChanged(LPCWSTR aDeviceId, 
 	if ((wcscmp(iEndpointId, aDeviceId) == 0)) {
 		switch (aNewState) {
 		case DEVICE_STATE_ACTIVE:
-			iSoundcard->SetEnabled(true);
+			iSongcaster->SetEnabled(true);
 			break;
 		case DEVICE_STATE_DISABLED:
 		case DEVICE_STATE_NOTPRESENT:
 		case DEVICE_STATE_UNPLUGGED:
-			iSoundcard->SetEnabled(false);
+			iSongcaster->SetEnabled(false);
 		default:
 			break;
 		}

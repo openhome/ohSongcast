@@ -2,3 +2,4 @@ cl /nologo /FoBuild/Obj/Install32.obj -c /W4 /WX /EHsc /Gd -DDEFINE_LITTLE_ENDIA
 link /nologo /SUBSYSTEM:CONSOLE /map Iphlpapi.lib /incremental:no /out:Build\Obj\Install32.exe Build\Obj\Install32.obj setupapi.lib
 copy Build\Obj\Install32.exe Build\Driver32\Install32.exe
 signtool sign /v /a /t http://timestamp.verisign.com/scripts/timestamp.dll Build\Driver32\Install32.exe
+copy Build\Obj\Install32.exe Build\Install32.exe

@@ -62,14 +62,14 @@ clean:
 	del /S /Q $(objdirbare)
 
 
-$(objdir)$(dllprefix)ohSongcaster.$(dllext) : $(objects_songcast) $(objects_soundcard) ohSongcaster\Windows\SoundcardDriver.cpp
+$(objdir)$(dllprefix)ohSongcaster.$(dllext) : $(objects_songcast) $(objects_songcaster) ohSongcaster\Windows\SoundcardDriver.cpp
 	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcaster\Windows\SoundcardDriver.cpp
-	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcaster.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_songcast) $(objects_soundcard) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcaster.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_songcast) $(objects_songcaster) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
 
-$(objdir)$(dllprefix)ohSongcaster.net.$(dllext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster\Windows\Soundcard.cs
+$(objdir)$(dllprefix)ohSongcaster.net.$(dllext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster\Windows\Songcaster.cs
 	$(csharp) /unsafe /t:library \
 		/out:$(objdir)$(dllprefix)ohSongcaster.net.$(dllext) \
-		ohSongcaster\Windows\Soundcard.cs
+		ohSongcaster\Windows\Songcaster.cs
 
 $(objdir)TestSongcaster.$(exeext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster\TestSongcaster.cpp
 	$(compiler)TestSongcaster.$(objext) -c $(cflags) $(includes) ohSongcaster\TestSongcaster.cpp

@@ -1,4 +1,4 @@
-#include "../Soundcard.h"
+#include "../Songcaster.h"
 #include "Driver/AudioDeviceInterface.h"
 
 #include <OpenHome/OhNetTypes.h>
@@ -470,7 +470,7 @@ void OhmSenderDriverMac::Driver::SetTtl(TUint aValue)
 
 // Platform specific parts of the C interface
 
-THandle SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
+THandle SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
 {
     // get the computer name
     struct utsname name;
@@ -517,11 +517,11 @@ THandle SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel
         return 0;
     }
 
-    Soundcard* soundcard = new Soundcard(aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl);
+    Songcaster* songcaster = new Songcaster(aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl);
 
-    driver->SetSoundcard(*soundcard);
+    driver->SetSoundcard(*songcaster);
 
-	return soundcard;
+	return songcaster;
 }
 
 

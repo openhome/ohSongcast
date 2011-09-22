@@ -10,7 +10,7 @@
 
 #include "../../Ohm.h"
 #include "../../OhmSender.h"
-#include "../Soundcard.h"
+#include "../Songcaster.h"
 
 
 namespace OpenHome {
@@ -20,7 +20,7 @@ class OhmSenderDriverWindows : public IOhmSenderDriver, public IMMNotificationCl
 {
 public:
 	OhmSenderDriverWindows(const char* aDomain, const char* aManufacturer, TBool aEnabled);
-	void SetSoundcard(Soundcard& aSoundcard);
+	void SetSongcaster(Songcaster& aSongcaster);
 	~OhmSenderDriverWindows();
 private:    
 	TBool FindDriver(const char* aDomain);
@@ -51,7 +51,7 @@ private:
 	WCHAR iEndpointId[100];
 	TBool iEnabled;
 	ULONG iRefCount;
-	Soundcard* iSoundcard;
+	Songcaster* iSongcaster;
 	IMMDeviceEnumerator* iDeviceEnumerator;
 };
 

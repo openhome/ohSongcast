@@ -1,4 +1,4 @@
-#include "Soundcard.h"
+#include "Songcaster.h"
 #include "Icon.h"
 
 #include <OpenHome/Private/Debug.h>
@@ -9,84 +9,84 @@ using namespace OpenHome::Net;
 
 // C interface
 
-uint32_t STDCALL SoundcardSubnet(THandle aSoundcard)
+uint32_t STDCALL SongcasterSubnet(THandle aSongcaster)
 {
-	return (((Soundcard*)aSoundcard)->GetSubnet());
+	return (((Songcaster*)aSongcaster)->GetSubnet());
 }
 
-uint32_t STDCALL SoundcardChannel(THandle aSoundcard)
+uint32_t STDCALL SongcasterChannel(THandle aSongcaster)
 {
-	return (((Soundcard*)aSoundcard)->GetChannel());
+	return (((Songcaster*)aSongcaster)->GetChannel());
 }
 
-uint32_t STDCALL SoundcardTtl(THandle aSoundcard)
+uint32_t STDCALL SongcasterTtl(THandle aSongcaster)
 {
-	return (((Soundcard*)aSoundcard)->GetTtl());
+	return (((Songcaster*)aSongcaster)->GetTtl());
 }
 
-uint32_t STDCALL SoundcardMulticast(THandle aSoundcard)
+uint32_t STDCALL SongcasterMulticast(THandle aSongcaster)
 {
-	return (((Soundcard*)aSoundcard)->GetMulticast() ? 1 : 0);
+	return (((Songcaster*)aSongcaster)->GetMulticast() ? 1 : 0);
 }
 
-uint32_t STDCALL SoundcardEnabled(THandle aSoundcard)
+uint32_t STDCALL SongcasterEnabled(THandle aSongcaster)
 {
-	return (((Soundcard*)aSoundcard)->GetEnabled() ? 1 : 0);
+	return (((Songcaster*)aSongcaster)->GetEnabled() ? 1 : 0);
 }
 
-uint32_t STDCALL SoundcardPreset(THandle aSoundcard)
+uint32_t STDCALL SongcasterPreset(THandle aSongcaster)
 {
-	return (((Soundcard*)aSoundcard)->GetPreset());
+	return (((Songcaster*)aSongcaster)->GetPreset());
 }
 
-void STDCALL SoundcardSetSubnet(THandle aSoundcard, uint32_t aValue)
+void STDCALL SongcasterSetSubnet(THandle aSongcaster, uint32_t aValue)
 {
-	((Soundcard*)aSoundcard)->SetSubnet(aValue);
+	((Songcaster*)aSongcaster)->SetSubnet(aValue);
 }
 
-void STDCALL SoundcardSetChannel(THandle aSoundcard, uint32_t aValue)
+void STDCALL SongcasterSetChannel(THandle aSongcaster, uint32_t aValue)
 {
-	((Soundcard*)aSoundcard)->SetChannel(aValue);
+	((Songcaster*)aSongcaster)->SetChannel(aValue);
 }
 
-void STDCALL SoundcardSetTtl(THandle aSoundcard, uint32_t aValue)
+void STDCALL SongcasterSetTtl(THandle aSongcaster, uint32_t aValue)
 {
-	((Soundcard*)aSoundcard)->SetTtl(aValue);
+	((Songcaster*)aSongcaster)->SetTtl(aValue);
 }
 
-void STDCALL SoundcardSetMulticast(THandle aSoundcard, uint32_t aValue)
+void STDCALL SongcasterSetMulticast(THandle aSongcaster, uint32_t aValue)
 {
-	((Soundcard*)aSoundcard)->SetMulticast((aValue == 0) ? false : true);
+	((Songcaster*)aSongcaster)->SetMulticast((aValue == 0) ? false : true);
 }
 
-void STDCALL SoundcardSetEnabled(THandle aSoundcard, uint32_t aValue)
+void STDCALL SongcasterSetEnabled(THandle aSongcaster, uint32_t aValue)
 {
-	((Soundcard*)aSoundcard)->SetEnabled((aValue == 0) ? false : true);
+	((Songcaster*)aSongcaster)->SetEnabled((aValue == 0) ? false : true);
 }
 
-void STDCALL SoundcardSetPreset(THandle aSoundcard, uint32_t aValue)
+void STDCALL SongcasterSetPreset(THandle aSongcaster, uint32_t aValue)
 {
-	((Soundcard*)aSoundcard)->SetPreset(aValue);
+	((Songcaster*)aSongcaster)->SetPreset(aValue);
 }
 
-void STDCALL SoundcardSetTrack(THandle aSoundcard, const char* aUri, const char* aMetadata, uint64_t aSamplesTotal, uint64_t aSampleStart)
+void STDCALL SongcasterSetTrack(THandle aSongcaster, const char* aUri, const char* aMetadata, uint64_t aSamplesTotal, uint64_t aSampleStart)
 {
-	((Soundcard*)aSoundcard)->SetTrack(aUri, aMetadata, aSamplesTotal, aSampleStart);
+	((Songcaster*)aSongcaster)->SetTrack(aUri, aMetadata, aSamplesTotal, aSampleStart);
 }
 
-void STDCALL SoundcardSetMetatext(THandle aSoundcard, const char* aValue)
+void STDCALL SongcasterSetMetatext(THandle aSongcaster, const char* aValue)
 {
-	((Soundcard*)aSoundcard)->SetMetatext(aValue);
+	((Songcaster*)aSongcaster)->SetMetatext(aValue);
 }
 
-void STDCALL SoundcardRefreshReceivers(THandle aSoundcard)
+void STDCALL SongcasterRefreshReceivers(THandle aSongcaster)
 {
-	((Soundcard*)aSoundcard)->RefreshReceivers();
+	((Songcaster*)aSongcaster)->RefreshReceivers();
 }
 
-void STDCALL SoundcardDestroy(THandle aSoundcard)
+void STDCALL SongcasterDestroy(THandle aSongcaster)
 {
-	delete ((Soundcard*)aSoundcard);
+	delete ((Songcaster*)aSongcaster);
 }
 
 const char* STDCALL ReceiverUdn(THandle aReceiver)
@@ -306,9 +306,9 @@ Subnet::~Subnet()
 	RemoveRef();
 }
     
-// Soundcard
+// Songcaster
 
-Soundcard::Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
+Songcaster::Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
 	: iSubnet(aSubnet)
 	, iChannel(aChannel)
 	, iTtl(aTtl)
@@ -348,7 +348,7 @@ Soundcard::Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMult
 
 	InitialisationParams* initParams = InitialisationParams::Create();
 
-	Functor callback = MakeFunctor(*this, &Soundcard::SubnetListChanged);
+	Functor callback = MakeFunctor(*this, &Songcaster::SubnetListChanged);
 
 	initParams->SetSubnetListChangedListener(callback);
 
@@ -393,7 +393,7 @@ Soundcard::Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMult
 // Don't bother removing old subnets - they might come back anyway, and there is not exactly
 // a huge traffic in added and removed network interfaces
 
-void Soundcard::SubnetListChanged()
+void Songcaster::SubnetListChanged()
 {
 	iMutex.Wait();
 
@@ -471,7 +471,7 @@ void Soundcard::SubnetListChanged()
 
 // return true if the current subnet was found in the list
 
-TBool Soundcard::UpdateAdapter()
+TBool Songcaster::UpdateAdapter()
 {
 	std::vector<Subnet*>::iterator it = iSubnetList.begin();
 
@@ -499,7 +499,7 @@ TBool Soundcard::UpdateAdapter()
 	return (false);
 }
 
-TIpAddress Soundcard::GetSubnet()
+TIpAddress Songcaster::GetSubnet()
 {
 	iMutex.Wait();
 	TIpAddress subnet = iSubnet;
@@ -507,7 +507,7 @@ TIpAddress Soundcard::GetSubnet()
 	return (subnet);
 }
 
-TUint Soundcard::GetChannel()
+TUint Songcaster::GetChannel()
 {
 	iMutex.Wait();
 	TUint channel = iChannel;
@@ -515,7 +515,7 @@ TUint Soundcard::GetChannel()
 	return (channel);
 }
 
-TUint Soundcard::GetTtl()
+TUint Songcaster::GetTtl()
 {
 	iMutex.Wait();
 	TUint ttl = iTtl;
@@ -523,7 +523,7 @@ TUint Soundcard::GetTtl()
 	return (ttl);
 }
 
-TBool Soundcard::GetMulticast()
+TBool Songcaster::GetMulticast()
 {
 	iMutex.Wait();
 	TBool multicast = iMulticast;
@@ -531,7 +531,7 @@ TBool Soundcard::GetMulticast()
 	return (multicast);
 }
 
-TBool Soundcard::GetEnabled()
+TBool Songcaster::GetEnabled()
 {
 	iMutex.Wait();
 	TBool enabled = iEnabled;
@@ -539,7 +539,7 @@ TBool Soundcard::GetEnabled()
 	return (enabled);
 }
 
-TUint Soundcard::GetPreset()
+TUint Songcaster::GetPreset()
 {
 	iMutex.Wait();
 	TUint preset = iPreset;
@@ -547,7 +547,7 @@ TUint Soundcard::GetPreset()
 	return (preset);
 }
 
-void Soundcard::SetSubnet(TIpAddress aValue)
+void Songcaster::SetSubnet(TIpAddress aValue)
 {
 	iMutex.Wait();
 
@@ -567,7 +567,7 @@ void Soundcard::SetSubnet(TIpAddress aValue)
 	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
-void Soundcard::SetChannel(TUint aValue)
+void Songcaster::SetChannel(TUint aValue)
 {
 	iMutex.Wait();
 
@@ -585,7 +585,7 @@ void Soundcard::SetChannel(TUint aValue)
 	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
-void Soundcard::SetTtl(TUint aValue)
+void Songcaster::SetTtl(TUint aValue)
 {
 	iMutex.Wait();
 
@@ -603,7 +603,7 @@ void Soundcard::SetTtl(TUint aValue)
 	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
-void Soundcard::SetMulticast(TBool aValue)
+void Songcaster::SetMulticast(TBool aValue)
 {
 	iMutex.Wait();
 
@@ -623,7 +623,7 @@ void Soundcard::SetMulticast(TBool aValue)
 	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
-void Soundcard::SetEnabled(TBool aValue)
+void Songcaster::SetEnabled(TBool aValue)
 {
 	iMutex.Wait();
 
@@ -641,7 +641,7 @@ void Soundcard::SetEnabled(TBool aValue)
 	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
-void Soundcard::SetPreset(TUint aValue)
+void Songcaster::SetPreset(TUint aValue)
 {
 	iMutex.Wait();
 
@@ -659,40 +659,40 @@ void Soundcard::SetPreset(TUint aValue)
 	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }
 
-void Soundcard::SetTrack(const TChar* aUri, const TChar* aMetadata, TUint64 aSamplesTotal, TUint64 aSampleStart)
+void Songcaster::SetTrack(const TChar* aUri, const TChar* aMetadata, TUint64 aSamplesTotal, TUint64 aSampleStart)
 {
 	iSender->SetTrack(Brn(aUri), Brn(aMetadata), aSamplesTotal, aSampleStart);
 }
 
-void Soundcard::SetMetatext(const TChar* aValue)
+void Songcaster::SetMetatext(const TChar* aValue)
 {
 	iSender->SetMetatext(Brn(aValue));
 }
 
-void Soundcard::RefreshReceivers()
+void Songcaster::RefreshReceivers()
 {
 	iReceiverManager->Refresh();
 }
 
-Soundcard::~Soundcard()
+Songcaster::~Songcaster()
 {
-    LOG(kMedia, "Soundcard::~Soundcard\n");
+    LOG(kMedia, "Songcaster::~Songcaster\n");
 
 	delete (iReceiverManager);
 
-    LOG(kMedia, "Soundcard::~Soundcard receiver manager destroyed\n");
+    LOG(kMedia, "Songcaster::~Songcaster receiver manager destroyed\n");
 
 	delete (iSender);
 
-    LOG(kMedia, "Soundcard::~Soundcard sender destroyed\n");
+    LOG(kMedia, "Songcaster::~Songcaster sender destroyed\n");
 
 	delete (iDevice);
 
-    LOG(kMedia, "Soundcard::~Soundcard device destroyed\n");
+    LOG(kMedia, "Songcaster::~Songcaster device destroyed\n");
 
 	delete (iDriver);
 
-    LOG(kMedia, "Soundcard::~Soundcard driver destroyed\n");
+    LOG(kMedia, "Songcaster::~Songcaster driver destroyed\n");
 
 	iMutex.Wait();
 
@@ -700,7 +700,7 @@ Soundcard::~Soundcard()
 
 	iMutex.Signal();
 
-    LOG(kMedia, "Soundcard::~Soundcard registered closing\n");
+    LOG(kMedia, "Songcaster::~Songcaster registered closing\n");
 
 	std::vector<Subnet*>::iterator it = iSubnetList.begin();
 
@@ -711,30 +711,30 @@ Soundcard::~Soundcard()
 		it++;
 	}
 
-    LOG(kMedia, "Soundcard::~Soundcard subnets destroyed\n");
+    LOG(kMedia, "Songcaster::~Songcaster subnets destroyed\n");
 
 	Net::UpnpLibrary::Close();
 
-    LOG(kMedia, "Soundcard::~Soundcard library closed\n");
+    LOG(kMedia, "Songcaster::~Songcaster library closed\n");
 }
 
 // IReceiverManager3Handler
 
-void Soundcard::ReceiverAdded(ReceiverManager3Receiver& aReceiver)
+void Songcaster::ReceiverAdded(ReceiverManager3Receiver& aReceiver)
 {
 	Receiver* receiver = new Receiver(aReceiver);
 	aReceiver.SetUserData(receiver);
 	(*iReceiverCallback)(iReceiverPtr, eAdded, (THandle)receiver);
 }
 
-void Soundcard::ReceiverChanged(ReceiverManager3Receiver& aReceiver)
+void Songcaster::ReceiverChanged(ReceiverManager3Receiver& aReceiver)
 {
 	Receiver* receiver = (Receiver*)(aReceiver.UserData());
 	ASSERT(receiver);
 	(*iReceiverCallback)(iReceiverPtr, eChanged, (THandle)receiver);
 }
 
-void Soundcard::ReceiverRemoved(ReceiverManager3Receiver& aReceiver)
+void Songcaster::ReceiverRemoved(ReceiverManager3Receiver& aReceiver)
 {
 	Receiver* receiver = (Receiver*)(aReceiver.UserData());
 	ASSERT(receiver);
