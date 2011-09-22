@@ -24,7 +24,6 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     iSoundcard = nil;
     iPreferences = nil;
     iEnabled = false;
-    iAutoplay = true;
     iReceiverList = nil;
     iSelectedUdnList = nil;
     iObserver = nil;
@@ -51,7 +50,6 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     
     // get other preference data
     iEnabled = [iPreferences enabled];
-    iAutoplay = [iPreferences autoplayReceivers];
     iSelectedUdnList = [[iPreferences selectedUdnList] retain];
 
     // setup some event handlers
@@ -59,7 +57,6 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     [iPreferences addObserverEnabled:self selector:@selector(preferenceEnabledChanged:)];
     [iPreferences addObserverIconVisible:self selector:@selector(preferenceIconVisibleChanged:)];
     [iPreferences addObserverSelectedUdnList:self selector:@selector(preferenceSelectedUdnListChanged:)];
-    [iPreferences addObserverAutoplayReceivers:self selector:@selector(preferenceAutoplayReceiversChanged:)];
     [iPreferences addObserverRefreshReceiverList:self selector:@selector(preferenceRefreshReceiverList:)];
     [iPreferences addObserverReconnectReceivers:self selector:@selector(preferenceReconnectReceivers:)];
     
@@ -73,26 +70,55 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
 }
 
 
-- (void) playReceiver:(Receiver*)aReceiver
+- (void) playReceiver:(Receiver*)aReceiver andReconnect:(bool)aReconnect
 {
-    // Start playing a receiver only if it is currently disconnected
-    if ([aReceiver status] == eReceiverStateDisconnected)
+    switch ([aReceiver status])
     {
-        [aReceiver play];
+        case eReceiverStateOffline:
+        case eReceiverStateBuffering:
+        case eReceiverStatePlaying:
+            // These states imply playing is not possible or not necessary
+            break;
+
+        case eReceiverStateDisconnected:
+            // if reconnect flag is not set, do not play this receiver, otherwise fall
+            // through to play it
+            if (!aReconnect)
+                break;
+
+        case eReceiverStateStopped:
+            // The receiver is stopped, so play it
+            [aReceiver play];
+            break;
     }
 }
 
 
 - (void) stopReceiver:(Receiver*)aReceiver
 {
-    // A receiver is stopped and put into standby only if it is connected to this soundcard
-    // If the receiver is disconnected, this implies there has been some sort
-    // of interaction with that receiver from another control point, e.g. change of
-    // source, so these receivers are not tampered with
-    if ([aReceiver status] == eReceiverStateConnected || [aReceiver status] == eReceiverStateConnecting)
+    switch ([aReceiver status])
     {
-        [aReceiver stop];
-        [aReceiver standby];
+        case eReceiverStateOffline:
+        case eReceiverStateDisconnected:
+            // These states imply that there has been some sort of external interaction
+            // with the receiver, such as changing source using Kinsky, so do not
+            // tamper with them
+            break;
+
+        case eReceiverStateStopped:
+        case eReceiverStateBuffering:
+        case eReceiverStatePlaying:
+            // These states imply the receiver is still connected to this songcast
+            // sender for this songcaster, so stop them and put them into standby
+            [aReceiver stop];
+            [aReceiver standby];
+            break;
+    }
+
+    if ([aReceiver status] == eReceiverStateStopped ||
+        [aReceiver status] == eReceiverStateBuffering ||
+        [aReceiver status] == eReceiverStatePlaying)
+    {
     }
 }
 
@@ -160,7 +186,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
         {
             if ([iSelectedUdnList containsObject:[receiver udn]])
             {
-                [self playReceiver:receiver];
+                [self playReceiver:receiver andReconnect:true];
             }
         }
     }
@@ -185,16 +211,13 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     // start receivers after soundcard is enabled
     if (iEnabled)
     {
-        // On switching on the soundcard, if autoplay is enabled, all disconnected receivers
-        // are played. If autoplay is disabled, nothing happens.
-        if (iAutoplay)
+        // On switching on the songcaster, only explicitly play receivers that are in the
+        // stopped state - receivers that are disconnected are left alone
+        for (Receiver* receiver in [iReceiverList receivers])
         {
-            for (Receiver* receiver in [iReceiverList receivers])
+            if ([iSelectedUdnList containsObject:[receiver udn]])
             {
-                if ([iSelectedUdnList containsObject:[receiver udn]])
-                {
-                    [self playReceiver:receiver];
-                }
+                [self playReceiver:receiver andReconnect:false];
             }
         }
     }
@@ -255,7 +278,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
             }
             else if ([selected containsObject:[receiver udn]])
             {
-                [self playReceiver:receiver];
+                [self playReceiver:receiver andReconnect:true];
             }
         }
     }
@@ -263,14 +286,6 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     // now discard the old list
     [iSelectedUdnList release];
     iSelectedUdnList = newSelectedUdnList;
-}
-
-
-- (void) preferenceAutoplayReceiversChanged:(NSNotification*)aNotification
-{
-    // refresh cached preferences and update the local copy
-    [iPreferences synchronize];
-    iAutoplay = [iPreferences autoplayReceivers];
 }
 
 
@@ -313,14 +328,12 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     [self updatePreferenceReceiverList];
 
     // the receiver has just appeared on the network - start playing if required i.e.
-    //  - autoplay option is enabled
     //  - soundcard is switched on
     //  - receiver is selected
-    if (iAutoplay &&
-        iEnabled &&
-        [iSelectedUdnList containsObject:[aReceiver udn]])
+    //  - receiver is connected and not playing i.e. stopped
+    if (iEnabled && [iSelectedUdnList containsObject:[aReceiver udn]])
     {
-        [self playReceiver:aReceiver];
+        [self playReceiver:aReceiver andReconnect:false];
     }
 }
 

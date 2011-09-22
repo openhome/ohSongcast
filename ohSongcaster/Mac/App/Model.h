@@ -17,7 +17,6 @@
     void* iSoundcard;
     Preferences* iPreferences;
     bool iEnabled;
-    bool iAutoplay;
     ReceiverList* iReceiverList;
     NSArray* iSelectedUdnList;
     id<IModelObserver> iObserver;
@@ -35,7 +34,6 @@
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;
 - (void) preferenceIconVisibleChanged:(NSNotification*)aNotification;
 - (void) preferenceSelectedUdnListChanged:(NSNotification*)aNotification;
-- (void) preferenceAutoplayReceiversChanged:(NSNotification*)aNotification;
 - (void) preferenceRefreshReceiverList:(NSNotification*)aNotification;
 - (void) preferenceReconnectReceivers:(NSNotification*)aNotification;
 

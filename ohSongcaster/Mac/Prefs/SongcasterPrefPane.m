@@ -24,7 +24,6 @@
 
 @synthesize icon;
 @synthesize buttonOnOff;
-@synthesize buttonAutoplay;
 @synthesize textDescription;
 @synthesize buttonShowInStatusBar;
 @synthesize buttonHelp;
@@ -57,7 +56,6 @@
     // initialise UI from preferences
     [self updateButtonOnOff];
     [buttonShowInStatusBar setState:([iPreferences iconVisible] ? NSOnState : NSOffState)];
-    [buttonAutoplay setState:([iPreferences autoplayReceivers] ? NSOnState : NSOffState)];
 }
 
 
@@ -72,12 +70,6 @@
 - (IBAction) buttonOnOffClicked:(id)aSender
 {
     [iPreferences setEnabled:([buttonOnOff state] == NSOnState)];
-}
-
-
-- (IBAction) buttonAutoplayClicked:(id)aSender
-{
-    [iPreferences setAutoplayReceivers:([buttonAutoplay state] == NSOnState)];
 }
 
 
@@ -361,16 +353,17 @@ static NSString* textSoundcardOff;
             break;
 
         case eReceiverStateDisconnected:
+        case eReceiverStateStopped:
             statusText = [CellResources textDisconnected];
             statusImage = [CellResources imageDisconnected];
             break;
 
-        case eReceiverStateConnecting:
+        case eReceiverStateBuffering:
             statusText = [CellResources textConnecting];
             statusImage = [CellResources imageDisconnected];
             break;
 
-        case eReceiverStateConnected:
+        case eReceiverStatePlaying:
             statusText = [CellResources textConnected];
             statusImage = [CellResources imageConnected];
             break;
