@@ -1,5 +1,5 @@
-#ifndef HEADER_SOUNDCARD
-#define HEADER_SOUNDCARD
+#ifndef HEADER_SONGCASTER
+#define HEADER_SONGCASTER
 
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Net/Core/OhNet.h>
@@ -37,30 +37,30 @@ enum EReceiverStatus {
  */
 typedef void (STDCALL *ReceiverCallback)(void* aPtr, ECallbackType aType, THandle aReceiver);
 typedef void (STDCALL *SubnetCallback)(void* aPtr, ECallbackType aType, THandle aSubnet);
-typedef void (STDCALL *ConfigurationChangedCallback)(void* aPtr, THandle aSoundcard);
+typedef void (STDCALL *ConfigurationChangedCallback)(void* aPtr, THandle aSongcaster);
 
-DllExport THandle STDCALL SoundcardCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
+DllExport THandle STDCALL SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
 
-DllExport uint32_t STDCALL SoundcardSubnet(THandle aSoundcard);
-DllExport uint32_t STDCALL SoundcardChannel(THandle aSoundcard);
-DllExport uint32_t STDCALL SoundcardTtl(THandle aSoundcard);
-DllExport uint32_t STDCALL SoundcardMulticast(THandle aSoundcard);
-DllExport uint32_t STDCALL SoundcardEnabled(THandle aSoundcard);
-DllExport uint32_t STDCALL SoundcardPreset(THandle aSoundcard);
+DllExport uint32_t STDCALL SongcasterSubnet(THandle aSongcaster);
+DllExport uint32_t STDCALL SongcasterChannel(THandle aSongcaster);
+DllExport uint32_t STDCALL SongcasterTtl(THandle aSongcaster);
+DllExport uint32_t STDCALL SongcasterMulticast(THandle aSongcaster);
+DllExport uint32_t STDCALL SongcasterEnabled(THandle aSongcaster);
+DllExport uint32_t STDCALL SongcasterPreset(THandle aSongcaster);
 
-DllExport void STDCALL SoundcardSetSubnet(THandle aSoundcard, uint32_t aValue);
-DllExport void STDCALL SoundcardSetChannel(THandle aSoundcard, uint32_t aValue);
-DllExport void STDCALL SoundcardSetTtl(THandle aSoundcard, uint32_t aValue);
-DllExport void STDCALL SoundcardSetMulticast(THandle aSoundcard, uint32_t aValue);
-DllExport void STDCALL SoundcardSetEnabled(THandle aSoundcard, uint32_t aValue);
-DllExport void STDCALL SoundcardSetPreset(THandle aSoundcard, uint32_t aValue);
+DllExport void STDCALL SongcasterSetSubnet(THandle aSongcaster, uint32_t aValue);
+DllExport void STDCALL SongcasterSetChannel(THandle aSongcaster, uint32_t aValue);
+DllExport void STDCALL SongcasterSetTtl(THandle aSongcaster, uint32_t aValue);
+DllExport void STDCALL SongcasterSetMulticast(THandle aSongcaster, uint32_t aValue);
+DllExport void STDCALL SongcasterSetEnabled(THandle aSongcaster, uint32_t aValue);
+DllExport void STDCALL SongcasterSetPreset(THandle aSongcaster, uint32_t aValue);
 
-DllExport void STDCALL SoundcardSetTrack(THandle aSoundcard, const char* aUri, const char* aMetadata, uint64_t aSamplesTotal, uint64_t aSampleStart);
-DllExport void STDCALL SoundcardSetMetatext(THandle aSoundcard, const char* aValue);
+DllExport void STDCALL SongcasterSetTrack(THandle aSongcaster, const char* aUri, const char* aMetadata, uint64_t aSamplesTotal, uint64_t aSampleStart);
+DllExport void STDCALL SongcasterSetMetatext(THandle aSongcaster, const char* aValue);
 
-DllExport void STDCALL SoundcardRefreshReceivers(THandle aSoundcard);
+DllExport void STDCALL SongcasterRefreshReceivers(THandle aSongcaster);
 
-DllExport void STDCALL SoundcardDestroy(THandle aSoundcard);
+DllExport void STDCALL SongcasterDestroy(THandle aSongcaster);
 
 DllExport const char* STDCALL ReceiverUdn(THandle aReceiver);
 DllExport const char* STDCALL ReceiverRoom(THandle aReceiver);
@@ -87,11 +87,11 @@ DllExport void STDCALL SubnetRemoveRef(THandle aReceiver);
 namespace OpenHome {
 namespace Net {
 
-class Soundcard;
+class Songcaster;
 
 class Receiver
 {
-	friend class Soundcard;
+	friend class Songcaster;
 
 public:
 	const TChar* Udn() const;
@@ -122,7 +122,7 @@ private:
 
 class Subnet : public INonCopyable
 {
-	friend class Soundcard;
+	friend class Songcaster;
 
 public:
 	TIpAddress Address() const;
@@ -144,13 +144,13 @@ private:
 	TIpAddress iSubnet;
 };
 
-class DllExportClass Soundcard : public IReceiverManager3Handler
+class DllExportClass Songcaster : public IReceiverManager3Handler
 {
 public:
 	static const TUint kMaxUdnBytes = 200;
 
 public:
-    Soundcard(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
+    Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
 
 	TIpAddress GetSubnet();
 	TUint GetChannel();
@@ -169,7 +169,7 @@ public:
 	void SetMetatext(const TChar* aValue);
 	void RefreshReceivers();
 
-	~Soundcard();
+	~Songcaster();
 
 private:
 	void SubnetListChanged();
@@ -206,5 +206,5 @@ private:
 } // namespace Net
 } // namespace OpenHome
 
-#endif // HEADER_SOUNDCARD
+#endif // HEADER_SONGCASTER
 

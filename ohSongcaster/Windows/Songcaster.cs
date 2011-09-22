@@ -4,11 +4,11 @@ using System.Text;
 using System.Net;
 using System.Collections.Generic;
 
-namespace OpenHome.Soundcard
+namespace OpenHome.Songcaster
 {
-    public class SoundcardError : Exception
+    public class SongcasterError : Exception
     {
-        internal SoundcardError()
+        internal SongcasterError()
             : base("Songcaster audio driver not installed")
         {
         }
@@ -57,25 +57,25 @@ namespace OpenHome.Soundcard
 
     internal class Receiver : IReceiver, IDisposable
     {
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern IntPtr ReceiverUdn(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern IntPtr ReceiverRoom(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern IntPtr ReceiverGroup(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern IntPtr ReceiverName(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern uint ReceiverStatus(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern void ReceiverPlay(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern void ReceiverStop(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern void ReceiverStandby(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern void ReceiverAddRef(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern void ReceiverRemoveRef(IntPtr aHandle);
 
         internal Receiver(IntPtr aReceiver)
@@ -175,13 +175,13 @@ namespace OpenHome.Soundcard
 
     internal class Subnet : ISubnet, IDisposable
     {
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern IntPtr SubnetAddress(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern IntPtr SubnetAdapterName(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern void SubnetAddRef(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
+        [DllImport("ohSongcaster.dll")]
         static extern void SubnetRemoveRef(IntPtr aHandle);
 
         public Subnet(IntPtr aSubnet)
@@ -222,7 +222,7 @@ namespace OpenHome.Soundcard
         string iAdapterName;
     }
 
-    public class Soundcard : IDisposable, IConfiguration
+    public class Songcaster : IDisposable, IConfiguration
     {
         private enum ECallbackType
         {
@@ -233,46 +233,46 @@ namespace OpenHome.Soundcard
 
         private delegate void DelegateReceiverCallback(IntPtr aPtr, ECallbackType aType, IntPtr aReceiver);
         private delegate void DelegateSubnetCallback(IntPtr aPtr, ECallbackType aType, IntPtr aSubnet);
-        private delegate void DelegateConfigurationChangedCallback(IntPtr aPtr, IntPtr aSoundcard);
+        private delegate void DelegateConfigurationChangedCallback(IntPtr aPtr, IntPtr aSongcaster);
 
-        [DllImport("ohSoundcard.dll")]
-        static extern unsafe IntPtr SoundcardCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, DelegateConfigurationChangedCallback aConfigurationChangedCallback, IntPtr aConfigurationChangedPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl);
+        [DllImport("ohSongcaster.dll")]
+        static extern unsafe IntPtr SongcasterCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, DelegateConfigurationChangedCallback aConfigurationChangedCallback, IntPtr aConfigurationChangedPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl);
 
-        [DllImport("ohSoundcard.dll")]
-        static extern uint SoundcardSubnet(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
-        static extern uint SoundcardChannel(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
-        static extern uint SoundcardTtl(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
-        static extern bool SoundcardMulticast(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
-        static extern bool SoundcardEnabled(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
-        static extern uint SoundcardPreset(IntPtr aHandle);
+        [DllImport("ohSongcaster.dll")]
+        static extern uint SongcasterSubnet(IntPtr aHandle);
+        [DllImport("ohSongcaster.dll")]
+        static extern uint SongcasterChannel(IntPtr aHandle);
+        [DllImport("ohSongcaster.dll")]
+        static extern uint SongcasterTtl(IntPtr aHandle);
+        [DllImport("ohSongcaster.dll")]
+        static extern bool SongcasterMulticast(IntPtr aHandle);
+        [DllImport("ohSongcaster.dll")]
+        static extern bool SongcasterEnabled(IntPtr aHandle);
+        [DllImport("ohSongcaster.dll")]
+        static extern uint SongcasterPreset(IntPtr aHandle);
         
-        [DllImport("ohSoundcard.dll")]
-        static extern void SoundcardSetSubnet(IntPtr aHandle, uint aValue);
-        [DllImport("ohSoundcard.dll")]
-        static extern void SoundcardSetChannel(IntPtr aHandle, uint aValue);
-        [DllImport("ohSoundcard.dll")]
-        static extern void SoundcardSetTtl(IntPtr aHandle, uint aValue);
-        [DllImport("ohSoundcard.dll")]
-        static extern void SoundcardSetMulticast(IntPtr aHandle, bool aValue);
-        [DllImport("ohSoundcard.dll")]
-        static extern void SoundcardSetEnabled(IntPtr aHandle, bool aValue);
-        [DllImport("ohSoundcard.dll")]
-        static extern void SoundcardSetPreset(IntPtr aHandle, uint aValue);
-        [DllImport("ohSoundcard.dll")]
-        static extern unsafe void SoundcardSetTrack(IntPtr aHandle, char* aUri, char* aMetadata, long aSamplesTotal, long aSampleStart);
-        [DllImport("ohSoundcard.dll")]
-        static extern unsafe void SoundcardSetMetatext(IntPtr aHandle, char* aValue);
-        [DllImport("ohSoundcard.dll")]
-        static extern void SoundcardRefreshReceivers(IntPtr aHandle);
-        [DllImport("ohSoundcard.dll")]
-        static extern void SoundcardDestroy(IntPtr aHandle);
+        [DllImport("ohSongcaster.dll")]
+        static extern void SongcasterSetSubnet(IntPtr aHandle, uint aValue);
+        [DllImport("ohSongcaster.dll")]
+        static extern void SongcasterSetChannel(IntPtr aHandle, uint aValue);
+        [DllImport("ohSongcaster.dll")]
+        static extern void SongcasterSetTtl(IntPtr aHandle, uint aValue);
+        [DllImport("ohSongcaster.dll")]
+        static extern void SongcasterSetMulticast(IntPtr aHandle, bool aValue);
+        [DllImport("ohSongcaster.dll")]
+        static extern void SongcasterSetEnabled(IntPtr aHandle, bool aValue);
+        [DllImport("ohSongcaster.dll")]
+        static extern void SongcasterSetPreset(IntPtr aHandle, uint aValue);
+        [DllImport("ohSongcaster.dll")]
+        static extern unsafe void SongcasterSetTrack(IntPtr aHandle, char* aUri, char* aMetadata, long aSamplesTotal, long aSampleStart);
+        [DllImport("ohSongcaster.dll")]
+        static extern unsafe void SongcasterSetMetatext(IntPtr aHandle, char* aValue);
+        [DllImport("ohSongcaster.dll")]
+        static extern void SongcasterRefreshReceivers(IntPtr aHandle);
+        [DllImport("ohSongcaster.dll")]
+        static extern void SongcasterDestroy(IntPtr aHandle);
 
-        public unsafe Soundcard(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler, IConfigurationChangedHandler aConfigurationChangedHandler, string aManufacturer, string aManufacturerUrl, string aModelUrl)
+        public unsafe Songcaster(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler, IConfigurationChangedHandler aConfigurationChangedHandler, string aManufacturer, string aManufacturerUrl, string aModelUrl)
         {
             iReceiverHandler = aReceiverHandler;
             iSubnetHandler = aSubnetHandler;
@@ -282,11 +282,11 @@ namespace OpenHome.Soundcard
             iConfigurationChangedCallback = new DelegateConfigurationChangedCallback(ConfigurationChangedCallback);
             iReceiverList = new List<Receiver>();
             iSubnetList = new List<Subnet>();
-            iHandle = SoundcardCreate(aDomain, aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, iConfigurationChangedCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl);
+            iHandle = SongcasterCreate(aDomain, aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, iConfigurationChangedCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl);
 
             if (iHandle == IntPtr.Zero)
             {
-                throw (new SoundcardError());
+                throw (new SongcasterError());
             }
         }
 
@@ -388,76 +388,76 @@ namespace OpenHome.Soundcard
             }
         }
 
-        private void ConfigurationChangedCallback(IntPtr aPtr, IntPtr aSoundcard)
+        private void ConfigurationChangedCallback(IntPtr aPtr, IntPtr aSongcaster)
         {
             iConfigurationChangedHandler.ConfigurationChanged(this);
         }
 
         public uint Subnet()
         {
-            return (SoundcardSubnet(iHandle));
+            return (SongcasterSubnet(iHandle));
         }
 
         public uint Channel()
         {
-            return (SoundcardChannel(iHandle));
+            return (SongcasterChannel(iHandle));
         }
 
         public uint Ttl()
         {
-            return (SoundcardTtl(iHandle));
+            return (SongcasterTtl(iHandle));
         }
 
         public bool Multicast()
         {
-            return (SoundcardMulticast(iHandle));
+            return (SongcasterMulticast(iHandle));
         }
 
         public bool Enabled()
         {
-            return (SoundcardEnabled(iHandle));
+            return (SongcasterEnabled(iHandle));
         }
 
         public uint Preset()
         {
-            return (SoundcardPreset(iHandle));
+            return (SongcasterPreset(iHandle));
         }
 
         public void SetSubnet(uint aValue)
         {
-            SoundcardSetSubnet(iHandle, aValue);
+            SongcasterSetSubnet(iHandle, aValue);
         }
 
         public void SetChannel(uint aValue)
         {
-            SoundcardSetChannel(iHandle, aValue);
+            SongcasterSetChannel(iHandle, aValue);
         }
 
         public void SetTtl(uint aValue)
         {
-            SoundcardSetTtl(iHandle, aValue);
+            SongcasterSetTtl(iHandle, aValue);
         }
 
         public void SetMulticast(bool aValue)
         {
-            SoundcardSetMulticast(iHandle, aValue);
+            SongcasterSetMulticast(iHandle, aValue);
         }
 
         public void SetEnabled(bool aValue)
         {
-            SoundcardSetEnabled(iHandle, aValue);
+            SongcasterSetEnabled(iHandle, aValue);
         }
 
         public void SetPreset(uint aValue)
         {
-            SoundcardSetPreset(iHandle, aValue);
+            SongcasterSetPreset(iHandle, aValue);
         }
 
         public unsafe void SetTrack(IntPtr aHandle, string aUri, string aMetadata, long aSamplesTotal, long aSampleStart)
         {
             IntPtr uri = Marshal.StringToHGlobalAnsi(aUri);
             IntPtr metadata = Marshal.StringToHGlobalAnsi(aMetadata);
-            SoundcardSetTrack(iHandle, (char*)uri, (char*)metadata, aSamplesTotal, aSampleStart);
+            SongcasterSetTrack(iHandle, (char*)uri, (char*)metadata, aSamplesTotal, aSampleStart);
             Marshal.FreeHGlobal(uri);
             Marshal.FreeHGlobal(metadata);
         }
@@ -465,18 +465,18 @@ namespace OpenHome.Soundcard
         public unsafe void SetMetatext(IntPtr aHandle, string aValue)
         {
             IntPtr value = Marshal.StringToHGlobalAnsi(aValue);
-            SoundcardSetMetatext(iHandle, (char*)value);
+            SongcasterSetMetatext(iHandle, (char*)value);
             Marshal.FreeHGlobal(value);
         }
 
         public void RefreshReceivers()
         {
-            SoundcardRefreshReceivers(iHandle);
+            SongcasterRefreshReceivers(iHandle);
         }
 
         public void Dispose()
         {
-            SoundcardDestroy(iHandle);
+            SongcasterDestroy(iHandle);
         }
 
         private IReceiverHandler iReceiverHandler;
@@ -489,4 +489,4 @@ namespace OpenHome.Soundcard
         private DelegateSubnetCallback iSubnetCallback;
         private DelegateConfigurationChangedCallback iConfigurationChangedCallback;
     }
-} // namespace OpenHome.Soundcard
+} // namespace OpenHome.Songcaster

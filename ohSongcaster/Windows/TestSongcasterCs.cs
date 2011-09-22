@@ -1,7 +1,7 @@
 using System;
 using System.Net;
 
-using OpenHome.Soundcard;
+using OpenHome.Songcaster;
 
     class Program : IReceiverHandler, ISubnetHandler, IConfigurationChangedHandler
     {
@@ -18,7 +18,7 @@ using OpenHome.Soundcard;
 
             try
             {
-                Soundcard soundcard = new Soundcard("av.openhome.org", 0, 1, 1, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+                Songcaster songcaster = new Songcaster("av.openhome.org", 0, 1, 1, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
 
                 while (true)
                 {
@@ -40,15 +40,15 @@ using OpenHome.Soundcard;
                             enabled = true;
                         }
 
-                        soundcard.SetEnabled(enabled);
+                        songcaster.SetEnabled(enabled);
 
                         continue;
                     }
                 }
 
-                soundcard.Dispose();
+                songcaster.Dispose();
             }
-            catch (SoundcardError e)
+            catch (SongcasterError e)
             {
                 Console.WriteLine(e.Message);
             }

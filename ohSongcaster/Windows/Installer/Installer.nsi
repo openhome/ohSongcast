@@ -14,9 +14,9 @@
   !define DOTNETURI "http://download.microsoft.com/download/7/0/3/703455ee-a747-4cc8-bd3e-98a615c3aedb/dotNetFx35setup.exe"
   !define PRODUCT "Songcaster"
   !define VERSION "0.0.0"
-  !define LAUNCHFILE "Songcaster.exe"
+  !define LAUNCHFILE "ohSongcaster.exe"
   !define LAUNCHFILEDIR ""
-  !define OUTFILE "InstallerSongcaster.exe"
+  !define OUTFILE "..\Build\ohSongcasterInstaller.exe"
   !define ICON "ohLogo.ico"
 
   !define PATH "OpenHome"
@@ -73,30 +73,30 @@
   !define MUI_FINISHPAGE_TITLE "Completing the Setup Wizard for ${PRODUCT}"
   !define MUI_FINISHPAGE_TEXT "${PRODUCT} has been installed on your computer.\n\nClick Finish to close this wizard."
   
-  ;!define MUI_FINISHPAGE_SHOWREADME
-  ;!define MUI_FINISHPAGE_SHOWREADME_TEXT "Launch ${PRODUCT}"
-  ;!define MUI_FINISHPAGE_SHOWREADME_FUNCTION LaunchLink
+  !define MUI_FINISHPAGE_SHOWREADME
+  !define MUI_FINISHPAGE_SHOWREADME_TEXT "Launch ${PRODUCT}"
+  !define MUI_FINISHPAGE_SHOWREADME_FUNCTION LaunchLink
 
-  ;!define MUI_FINISHPAGE_RUN
-  ;!define MUI_FINISHPAGE_RUN_TEXT "Create desktop shortcut"
-  ;!define MUI_FINISHPAGE_RUN_FUNCTION CreateDesktopShortcut
+  !define MUI_FINISHPAGE_RUN
+  !define MUI_FINISHPAGE_RUN_TEXT "Create desktop shortcut"
+  !define MUI_FINISHPAGE_RUN_FUNCTION CreateDesktopShortcut
 
-  ;!insertmacro MUI_PAGE_FINISH
+  !insertmacro MUI_PAGE_FINISH
   
   !insertmacro MUI_UNPAGE_CONFIRM
   !insertmacro MUI_UNPAGE_INSTFILES
   
-  ;!define MUI_FINISHPAGE_TITLE "Uninstall Application Settings"
-  ;!define MUI_FINISHPAGE_TEXT "Do you wish to uninstall all ${PRODUCT} application settings (e.g. User option files, plugins, etc)"
+  !define MUI_FINISHPAGE_TITLE "Uninstall Application Settings"
+  !define MUI_FINISHPAGE_TEXT "Do you wish to uninstall all ${PRODUCT} application settings (e.g. User option files, plugins, etc)"
   
-  ;!define MUI_FINISHPAGE_RUN
-  ;!define MUI_FINISHPAGE_RUN_TEXT "Uninstall application settings"
-  ;!define MUI_FINISHPAGE_RUN_FUNCTION un.RemoveApplicationData
-  ;!define MUI_FINISHPAGE_RUN_NOTCHECKED
-  ;!define MUI_FINISHPAGE_NOREBOOTSUPPORT
+  !define MUI_FINISHPAGE_RUN
+  !define MUI_FINISHPAGE_RUN_TEXT "Uninstall application settings"
+  !define MUI_FINISHPAGE_RUN_FUNCTION un.RemoveApplicationData
+  !define MUI_FINISHPAGE_RUN_NOTCHECKED
+  !define MUI_FINISHPAGE_NOREBOOTSUPPORT
   
-  ;!insertmacro MUI_UNPAGE_FINISH
-  ;!insertmacro MUI_UNPAGE_FINISH
+  !insertmacro MUI_UNPAGE_FINISH
+  !insertmacro MUI_UNPAGE_FINISH
 
 Function LaunchLink
     ExecShell "open" "$INSTDIR\${LAUNCHFILE}"
@@ -301,7 +301,7 @@ retry:
   ; FindWindow : 2nd param=window "class name" for the app, 3rd param="window caption" for the app 
   ; Any releases made in the past with a non generic title (window caption) need a dedicated 2 line code block of the format shown below
 
-  System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "SoundcardMutex") i .R0'
+  System::Call 'kernel32::OpenMutex(i 0x100000, b 0, t "ohSongcasterMutex") i .R0'
     IntCmp $R0 0 continueInstall
         System::Call 'kernel32::CloseHandle(i $R0)'
         MessageBox MB_ICONSTOP|MB_RETRYCANCEL "${PRODUCT} is currently running. Please close the application and retry." IDRETRY retry
@@ -348,34 +348,34 @@ Section "OpenHome" SecOpenHome
   SetShellVarContext all
 
   SetOutPath "$INSTDIR\"
-  File ..\Wpf\ohSoundcard\bin\Release\ohSoundcard.exe
+  File ..\Wpf\ohSongcaster\bin\Release\ohSongcaster.exe
   SetOutPath "$INSTDIR\"
-  File ..\Wpf\ohSoundcard\bin\Release\ohSoundcard.net.dll
+  File ..\Wpf\ohSongcaster\bin\Release\ohSongcaster.net.dll
   SetOutPath "$INSTDIR\"
-  File ..\Wpf\ohSoundcard\bin\Release\ohSoundcard.net.dll
+  File ..\Wpf\ohSongcaster\bin\Release\ohSongcaster.dll
   SetOutPath "$INSTDIR\Driver64"
-  File ..\..\..\Build\Driver64\ohSoundcard.cat
+  File ..\Build\Driver64\ohSongcaster.cat
   SetOutPath "$INSTDIR\Driver64"
-  File ..\..\..\Build\Driver64\ohSoundcard.inf
+  File ..\Build\Driver64\ohSongcaster.inf
   SetOutPath "$INSTDIR\Driver64"
-  File ..\..\..\Build\Driver64\ohSoundcard.sys
+  File ..\Build\Driver64\ohSongcaster.sys
   SetOutPath "$INSTDIR\Driver64"
-  File ..\..\..\Build\Obj\Windows\Release\Install64.exe
+  File ..\Build\Driver64\Install64.exe
   SetOutPath "$INSTDIR\Driver32"
-  File ..\..\..\Build\Driver32\ohSoundcard.cat
+  File ..\Build\Driver32\ohSongcaster.cat
   SetOutPath "$INSTDIR\Driver32"
-  File ..\..\..\Build\Driver32\ohSoundcard.inf
+  File ..\Build\Driver32\ohSongcaster.inf
   SetOutPath "$INSTDIR\Driver32"
-  File ..\..\..\Build\Driver32\ohSoundcard.sys
+  File ..\Build\Driver32\ohSongcaster.sys
   SetOutPath "$INSTDIR\Driver32"
-  File ..\..\..\Build\Obj\Windows\Release\Install32.exe
+  File ..\Build\Driver32\Install32.exe
   
   ${If} ${RunningX64}
      SetOutPath "$INSTDIR\Driver64"
-     ExecWait '"$INSTDIR\Driver64\Install64.exe" -i {D6BAC7AB-8758-43A9-917F-D702501F4DB0}\Songcaster ohSoundcard.inf'
+     ExecWait '"$INSTDIR\Driver64\Install64.exe" -i av.openhome.org ohSongcaster.inf'
   ${Else}
      SetOutPath "$INSTDIR\Driver32"
-     ExecWait '"$INSTDIR\Driver32\Install32.exe" -i {D6BAC7AB-8758-43A9-917F-D702501F4DB0}\Songcaster ohSoundcard.inf'
+     ExecWait '"$INSTDIR\Driver32\Install32.exe" -i av.openhome.org ohSongcaster.inf'
   ${EndIf}
 
   ;Store installation folder
@@ -443,19 +443,19 @@ Section "Uninstall"
   
   ${If} ${RunningX64}
      SetOutPath "$INSTDIR\Driver64"
-     ExecWait '"$INSTDIR\Driver64\Install64.exe" -d {D6BAC7AB-8758-43A9-917F-D702501F4DB0}\Songcaster Songcaster.inf'
+     ExecWait '"$INSTDIR\Driver64\Install64.exe" -d av.openhome.org ohSongcaster.inf'
   ${Else}
      SetOutPath "$INSTDIR\Driver32"
-     ExecWait '"$INSTDIR\Driver32\Install32.exe" -d {D6BAC7AB-8758-43A9-917F-D702501F4DB0}\Songcaster Songcaster.inf'
+     ExecWait '"$INSTDIR\Driver32\Install32.exe" -d av.openhome.org ohSongcaster.inf'
   ${EndIf}
   
   SetOutPath $TEMP
 
   ;delete the installed files
   Delete "$INSTDIR\\Songcaster.exe"
-  Delete "$INSTDIR\\ohSoundcard.net.dll"
-  Delete "$INSTDIR\\ohSoundcard.dll"
-  Delete "$INSTDIR\\SongcasterPreferences.exe"
+  Delete "$INSTDIR\\ohSongcaster.net.dll"
+  Delete "$INSTDIR\\ohSongcaster.dll"
+  Delete "$INSTDIR\Driver64\Songcaster.cat"
   Delete "$INSTDIR\Driver64\Songcaster.inf"
   Delete "$INSTDIR\Driver64\Songcaster.sys"
   Delete "$INSTDIR\Driver64\Install64.exe"
@@ -463,16 +463,9 @@ Section "Uninstall"
   Delete "$INSTDIR\Driver32\Songcaster.inf"
   Delete "$INSTDIR\Driver32\Songcaster.sys"
   Delete "$INSTDIR\Driver32\Install32.exe"
-  Delete "$INSTDIR\Driver32\Songcaster.cat"
-  Delete "$INSTDIR\Driver32\Songcaster.cat"
-  Delete "$INSTDIR\Driver32\Songcaster.cat"
-  Delete "$INSTDIR\Resources\IconLarge.png"
-  Delete "$INSTDIR\Resources\SysTrayIconOff.png"
-  Delete "$INSTDIR\Resources\SysTrayIconOn.png"
   RMDir "$INSTDIR\Driver32"
-  RMDir "$INSTDIR\Resources"
-  RMDir "$INSTDIR\."
   RMDir "$INSTDIR\Driver64"
+  RMDir "$INSTDIR\."
 
   Delete "$INSTDIR\*.log"
   Delete "$INSTDIR\*.crash"

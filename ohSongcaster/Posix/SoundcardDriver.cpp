@@ -1,4 +1,4 @@
-#include "../Soundcard.h"
+#include "../Songcaster.h"
 
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Net/Core/OhNet.h>
@@ -69,7 +69,7 @@ void OhmSenderDriverPosix::SetTrackPosition(TUint64 aSampleStart, TUint64 aSampl
 
 // Soundcard - platform specific implementation of OpenHome::Net::Soundcard
 
-Soundcard* Soundcard::Create(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
+Songcaster* Songcaster::Create(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
 {
     // get the computer name
     struct utsname name;
@@ -81,8 +81,8 @@ Soundcard* Soundcard::Create(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBo
     // create the driver
     OhmSenderDriverPosix* driver = new OhmSenderDriverPosix();
 
-    Soundcard* soundcard = new Soundcard(aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver);
-    return soundcard;
+    Songcaster* songcaster = new Songcaster(aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver);
+    return songcaster;
 }
 
 

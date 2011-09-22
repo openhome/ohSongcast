@@ -10,7 +10,7 @@
 #include <vector>
 #include <stdio.h>
 
-#include "Soundcard.h"
+#include "Songcaster.h"
 
 #ifdef _WIN32
 
@@ -90,14 +90,14 @@ void STDCALL loggerSubnet(void* /* aPtr */, ECallbackType aType, THandle aSubnet
 	}
 }
 
-void STDCALL loggerConfigurationChanged(void* /* aPtr */, THandle aSoundcard)
+void STDCALL loggerConfigurationChanged(void* /* aPtr */, THandle aSongcaster)
 {
-	TUint subnet = SoundcardSubnet(aSoundcard);
-	TUint channel = SoundcardChannel(aSoundcard);
-	TUint ttl = SoundcardTtl(aSoundcard);
-	TUint multicast = SoundcardMulticast(aSoundcard);
-	TUint enabled = SoundcardEnabled(aSoundcard);
-	TUint preset = SoundcardPreset(aSoundcard);
+	TUint subnet = SongcasterSubnet(aSongcaster);
+	TUint channel = SongcasterChannel(aSongcaster);
+	TUint ttl = SongcasterTtl(aSongcaster);
+	TUint multicast = SongcasterMulticast(aSongcaster);
+	TUint enabled = SongcasterEnabled(aSongcaster);
+	TUint preset = SongcasterPreset(aSongcaster);
 
 	printf("Configuration changed: subnet=%x, channel=%d, ttl=%d, multicast=%d, enabled=%d, preset=%d\n", subnet, channel, ttl, multicast, enabled, preset);
 }
@@ -111,10 +111,10 @@ int CDECL main(int /* aArgc */, char** /* aArgv[] */)
     TBool disabled = false;
     TUint preset = 99;
 
-	THandle soundcard = SoundcardCreate("av.openhome.org", subnet, channel, ttl, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0, loggerConfigurationChanged, 0, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+	THandle songcaster = SongcasterCreate("av.openhome.org", subnet, channel, ttl, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0, loggerConfigurationChanged, 0, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
 
-	if (soundcard == 0) {
-		printf("Soundcard error\n");
+	if (songcaster == 0) {
+		printf("Songcaster error\n");
 		return(1);
 	}
 
@@ -146,27 +146,27 @@ int CDECL main(int /* aArgc */, char** /* aArgv[] */)
         if (key == 'm') {
             if (multicast) {
                 multicast = false;
-                SoundcardSetMulticast(soundcard, false);
+                SongcasterSetMulticast(songcaster, false);
             }
             else {
                 multicast = true;
-                SoundcardSetMulticast(soundcard, true);
+                SongcasterSetMulticast(songcaster, true);
             }
         }
 
         if (key == 'e') {
             if (disabled) {
                 disabled = false;
-                SoundcardSetEnabled(soundcard, true);
+                SongcasterSetEnabled(songcaster, true);
             }
             else {
                 disabled = true;
-                SoundcardSetEnabled(soundcard, false);
+                SongcasterSetEnabled(songcaster, false);
             }
         }
     }
     
-	SoundcardDestroy(soundcard);
+	SongcasterDestroy(songcaster);
 
 	printf("\n");
 	

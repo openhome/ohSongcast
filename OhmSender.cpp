@@ -606,18 +606,19 @@ void OhmSender::SetPreset(TUint aValue)
 OhmSender::~OhmSender()
 {
     LOG(kMedia, "OhmSender::~OhmSender\n");
-    iMutexStartStop.Wait();
-    Stop();
-	StopZone();
-    iMutexStartStop.Signal();
-
-    LOG(kMedia, "OhmSender::~OhmSender stopped\n");
 
 	iEnabled = false;
 
 	iDriver.SetEnabled(false);
 
-	LOG(kMedia, "OHM SENDER DRIVER ENABLED %d\n", iEnabled);
+	LOG(kMedia, "OhmSender::~OhmSender disabled driver\n");
+
+	iMutexStartStop.Wait();
+    Stop();
+	StopZone();
+    iMutexStartStop.Signal();
+
+    LOG(kMedia, "OhmSender::~OhmSender stopped\n");
 
 	delete iThreadZone;
 

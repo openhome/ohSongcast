@@ -1,0 +1,59 @@
+﻿<Window x:Class="OpenHome.Songcaster.ConfigurationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:me="clr-namespace:OpenHome.Songcaster"
+        Title="SettingsWindow"
+        ShowInTaskbar="False"
+        WindowStyle="None" 
+        AllowsTransparency="True" 
+        ResizeMode="NoResize"
+        Background="Transparent"
+        Visibility="Collapsed" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" d:DesignHeight="472" d:DesignWidth="560" SizeToContent="WidthAndHeight">
+
+
+    <Window.Resources>
+        <me:NegateBoolean x:Key="NegateBoolean" />
+    </Window.Resources>
+
+    <Canvas Height="849" Width="959">
+        <Border x:Name="LayoutRoot" CornerRadius="20" BorderThickness="5" Height="400" Width="468" BorderBrush="Black" Canvas.Left="0" Canvas.Top="0">
+            <Border.Background>
+                <LinearGradientBrush EndPoint="0,0.5" StartPoint="1,0.5">
+                    <GradientStop Color="#DDDDDD" Offset="0"/>
+                    <GradientStop Color="#FFFFFF" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
+            <Canvas >
+                <TextBlock TextAlignment="Left" FontFamily="Arial Black" FontWeight="Bold" FontSize="22" Canvas.Left="15" Canvas.Top="8" Text="Settings" />
+                <ComboBox Canvas.Left="15" Canvas.Top="77" Height="28" Name="comboBoxNetwork" Width="428" >
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Foreground="Black" FontFamily="Arial Black" FontSize="14" Text="{Binding Path=Description}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <TextBlock Canvas.Left="15" Canvas.Top="141" TextAlignment="Right" Height="23" FontFamily="Arial Black" FontWeight="Bold" FontSize="16" Text="Songcast Mode" />
+                <RadioButton Canvas.Left="186" Canvas.Top="143" Content="Unicast" FontFamily="Arial Black" FontSize="14" IsChecked="{Binding Path=Multicast, Converter={StaticResource NegateBoolean}}" />
+                <RadioButton Canvas.Left="286" Canvas.Top="143" Content="Multicast" FontFamily="Arial Black" FontSize="14" IsChecked="{Binding Path=Multicast}" />
+                <TextBlock Canvas.Left="15" Canvas.Top="345" Height="23" FontFamily="Arial Black" FontSize="16" Text="Multicast Ttl" />
+                <TextBlock Canvas.Left="15" Canvas.Top="53" FontFamily="Arial Black" FontSize="16" Height="18" Text="Network" HorizontalAlignment="Stretch" Width="80" />
+                <TextBlock Canvas.Left="15" Canvas.Top="204" FontFamily="Arial Black" FontSize="16" FontWeight="Bold" Height="26" Text="Songcast Preset" Width="158" />
+                <TextBox Canvas.Left="186" Canvas.Top="199" FontFamily="Arial Black" FontSize="14" FontWeight="Bold" Height="26" Width="56" Text="{Binding Path=Preset}" />
+                <Slider Canvas.Left="228" Canvas.Top="345" Height="23" Width="215" Minimum="1" Maximum="8" SmallChange="1" TickPlacement="TopLeft" IsSnapToTickEnabled="True" Value="{Binding Path=Ttl}" />
+                <TextBox Canvas.Left="186" Canvas.Top="345" FontFamily="Arial Black" FontSize="14" FontWeight="Bold" Height="23" Width="36" IsReadOnly="True" Text="{Binding Path=Ttl}" />
+                <TextBlock Canvas.Left="258" Canvas.Top="16" Height="27" FontFamily="Arial Black" FontSize="12" TextAlignment="Right" Text="{Binding Path=Version}" Width="175" />
+                <Line Canvas.Left="0" Canvas.Top="120" Stroke="Black" StrokeThickness="2" X1="0" X2="460" Y1="0" Y2="0" Height="5" Width="463" />
+                <Line Canvas.Left="0" Canvas.Top="40" Height="7" Stroke="Black" StrokeThickness="5" Width="463" X1="0" X2="460" Y1="0" Y2="0" />
+                <Line Canvas.Left="0" Canvas.Top="180" Height="5" Stroke="Black" StrokeThickness="2" Width="463" X1="0" X2="460" Y1="0" Y2="0" />
+                <Line Canvas.Left="0" Canvas.Top="246" Height="5" Stroke="Black" StrokeThickness="2" Width="463" X1="0" X2="460" Y1="0" Y2="0" />
+                <Line Canvas.Left="0" Canvas.Top="317" Height="5" Stroke="Black" StrokeThickness="2" Width="463" X1="0" X2="460" Y1="0" Y2="0" />
+                <TextBox Canvas.Left="186" Canvas.Top="270" Height="23" FontFamily="Arial Black" FontSize="14" Width="77" IsReadOnly="True" Text="{Binding Path=Channel}"/>
+                <TextBlock Canvas.Left="15" Canvas.Top="273" Height="23" FontFamily="Arial Black" FontSize="16" Text="Multicast Channel" />
+                <Button Canvas.Left="286" Canvas.Top="270" FontFamily="Arial Black" FontSize="14" FontWeight="Bold" Content="New" Height="23" Name="buttonChannelNew" Width="59" />
+            </Canvas>
+        </Border>
+    </Canvas>
+</Window>
