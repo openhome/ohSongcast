@@ -91,7 +91,7 @@ IOReturn AudioUserClient::clientDied()
     // the user space application has crashed - get the driver to stop sending audio
     if (DeviceOk() == kIOReturnSuccess)
     {
-        iDevice->Socket().SetInactiveAndHalt();
+        iDevice->Socket().SetActive(false);
     }
     
     // base class calls clientClose()

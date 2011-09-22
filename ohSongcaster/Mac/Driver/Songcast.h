@@ -78,7 +78,7 @@ enum ESongcastState
 {
     eSongcastStateInactive,
     eSongcastStateActive,
-    eSongcastStatePendingInactiveHalt
+    eSongcastStatePendingInactive
 };
 
 class SongcastSocket : public ISongcastSocket
@@ -92,7 +92,6 @@ public:
     void Send(SongcastAudioMessage& aMsg);
     
     void SetActive(uint64_t aActive);
-    void SetInactiveAndHalt();
     void SetTtl(uint64_t aTtl);
     
 private:
