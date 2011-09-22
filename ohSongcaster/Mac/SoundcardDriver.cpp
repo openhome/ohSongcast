@@ -39,7 +39,7 @@ private:
     static OSStatus DefaultDeviceChanged(AudioHardwarePropertyID aId, void* aPtr);
     void DefaultDeviceChanged();
 
-    AudioDeviceID iDeviceSoundcard;
+    AudioDeviceID iDeviceSongcaster;
     AudioDeviceID iDevicePrevious;
 
     Songcaster* iSongcaster;
@@ -77,7 +77,7 @@ private:
 } // namespace OpenHome
 
 
-EXCEPTION(SoundcardError);
+EXCEPTION(SongcasterError);
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
@@ -142,7 +142,7 @@ public:
     }
 
 
-    static AudioDeviceID FirstNonSoundcardDevice(AudioDeviceID aSoundcard)
+    static AudioDeviceID FirstNonSongcasterDevice(AudioDeviceID aSongcaster)
     {
         // get list of all devices
         AudioDeviceID deviceIds[MAX_AUDIO_DEVICES];
@@ -153,10 +153,10 @@ public:
             return kAudioDeviceUnknown;
         }
 
-        // look for the first output device that is not the soundcard
+        // look for the first output device that is not the songcaster
         for (UInt32 i=0 ; i<deviceCount ; i++)
         {
-            if (deviceIds[i] != aSoundcard)
+            if (deviceIds[i] != aSongcaster)
             {
                 UInt32 propBytes = 0;
                 OSStatus err = AudioDeviceGetPropertyInfo(deviceIds[i], 0, false, kAudioDevicePropertyStreams, &propBytes, 0);
@@ -192,7 +192,7 @@ private:
 // OhmSenderDriverMac implementation
 
 OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriverName)
-    : iDeviceSoundcard(kAudioDeviceUnknown)
+    : iDeviceSongcaster(kAudioDeviceUnknown)
     , iDevicePrevious(kAudioDeviceUnknown)
     , iSongcaster(0)
     , iService(0)
@@ -230,9 +230,9 @@ OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriver
     iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(iDriverClassName.CString()));
     if (iService != 0)
     {
-        iDeviceSoundcard = AudioHardware::Device(iDriverName);
+        iDeviceSongcaster = AudioHardware::Device(iDriverName);
 
-        if (iDeviceSoundcard != kAudioDeviceUnknown)
+        if (iDeviceSongcaster != kAudioDeviceUnknown)
         {
             // notification not required
             IONotificationPortDestroy(iNotificationPort);
@@ -276,10 +276,10 @@ void OhmSenderDriverMac::DriverFound()
     // get the IOService for the driver
     iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(iDriverClassName.CString()));
 
-    // get the audio device for the soundcard
-    iDeviceSoundcard = AudioHardware::Device(iDriverName);
+    // get the audio device for the songcaster
+    iDeviceSongcaster = AudioHardware::Device(iDriverName);
 
-    if (iDeviceSoundcard != kAudioDeviceUnknown)
+    if (iDeviceSongcaster != kAudioDeviceUnknown)
     {
         // set the state of the driver
         SetEnabled(iEnabled);
@@ -306,11 +306,11 @@ OSStatus OhmSenderDriverMac::DefaultDeviceChanged(AudioHardwarePropertyID aId, v
 
 void OhmSenderDriverMac::DefaultDeviceChanged()
 {
-    if (iDeviceSoundcard != kAudioDeviceUnknown)
+    if (iDeviceSongcaster != kAudioDeviceUnknown)
     {
         AudioDeviceID current = AudioHardware::CurrentDevice();
 
-        iSongcaster->SetEnabled(current == iDeviceSoundcard);
+        iSongcaster->SetEnabled(current == iDeviceSongcaster);
     }
 }
 
@@ -342,15 +342,15 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
         iDriver->SetActive(iActive);
 
 
-        // change the current audio output device to be the soundcard device
+        // change the current audio output device to be the songcaster device
         AudioDeviceID current = AudioHardware::CurrentDevice();
 
         // change the current audio device only if it is not already set
-        if (current != iDeviceSoundcard)
+        if (current != iDeviceSongcaster)
         {
             iDevicePrevious = current;
 
-            AudioHardware::SetCurrentDevice(iDeviceSoundcard);
+            AudioHardware::SetCurrentDevice(iDeviceSongcaster);
         }
     }
     else
@@ -358,7 +358,7 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
         // change the current audio output device to be what it was previously
         AudioDeviceID current = AudioHardware::CurrentDevice();
 
-        if (current == iDeviceSoundcard)
+        if (current == iDeviceSongcaster)
         {
             if (iDevicePrevious != kAudioDeviceUnknown)
             {
@@ -368,7 +368,7 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
             else
             {
                 // the previous audio device was not stored
-                AudioDeviceID device = AudioHardware::FirstNonSoundcardDevice(iDeviceSoundcard);
+                AudioDeviceID device = AudioHardware::FirstNonSongcasterDevice(iDeviceSongcaster);
 
                 if (device != kAudioDeviceUnknown)
                 {
@@ -432,7 +432,7 @@ OhmSenderDriverMac::Driver::Driver(io_service_t aService)
     // open a connection to communicate with the service
     kern_return_t res = IOServiceOpen(aService, mach_task_self(), 0, &iHandle);
     if (res != KERN_SUCCESS) {
-        THROW(SoundcardError);
+        THROW(SongcasterError);
     }
 
     // open the "hardware" device
@@ -513,7 +513,7 @@ THandle SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChanne
     try {
         driver = new OhmSenderDriverMac(className, driverName);
     }
-    catch (SoundcardError) {
+    catch (SongcasterError) {
         return 0;
     }
 

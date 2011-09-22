@@ -47,7 +47,7 @@
 
 - (IBAction)menuItemOnOffClicked:(id)aSender
 {
-    // toggle the state of the soundcard - allow the eventing to come back
+    // toggle the state of the songcaster - allow the eventing to come back
     // up through enabledChanged to update the UI
     [model setEnabled:![model enabled]];
 }

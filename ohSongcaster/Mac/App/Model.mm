@@ -4,12 +4,12 @@
 #include "../../Songcaster.h"
 
 
-// Declaration for soundcard receiver callback - defined in ReceiverList.mm
+// Declaration for receiver callback - defined in ReceiverList.mm
 extern void ReceiverListCallback(void* aPtr, ECallbackType aType, THandle aReceiver);
 
 // Forward declarations of callback functions defined below
 void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
-void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
+void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 
 
@@ -60,7 +60,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     [iPreferences addObserverRefreshReceiverList:self selector:@selector(preferenceRefreshReceiverList:)];
     [iPreferences addObserverReconnectReceivers:self selector:@selector(preferenceReconnectReceivers:)];
     
-    // create the soundcard object
+    // create the songcaster object
     uint32_t subnet = 0;
     uint32_t channel = 0;
     uint32_t ttl = 4;
@@ -138,10 +138,10 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
 
 - (void) stop
 {
-    // soundcard app shutting down - stop receivers before destroying soundcard
+    // app shutting down - stop receivers before destroying songcaster
     [self stopReceivers];
 
-    // shutdown the soundcard
+    // shutdown the songcaster
     SongcasterDestroy(iSongcaster);
     iSongcaster = NULL;
 
@@ -172,14 +172,14 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
 - (void) setEnabled:(bool)aValue
 {
     // just set the preference - eventing by the preference change will
-    // then cause the state of the soundcard to be updated
+    // then cause the state of the songcaster to be updated
     [iPreferences setEnabled:aValue];
 }
 
 
 - (void) reconnectReceivers
 {
-    // if the soundcard is enabled, force all selected receivers to reconnect
+    // if the songcaster is enabled, force all selected receivers to reconnect
     if (iEnabled)
     {
         for (Receiver* receiver in [iReceiverList receivers])
@@ -199,16 +199,16 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     [iPreferences synchronize];
     iEnabled = [iPreferences enabled];
 
-    // stop receivers before disabling soundcard
+    // stop receivers before disabling songcaster
     if (!iEnabled)
     {
         [self stopReceivers];
     }
 
-    // enable/disable the soundcard
+    // enable/disable the songcaster
     SongcasterSetEnabled(iSongcaster, iEnabled ? 1 : 0);
 
-    // start receivers after soundcard is enabled
+    // start receivers after songcaster is enabled
     if (iEnabled)
     {
         // On switching on the songcaster, only explicitly play receivers that are in the
@@ -245,7 +245,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     // get the new list of selected receivers in order to determine changes in the list
     NSArray* newSelectedUdnList = [[iPreferences selectedUdnList] retain];
 
-    // if the soundcard is enabled, need to play/stop receivers that have been
+    // if the songcaster is enabled, need to play/stop receivers that have been
     // selected/deselected
     if (iEnabled)
     {
@@ -312,7 +312,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     // update the preferences
     [self updatePreferenceReceiverList];
     
-    // now signal the soundcard lower level to refresh
+    // now signal the songcaster lower level to refresh
     SongcasterRefreshReceivers(iSongcaster);
 }
 
@@ -328,7 +328,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     [self updatePreferenceReceiverList];
 
     // the receiver has just appeared on the network - start playing if required i.e.
-    //  - soundcard is switched on
+    //  - songcaster is switched on
     //  - receiver is selected
     //  - receiver is connected and not playing i.e. stopped
     if (iEnabled && [iSelectedUdnList containsObject:[aReceiver udn]])
@@ -365,12 +365,12 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
 
 
 
-// Callbacks from the ohSoundcard code
+// Callbacks from the ohSongcaster code
 void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
 {
 }
 
-void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard)
+void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster)
 {
     Model* model = (Model*)aPtr;
     [model configurationChanged];
