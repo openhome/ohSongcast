@@ -23,7 +23,7 @@ public:
     OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriverName);
     virtual ~OhmSenderDriverMac();
 
-    void SetSoundcard(Soundcard& aSoundcard);
+    void SetSongcaster(Songcaster& aSongcaster);
 
 private:
     // IOhmSenderDriver
@@ -42,7 +42,7 @@ private:
     AudioDeviceID iDeviceSoundcard;
     AudioDeviceID iDevicePrevious;
 
-    Soundcard* iSoundcard;
+    Songcaster* iSongcaster;
 
     io_service_t iService;
     io_iterator_t iNotification;
@@ -194,7 +194,7 @@ private:
 OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriverName)
     : iDeviceSoundcard(kAudioDeviceUnknown)
     , iDevicePrevious(kAudioDeviceUnknown)
-    , iSoundcard(0)
+    , iSongcaster(0)
     , iService(0)
     , iNotification(0)
     , iNotificationPort(0)
@@ -258,9 +258,9 @@ OhmSenderDriverMac::~OhmSenderDriverMac()
     }
 }
 
-void OhmSenderDriverMac::SetSoundcard(Soundcard& aSoundcard)
+void OhmSenderDriverMac::SetSongcaster(Songcaster& aSongcaster)
 {
-    iSoundcard = &aSoundcard;
+    iSongcaster = &aSongcaster;
 }
 
 void OhmSenderDriverMac::DriverFound(void* aPtr, io_iterator_t aIterator)
@@ -310,7 +310,7 @@ void OhmSenderDriverMac::DefaultDeviceChanged()
     {
         AudioDeviceID current = AudioHardware::CurrentDevice();
 
-        iSoundcard->SetEnabled(current == iDeviceSoundcard);
+        iSongcaster->SetEnabled(current == iDeviceSoundcard);
     }
 }
 
@@ -519,7 +519,7 @@ THandle SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChanne
 
     Songcaster* songcaster = new Songcaster(aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl);
 
-    driver->SetSoundcard(*songcaster);
+    driver->SetSongcaster(*songcaster);
 
 	return songcaster;
 }

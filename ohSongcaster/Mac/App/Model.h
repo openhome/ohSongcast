@@ -14,7 +14,7 @@
 
 @interface Model : NSObject<IReceiverListObserver>
 {
-    void* iSoundcard;
+    void* iSongcaster;
     Preferences* iPreferences;
     bool iEnabled;
     ReceiverList* iReceiverList;

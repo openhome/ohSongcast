@@ -1,7 +1,7 @@
 
 #import "ReceiverList.h"
 #import "Receiver.h"
-#include "../../Soundcard.h"
+#include "../../Songcaster.h"
 
 
 // Implementation of receiver list class

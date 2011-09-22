@@ -1,7 +1,7 @@
 
 #import "Model.h"
 #import "Receiver.h"
-#include "../../Soundcard.h"
+#include "../../Songcaster.h"
 
 
 // Declaration for soundcard receiver callback - defined in ReceiverList.mm
@@ -21,7 +21,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
 {
     [super init];
     
-    iSoundcard = nil;
+    iSongcaster = nil;
     iPreferences = nil;
     iEnabled = false;
     iReceiverList = nil;
@@ -66,7 +66,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     uint32_t ttl = 4;
     uint32_t multicast = 0;
     uint32_t preset = 0;
-    iSoundcard = SoundcardCreate("av.openhome.org", subnet, channel, ttl, multicast, iEnabled ? 1 : 0, preset, ReceiverListCallback, iReceiverList, ModelSubnetCallback, self, ModelConfigurationChangedCallback, self, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+    iSongcaster = SongcasterCreate("av.openhome.org", subnet, channel, ttl, multicast, iEnabled ? 1 : 0, preset, ReceiverListCallback, iReceiverList, ModelSubnetCallback, self, ModelConfigurationChangedCallback, self, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
 }
 
 
@@ -142,8 +142,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     [self stopReceivers];
 
     // shutdown the soundcard
-    SoundcardDestroy(iSoundcard);
-    iSoundcard = NULL;
+    SongcasterDestroy(iSongcaster);
+    iSongcaster = NULL;
 
     [iSelectedUdnList release];
     [iReceiverList release];
@@ -206,7 +206,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     }
 
     // enable/disable the soundcard
-    SoundcardSetEnabled(iSoundcard, iEnabled ? 1 : 0);
+    SongcasterSetEnabled(iSongcaster, iEnabled ? 1 : 0);
 
     // start receivers after soundcard is enabled
     if (iEnabled)
@@ -313,7 +313,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
     [self updatePreferenceReceiverList];
     
     // now signal the soundcard lower level to refresh
-    SoundcardRefreshReceivers(iSoundcard);
+    SongcasterRefreshReceivers(iSongcaster);
 }
 
 
@@ -352,7 +352,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSoundcard);
 
 - (void) configurationChanged
 {
-    bool enabled = (SoundcardEnabled(iSoundcard) != 0);
+    bool enabled = (SongcasterEnabled(iSongcaster) != 0);
 
     if (enabled != [self enabled])
     {
