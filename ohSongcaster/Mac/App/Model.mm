@@ -114,12 +114,6 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
             [aReceiver standby];
             break;
     }
-
-    if ([aReceiver status] == eReceiverStateStopped ||
-        [aReceiver status] == eReceiverStateBuffering ||
-        [aReceiver status] == eReceiverStatePlaying)
-    {
-    }
 }
 
 
