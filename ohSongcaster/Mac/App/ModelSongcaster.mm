@@ -54,15 +54,24 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) dispose
 {
+    // destroy the songcaster
+    SongcasterDestroy(iSongcaster);
+    iSongcaster = 0;
+
+    // update all receivers to be unavailable
+    for (Receiver* receiver in [iReceivers receivers])
+    {
+        [receiver updateWithPtr:nil];
+    }
+    [iReceiversChangedObject performSelector:iReceiversChangedSelector withObject:nil];
+
+    // clear event handlers
     iReceiversChangedObject = 0;
     iReceiversChangedSelector = 0;
     iConfigurationChangedObject = 0;
     iConfigurationChangedSelector = 0;
 
     [iReceivers setObserver:nil];
-
-    SongcasterDestroy(iSongcaster);
-    iSongcaster = 0;
 }
 
 
