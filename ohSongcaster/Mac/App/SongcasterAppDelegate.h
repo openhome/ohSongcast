@@ -13,6 +13,7 @@
 
     NSStatusItem* statusItem;
     Model* model;
+    bool iStartResigned;
 }
 
 @property (assign) IBOutlet NSMenu* menu;

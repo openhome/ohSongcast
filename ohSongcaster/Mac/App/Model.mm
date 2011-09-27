@@ -67,6 +67,10 @@
 - (void) setObserver:(id<IModelObserver>)aObserver
 {
     iObserver = aObserver;
+
+    // send events to update the observer
+    [iObserver enabledChanged];    
+    [iObserver iconVisibleChanged];
 }
 
 
