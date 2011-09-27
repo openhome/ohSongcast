@@ -37,7 +37,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     iSelectedUdns = [aSelectedUdns retain];
 
     // setup observer for the receiver list
-    [iReceivers addObserver:self];
+    [iReceivers setObserver:self];
 
     // create the songcaster object
     uint32_t subnet = 0;
@@ -52,11 +52,22 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 }
 
 
-- (void) dealloc
+- (void) dispose
 {
+    iReceiversChangedObject = 0;
+    iReceiversChangedSelector = 0;
+    iConfigurationChangedObject = 0;
+    iConfigurationChangedSelector = 0;
+
+    [iReceivers setObserver:nil];
+
     SongcasterDestroy(iSongcaster);
     iSongcaster = 0;
+}
 
+
+- (void) dealloc
+{
     [iReceivers release];
     [iSelectedUdns release];
 
@@ -249,6 +260,10 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) receiverAdded:(Receiver*)aReceiver
 {
+    // do nothing if the songcaster has been disposed
+    if (!iSongcaster)
+        return;
+
     // the receiver has just appeared on the network - start playing if required i.e.
     //  - songcaster is switched on
     //  - receiver is selected
@@ -265,6 +280,10 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) receiverRemoved:(Receiver*)aReceiver
 {
+    // do nothing if the songcaster has been disposed
+    if (!iSongcaster)
+        return;
+
     // notify upper layers
     [iReceiversChangedObject performSelector:iReceiversChangedSelector withObject:nil];
 }
@@ -272,6 +291,10 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) receiverChanged:(Receiver*)aReceiver
 {
+    // do nothing if the songcaster has been disposed
+    if (!iSongcaster)
+        return;
+
     // notify upper layers
     [iReceiversChangedObject performSelector:iReceiversChangedSelector withObject:nil];
 }

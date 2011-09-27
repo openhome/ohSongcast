@@ -12,25 +12,12 @@
 {
     [super init];
     
-    iPreferences = nil;
     iObserver = nil;
     iModelSongcaster = nil;
 
-    return self;
-}
-
-
-- (void) start
-{
     // create the preferences object
     iPreferences = [[Preferences alloc] initWithBundle:[NSBundle mainBundle]];
     [iPreferences synchronize];
-
-    // create the songcaster model
-    iModelSongcaster = [[ModelSongcaster alloc] initWithReceivers:[iPreferences receiverList] andSelectedUdns:[iPreferences selectedUdnList]];
-    [iModelSongcaster setEnabled:[iPreferences enabled]];
-    [iModelSongcaster setReceiversChangedObserver:self selector:@selector(receiversChanged)];
-    [iModelSongcaster setConfigurationChangedObserver:self selector:@selector(configurationChanged)];
 
     // setup some event handlers
     [iPreferences addObserverEnabled:self selector:@selector(preferenceEnabledChanged:)];
@@ -38,19 +25,42 @@
     [iPreferences addObserverSelectedUdnList:self selector:@selector(preferenceSelectedUdnListChanged:)];
     [iPreferences addObserverRefreshReceiverList:self selector:@selector(preferenceRefreshReceiverList:)];
     [iPreferences addObserverReconnectReceivers:self selector:@selector(preferenceReconnectReceivers:)];
+
+    return self;
+}
+
+
+- (void) start
+{
+    if (iModelSongcaster)
+        return;
+
+    // make sure preferences are synchronised so the songcaster is correctly initialised
+    [iPreferences synchronize];
+
+    // create the songcaster model
+    iModelSongcaster = [[ModelSongcaster alloc] initWithReceivers:[iPreferences receiverList] andSelectedUdns:[iPreferences selectedUdnList]];
+    [iModelSongcaster setEnabled:[iPreferences enabled]];
+    [iModelSongcaster setReceiversChangedObserver:self selector:@selector(receiversChanged)];
+    [iModelSongcaster setConfigurationChangedObserver:self selector:@selector(configurationChanged)];
 }
 
 
 - (void) stop
 {
+    if (!iModelSongcaster)
+        return;
+
     // stop the receivers before destroying the songcaster
     [iModelSongcaster stopReceivers];
+
+    // dispose of the songcaster model before releasing - this will shutdown the
+    // songcaster
+    [iModelSongcaster dispose];
 
     // shutdown the songcaster
     [iModelSongcaster release];
     iModelSongcaster = 0;
-
-    [iPreferences release];
 }
 
 
@@ -68,7 +78,7 @@
 
 - (bool) enabled
 {
-    return [iModelSongcaster enabled];
+    return [iPreferences enabled];
 }
 
 
@@ -82,7 +92,9 @@
 
 - (void) reconnectReceivers
 {
-    [iModelSongcaster playReceiversAndReconnect:true];
+    if (iModelSongcaster) {
+        [iModelSongcaster playReceiversAndReconnect:true];
+    }
 }
 
 
@@ -92,7 +104,9 @@
     [iPreferences synchronize];
 
     // enable/disable the songcaster
-    [iModelSongcaster setEnabled:[iPreferences enabled]];
+    if (iModelSongcaster) {
+        [iModelSongcaster setEnabled:[iPreferences enabled]];
+    }
 
     // notify UI
     [iObserver enabledChanged];    
@@ -115,13 +129,17 @@
     [iPreferences synchronize];
 
     // set the selected list in the songcaster
-    [iModelSongcaster setSelectedUdns:[iPreferences selectedUdnList]];
+    if (iModelSongcaster) {
+        [iModelSongcaster setSelectedUdns:[iPreferences selectedUdnList]];
+    }
 }
 
 
 - (void) preferenceRefreshReceiverList:(NSNotification*)aNotification
 {
-    [iModelSongcaster refreshReceivers];
+    if (iModelSongcaster) {
+        [iModelSongcaster refreshReceivers];
+    }
 }
 
 
@@ -133,6 +151,9 @@
 
 - (void) receiversChanged
 {
+    if (!iModelSongcaster)
+        return;
+
     // build a new list of receivers to store in the preferences
     NSMutableArray* list = [NSMutableArray arrayWithCapacity:0];
     
@@ -148,6 +169,9 @@
 
 - (void) configurationChanged
 {
+    if (!iModelSongcaster)
+        return;
+
     [self setEnabled:[iModelSongcaster enabled]];
 }
 

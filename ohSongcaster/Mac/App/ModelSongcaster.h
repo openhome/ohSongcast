@@ -17,6 +17,7 @@
 }
 
 - (id) initWithReceivers:(NSArray*)aReceivers andSelectedUdns:(NSArray*)aSelectedUdns;
+- (void) dispose;
 
 - (void) setReceiversChangedObserver:(id)aObserver selector:(SEL)aSelector;
 - (void) setConfigurationChangedObserver:(id)aObserver selector:(SEL)aSelector;

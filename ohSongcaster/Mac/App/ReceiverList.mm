@@ -30,9 +30,20 @@
 }
 
 
-- (void) addObserver:(NSObject<IReceiverListObserver>*)aObserver
+- (void) setObserver:(NSObject<IReceiverListObserver>*)aObserver
 {
-    iObserver = aObserver;
+    @synchronized(iLock)
+    {
+        if (iObserver) {
+            [iObserver release];
+        }
+
+        iObserver = aObserver;
+
+        if (iObserver) {
+            [iObserver retain];
+        }
+    }
 }
 
 
