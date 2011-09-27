@@ -1,7 +1,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "Preferences.h"
-#import "ReceiverList.h"
+#import "ModelSongcaster.h"
 
 
 @protocol IModelObserver
@@ -12,14 +12,11 @@
 @end
 
 
-@interface Model : NSObject<IReceiverListObserver>
+@interface Model : NSObject
 {
-    void* iSongcaster;
     Preferences* iPreferences;
-    bool iEnabled;
-    ReceiverList* iReceiverList;
-    NSArray* iSelectedUdnList;
     id<IModelObserver> iObserver;
+    ModelSongcaster* iModelSongcaster;
 }
 
 - (void) start;
