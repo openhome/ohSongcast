@@ -25,7 +25,7 @@ objcc_flags = -x objective-c++ -fvisibility-inlines-hidden $(compiler_flags)
 
 link = g++
 linkflags1 = -isysroot /Developer/SDKs/MacOSX10.6.sdk
-linkflags2 = -mmacosx-version-min=10.6 -framework Cocoa
+linkflags2 = -mmacosx-version-min=10.6 -framework Cocoa -framework SystemConfiguration
 
 copystrings = /Developer/Library/Xcode/Plug-ins/CoreBuildTasks.xcplugin/Contents/Resources/copystrings
 copystrings_flags = --validate --inputencoding utf-8 --outputencoding UTF-16

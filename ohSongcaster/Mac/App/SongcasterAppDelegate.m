@@ -13,9 +13,8 @@
 
 - (void) sessionDidResignActive:(NSNotification*)aNotification
 {
-    // set the start resigned flag to true - this event is called before the
-    // applicationDidFinishLaunching event
-    iStartResigned = true;
+    // set the system state
+    iSessionResigned = true;
 
     // user session has been resigned - stop the songcaster - this will do nothing
     // if the model has not been started i.e. this notification has occurred on
@@ -26,8 +25,56 @@
 
 - (void) sessionDidBecomeActive:(NSNotification*)aNotification
 {
+    // set the system state
+    iSessionResigned = false;
+
     // user session has just become active again - restart the songcaster
     [model start];
+}
+
+
+- (void) networkReachabilityChanged:(SCNetworkReachabilityFlags)aFlags
+{
+    // ignore any changes when sleeping or when this user session is resigned
+    if (iSleeping || iSessionResigned) {
+        return;
+    }
+
+    if (aFlags == kSCNetworkReachabilityFlagsReachable)
+    {
+        [model start];
+    }
+    else
+    {
+        [model stop];
+    }
+}
+
+
+void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
+                                SCNetworkReachabilityFlags aFlags,
+                                void* aInfo)
+{
+    SongcasterAppDelegate* app = (SongcasterAppDelegate*)aInfo;
+    [app networkReachabilityChanged:aFlags];
+}
+
+
+- (void) willSleep:(NSNotification*)aNotification
+{
+    // set the system state
+    iSleeping = true;
+
+    // stop the songcaster
+    [model stop];
+}
+
+
+- (void) didWake:(NSNotification*)aNotification
+{
+    // set the system state - do not restart the songcaster here since the network
+    // may be unavailable
+    iSleeping = false;
 }
 
 
@@ -44,27 +91,38 @@
     model = [[Model alloc] init];
     [model setObserver:self];
 
-    // initialise flag for when the app starts when the user session is resigned
-    iStartResigned = false;
+    // initialise system state
+    iSessionResigned = false;
+    iSleeping = false;
 
     // setup system event notifications
     NSNotificationCenter* center = [[NSWorkspace sharedWorkspace] notificationCenter];
-//    [center addObserver:self selector:@selector(willSleep:)
-//                             name:NSWorkspaceWillSleepNotification object:NULL];
-//    [center addObserver:self selector:@selector(didWake:)
-//                             name:NSWorkspaceDidWakeNotification object:NULL];
+    [center addObserver:self selector:@selector(willSleep:)
+                             name:NSWorkspaceWillSleepNotification object:NULL];
+    [center addObserver:self selector:@selector(didWake:)
+                             name:NSWorkspaceDidWakeNotification object:NULL];
     [center addObserver:self selector:@selector(sessionDidResignActive:)
                              name:NSWorkspaceSessionDidResignActiveNotification object:NULL];
     [center addObserver:self selector:@selector(sessionDidBecomeActive:)
                              name:NSWorkspaceSessionDidBecomeActiveNotification object:NULL];
+
+    SCNetworkReachabilityContext context;
+    context.version = 0;
+    context.retain = NULL;
+    context.release = NULL;
+    context.copyDescription = NULL;
+    context.info = self;
+
+    iReachability = SCNetworkReachabilityCreateWithName(NULL, "www.google.com");
+    SCNetworkReachabilitySetCallback(iReachability, NetworkReachabilityChanged, &context);
+    SCNetworkReachabilityScheduleWithRunLoop(iReachability, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 }
 
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-    // start the model if this instance of the application started while the user
-    // session is active
-    if (!iStartResigned) {
+    // start the songcaster if the user session is active and the system is not asleep
+    if (!iSessionResigned && !iSleeping) {
         [model start];
     }
 }
