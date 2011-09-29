@@ -43,6 +43,7 @@ public:
     virtual void free();
     
     void SetSocket(ISongcastSocket& aSocket);
+    void SetDescription(const char* aDescription);
 
 private:
     virtual bool initHardware(IOService* aProvider);

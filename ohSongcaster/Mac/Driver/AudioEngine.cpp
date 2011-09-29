@@ -1,5 +1,5 @@
+#include "SongcasterDriver.h"
 #include "AudioEngine.h"
-#include "Branding.h"
 #include <IOKit/audio/IOAudioStream.h>
 #include <IOKit/IOLib.h>
 
@@ -74,7 +74,6 @@ bool AudioEngine::initHardware(IOService* aProvider)
         return false;
     }
     
-    setDescription(BRANDING_AUDIOENGINE_DESCRIPTION);
     setNumSampleFramesPerBuffer(BLOCKS * BLOCK_FRAMES);
     setSampleRate(&iSampleRate);
 
@@ -167,6 +166,12 @@ void AudioEngine::free()
 void AudioEngine::SetSocket(ISongcastSocket& aSocket)
 {
     iSocket = &aSocket;
+}
+
+
+void AudioEngine::SetDescription(const char* aDescription)
+{
+    setDescription(aDescription);
 }
 
 

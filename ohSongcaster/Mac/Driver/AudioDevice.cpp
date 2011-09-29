@@ -1,4 +1,4 @@
-#include "AudioDevice.h"
+#include "SongcasterDriver.h"
 #include "AudioEngine.h"
 #include <IOKit/IOLib.h>
 
@@ -17,9 +17,9 @@ bool AudioDevice::initHardware(IOService* aProvider)
     }
 
     // set device names
-    setDeviceName(BRANDING_AUDIODEVICE_DEVICENAME);
-    setDeviceShortName(BRANDING_AUDIODEVICE_DEVICESHORTNAME);
-    setManufacturerName(BRANDING_AUDIODEVICE_MANUFACTURERNAME);
+    setDeviceName(AudioDeviceInfo::Name());
+    setDeviceShortName(AudioDeviceInfo::ShortName());
+    setManufacturerName(AudioDeviceInfo::ManufacturerName());
 
     // create, initialise and activate the audio engine
     AudioEngine* engine = new AudioEngine();
@@ -37,6 +37,7 @@ bool AudioDevice::initHardware(IOService* aProvider)
     // create the songcast socket
     iSocket = new SongcastSocket();
     engine->SetSocket(*iSocket);
+    engine->SetDescription(AudioDeviceInfo::Name());
 
     if (activateAudioEngine(engine) != kIOReturnSuccess) {
         IOLog("Songcaster AudioDevice[%p]::initHardware(%p) failed to activate engine\n", this, aProvider);
