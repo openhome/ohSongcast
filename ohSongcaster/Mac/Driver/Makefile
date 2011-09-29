@@ -35,10 +35,11 @@ compiler_flags = -c -fmessage-length=0 -pipe -nostdinc -Wno-trigraphs -fasm-bloc
 kernel_cc_flags = -x c++ $(compiler_flags) -msoft-float -fno-builtin -fno-common -mkernel -fno-exceptions -fno-rtti -fcheck-new -fapple-kext
 kernel_c_flags = -x c -std=gnu99 $(compiler_flags) -msoft-float -fno-builtin -fno-common -mkernel
 
+ar = ar rc
+
 link = g++
 linkflags1 = -isysroot /Developer/SDKs/MacOSX10.6.sdk
-linkflags2 = -mmacosx-version-min=10.6 -lcpp_kext -Xlinker -kext -nostdlib -lkmodc++
-linkflags3 = -lkmod -lcc_kext
+linkflags2 = -mmacosx-version-min=10.6 -lcpp_kext -Xlinker -kext -nostdlib -lkmodc++ -lkmod -lcc_kext
 
 
 default : make_outputdir $(outputdir)$(product_name).kext
@@ -65,10 +66,13 @@ $(outputdir)%.o : %.cpp
 $(outputdir)%.o : %.c
 	$(compiler) $(arch_flags) $(kernel_c_flags) $< -o $@
 
-objects = $(outputdir)AudioDevice.o $(outputdir)AudioEngine.o $(outputdir)AudioUserClient.o $(outputdir)AudioClip.o $(outputdir)Songcast.o $(outputdir)ohSongcasterDriver.o
+objects = $(outputdir)AudioDevice.o $(outputdir)AudioEngine.o $(outputdir)AudioUserClient.o $(outputdir)AudioClip.o $(outputdir)Songcast.o
 
-$(outputdir)$(product_name) : $(objects) $(outputdir)KextInfo.o $(outputdir)ohSongcasterKextInfo.o
-	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(linkflags2) $(outputdir)KextInfo.o $(outputdir)ohSongcasterKextInfo.o $(linkflags3) -o $@
+$(outputdir)lib$(product_name).a : $(objects)
+	$(ar) $(outputdir)lib$(product_name).a $(objects)
+
+$(outputdir)$(product_name) : $(outputdir)ohSongcasterDriver.o $(outputdir)ohSongcasterKextInfo.o $(outputdir)lib$(product_name).a $(outputdir)KextInfo.o
+	$(link) $(arch_linkflags) $(linkflags1) $(outputdir)ohSongcasterDriver.o $(outputdir)ohSongcasterKextInfo.o $(outputdir)lib$(product_name).a $(outputdir)KextInfo.o $(linkflags2) -o $@
 
 endif
 
