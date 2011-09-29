@@ -3,24 +3,26 @@
 
 #include <IOKit/audio/IOAudioDevice.h>
 #include "Branding.h"
-#include "Songcast.h"
 
 
 #define AudioDevice BRANDING_AUDIODEVICE_CLASS
+
+
+class SongcastSocket;
 
 
 class AudioDevice : public IOAudioDevice
 {
     OSDeclareDefaultStructors(AudioDevice);
 
+public:
+    SongcastSocket& Socket() { return *iSocket; }
+
+private:
     virtual bool initHardware(IOService* aProvider);
     virtual void free();
 
-public:
-    SongcastSocket& Socket() { return iSocket; }
-
-private:
-    SongcastSocket iSocket;
+    SongcastSocket* iSocket;
 };
 
 

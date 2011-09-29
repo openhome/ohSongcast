@@ -33,7 +33,10 @@ bool AudioDevice::initHardware(IOService* aProvider)
         engine->release();
         return false;
     }
-    engine->SetSocket(iSocket);
+
+    // create the songcast socket
+    iSocket = new SongcastSocket();
+    engine->SetSocket(*iSocket);
 
     if (activateAudioEngine(engine) != kIOReturnSuccess) {
         IOLog("Songcaster AudioDevice[%p]::initHardware(%p) failed to activate engine\n", this, aProvider);
@@ -54,7 +57,9 @@ void AudioDevice::free()
     IOLog("Songcaster AudioDevice[%p]::free()\n", this);
 
     // close the kernel socket
-    iSocket.Close();
+    iSocket->Close();
+    delete iSocket;
+    iSocket = 0;
     
     IOAudioDevice::free();
 }

@@ -1,5 +1,6 @@
 #include "AudioUserClient.h"
 #include "AudioDeviceInterface.h"
+#include "Songcast.h"
 #include <IOKit/IOLib.h>
 
 
