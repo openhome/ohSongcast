@@ -1,40 +1,88 @@
 #include "AudioUserClient.h"
+#include "AudioDeviceInterface.h"
 #include <IOKit/IOLib.h>
 
 
-OSDefineMetaClassAndStructors(AudioUserClient, IOUserClient);
+// Declaration of private dispatcher class
+
+class AudioUserClientDispatcher
+{
+public:
+    static const IOExternalMethodDispatch iMethods[eNumDriverMethods];
+
+    static IOReturn Open(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
+    static IOReturn Close(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
+    static IOReturn SetActive(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
+    static IOReturn SetEndpoint(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
+    static IOReturn SetTtl(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
+};
 
 
-const IOExternalMethodDispatch AudioUserClient::iMethods[eNumDriverMethods] =
+// Definition of table for the dispatcher methods
+
+const IOExternalMethodDispatch AudioUserClientDispatcher::iMethods[eNumDriverMethods] =
 {
     // eOpen
     {
-        (IOExternalMethodAction)&AudioUserClient::DispatchOpen, 0, 0, 0, 0
+        (IOExternalMethodAction)&AudioUserClientDispatcher::Open, 0, 0, 0, 0
     },
     // eClose
     {
-        (IOExternalMethodAction)&AudioUserClient::DispatchClose, 0, 0, 0, 0
+        (IOExternalMethodAction)&AudioUserClientDispatcher::Close, 0, 0, 0, 0
     },
     // eSetActive
     {
-        (IOExternalMethodAction)&AudioUserClient::DispatchSetActive, 1, 0, 0, 0
+        (IOExternalMethodAction)&AudioUserClientDispatcher::SetActive, 1, 0, 0, 0
     },
     // eSetEndpoint
     {
-        (IOExternalMethodAction)&AudioUserClient::DispatchSetEndpoint, 2, 0, 0, 0
+        (IOExternalMethodAction)&AudioUserClientDispatcher::SetEndpoint, 2, 0, 0, 0
     },
     // eSetTtl
     {
-        (IOExternalMethodAction)&AudioUserClient::DispatchSetTtl, 1, 0, 0, 0
+        (IOExternalMethodAction)&AudioUserClientDispatcher::SetTtl, 1, 0, 0, 0
     }
 };
+
+
+// Definition of dispatch functions
+
+IOReturn AudioUserClientDispatcher::Open(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
+{
+    return aTarget->Open();
+}
+
+IOReturn AudioUserClientDispatcher::Close(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
+{
+    return aTarget->Close();
+}
+
+IOReturn AudioUserClientDispatcher::SetActive(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
+{
+    return aTarget->SetActive(aArgs->scalarInput[0]);
+}
+
+IOReturn AudioUserClientDispatcher::SetEndpoint(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
+{
+    return aTarget->SetEndpoint(aArgs->scalarInput[0], aArgs->scalarInput[1]);
+}
+
+IOReturn AudioUserClientDispatcher::SetTtl(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
+{
+    return aTarget->SetTtl(aArgs->scalarInput[0]);
+}
+
+
+// Implementation of audio user client class
+
+OSDefineMetaClassAndStructors(AudioUserClient, IOUserClient);
 
 
 IOReturn AudioUserClient::externalMethod(uint32_t aSelector, IOExternalMethodArguments* aArgs, IOExternalMethodDispatch* aDispatch, OSObject* aTarget, void* aReference)
 {
     if (aSelector < eNumDriverMethods)
     {
-        aDispatch = (IOExternalMethodDispatch*)&iMethods[aSelector];
+        aDispatch = (IOExternalMethodDispatch*)&AudioUserClientDispatcher::iMethods[aSelector];
         if (!aTarget) {
             aTarget = this;
         }
@@ -115,11 +163,6 @@ IOReturn AudioUserClient::DeviceOk()
 
 // eOpen
 
-IOReturn AudioUserClient::DispatchOpen(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
-{
-    return aTarget->Open();
-}
-
 IOReturn AudioUserClient::Open()
 {
     if (iDevice == 0 || isInactive()) {
@@ -138,11 +181,6 @@ IOReturn AudioUserClient::Open()
 
 // eClose
 
-IOReturn AudioUserClient::DispatchClose(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
-{
-    return aTarget->Close();
-}
-
 IOReturn AudioUserClient::Close()
 {
     IOReturn ret = DeviceOk();
@@ -159,11 +197,6 @@ IOReturn AudioUserClient::Close()
 
 // eSetActive
 
-IOReturn AudioUserClient::DispatchSetActive(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
-{
-    return aTarget->SetActive(aArgs->scalarInput[0]);
-}
-
 IOReturn AudioUserClient::SetActive(uint64_t aActive)
 {
     IOReturn ret = DeviceOk();
@@ -178,11 +211,6 @@ IOReturn AudioUserClient::SetActive(uint64_t aActive)
 
 
 // eSetEndpoint
-
-IOReturn AudioUserClient::DispatchSetEndpoint(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
-{
-    return aTarget->SetEndpoint(aArgs->scalarInput[0], aArgs->scalarInput[1]);
-}
 
 IOReturn AudioUserClient::SetEndpoint(uint64_t aIpAddress, uint64_t aPort)
 {
@@ -199,11 +227,6 @@ IOReturn AudioUserClient::SetEndpoint(uint64_t aIpAddress, uint64_t aPort)
 
 
 // eSetTtl
-
-IOReturn AudioUserClient::DispatchSetTtl(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
-{
-    return aTarget->SetTtl(aArgs->scalarInput[0]);
-}
 
 IOReturn AudioUserClient::SetTtl(uint64_t aTtl)
 {
