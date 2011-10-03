@@ -66,13 +66,10 @@ $(outputdir)%.o : %.cpp
 $(outputdir)%.o : %.c
 	$(compiler) $(arch_flags) $(kernel_c_flags) $< -o $@
 
-objects = $(outputdir)AudioDevice.o $(outputdir)AudioEngine.o $(outputdir)AudioUserClient.o $(outputdir)AudioClip.o $(outputdir)Songcast.o
+objects = $(outputdir)AudioDevice.o $(outputdir)AudioEngine.o $(outputdir)AudioUserClient.o $(outputdir)AudioClip.o $(outputdir)Songcast.o $(outputdir)KextInfo.o
 
-$(outputdir)lib$(product_name).a : $(objects)
-	$(ar) $(outputdir)lib$(product_name).a $(objects)
-
-$(outputdir)$(product_name) : $(outputdir)ohSongcasterDriver.o $(outputdir)ohSongcasterKextInfo.o $(outputdir)lib$(product_name).a $(outputdir)KextInfo.o
-	$(link) $(arch_linkflags) $(linkflags1) $(outputdir)ohSongcasterDriver.o $(outputdir)ohSongcasterKextInfo.o $(outputdir)lib$(product_name).a $(outputdir)KextInfo.o $(linkflags2) -o $@
+$(outputdir)$(product_name) : $(objects)
+	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(linkflags2) -o $@
 
 endif
 
