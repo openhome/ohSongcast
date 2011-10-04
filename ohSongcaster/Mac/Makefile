@@ -58,9 +58,9 @@ $(objdir)Installer/$(product_name).pkg : driver app prefs
 	cp LaunchAgent.plist  $(objdir)Installer/Dst/Library/LaunchAgents/org.openhome.av.songcaster.plist
 	$(packagemaker) --root $(objdir)Installer/Dst --out $@ --scripts Scripts --info PkgInfo.plist --title ohSongcaster --version 1.1.1 --no-relocate
 
-$(objdir)Installer/$(product_name).dmg : $(objdir)Installer/$(product_name).pkg Scripts/uninstall.sh
+$(objdir)Installer/$(product_name).dmg : $(objdir)Installer/$(product_name).pkg Scripts/uninstall.tool
 	mkdir -p $(objdir)Installer/DmgContents/
 	cp -R $(objdir)Installer/$(product_name).pkg $(objdir)Installer/DmgContents/
-	cp Scripts/uninstall.sh $(objdir)Installer/DmgContents/
+	cp Scripts/uninstall.tool $(objdir)Installer/DmgContents/
 	hdiutil create -ov $@ -volname $(product_name) -fs HFS+ -srcfolder $(objdir)Installer/DmgContents/
 
