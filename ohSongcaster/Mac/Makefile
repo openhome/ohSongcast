@@ -10,8 +10,10 @@ endif
 export objdir = $(CURDIR)/Build/Obj/Mac/$(build_dir)/
 export product_name = ohSongcaster
 
+packagemaker=/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker 
 
-default : make_objdir_x86_64 make_objdir_i386 make_objdir_ppc make_objdir_universal $(objdir)Installer/$(product_name).pkg
+
+default : make_objdir_x86_64 make_objdir_i386 make_objdir_ppc make_objdir_universal $(objdir)Installer/$(product_name).dmg
 
 
 .PHONY : clean
@@ -54,6 +56,11 @@ $(objdir)Installer/$(product_name).pkg : driver app prefs
 	cp -R $(objdir)x86_64/Prefs/$(product_name).prefPane $(objdir)Installer/Dst/Library/PreferencePanes/
 	cp -R $(objdir)x86_64/App/$(product_name).app $(objdir)Installer/Dst/Library/OpenHome/
 	cp LaunchAgent.plist  $(objdir)Installer/Dst/Library/LaunchAgents/org.openhome.av.songcaster.plist
-	pkgbuild --identifier org.openhome.av.songcaster --install-location / --root $(objdir)Installer/Dst --component-plist PkgComponent.plist --scripts Scripts $@
+	$(packagemaker) --root $(objdir)Installer/Dst --out $@ --scripts Scripts --info PkgInfo.plist --title ohSongcaster --version 1.1.1 --no-relocate
 
+$(objdir)Installer/$(product_name).dmg : $(objdir)Installer/$(product_name).pkg Scripts/uninstall.sh
+	mkdir -p $(objdir)Installer/DmgContents/
+	cp -R $(objdir)Installer/$(product_name).pkg $(objdir)Installer/DmgContents/
+	cp Scripts/uninstall.sh $(objdir)Installer/DmgContents/
+	hdiutil create -ov $@ -volname $(product_name) -fs HFS+ -srcfolder $(objdir)Installer/DmgContents/
 

@@ -1,9 +1,14 @@
 #!/bin/sh
 
 
+launchFile="/Library/LaunchAgents/org.openhome.av.songcaster.plist"
+driver="/System/Library/Extensions/ohSongcaster.kext"
+prefs="/Library/PreferencePanes/ohSongcaster.prefPane"
+app="/Library/OpenHome/ohSongcaster.app"
+
+
 # stop the agent application
 
-launchFile="/Library/LaunchAgents/org.openhome.av.songcaster.plist"
 if [ -e "$launchFile" ]
 then
   launchctl unload "$launchFile"
@@ -12,22 +17,21 @@ fi
 
 # unload the driver
 
-driver="/System/Library/Extensions/ohSongcaster.kext"
 if [ -e "$driver" ]
 then
-  kextunload "$driver"
+  sudo kextunload "$driver"
   if [ $? != 0 ]
   then
-    kextunload "$driver"
+    sudo kextunload "$driver"
   fi
 fi
 
 
 # remove installed files
 
-rm -rf "$launchFile"
-rm -rf "$driver"
-rm -rf /Library/PreferencePanes/ohSongcaster.prefPane
-rm -rf /Library/OpenHome/ohSongcaster.app
+sudo rm -rf "$launchFile"
+sudo rm -rf "$driver"
+sudo rm -rf "$prefs"
+sudo rm -rf "$app"
 
 
