@@ -32,9 +32,8 @@ class ReceiverManager3Receiver  : private INonCopyable
 public:
 	enum EStatus {
         eDisconnected,
-        eStopped,
-        eBuffering,
-        ePlaying
+        eConnecting,
+        eConnected
 	};
 
 public:

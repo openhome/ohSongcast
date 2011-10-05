@@ -153,14 +153,14 @@ ReceiverManager3Receiver::EStatus ReceiverManager3::Status(ReceiverManager2Recei
 	aReceiver.TransportState(state);
 
 	if (state == Brn("Stopped") ) {
-		return (ReceiverManager3Receiver::eStopped);
+		return (ReceiverManager3Receiver::eDisconnected);
 	}
 
 	if (state == Brn("Buffering") ) {
-		return (ReceiverManager3Receiver::eBuffering);
+		return (ReceiverManager3Receiver::eConnecting);
 	}
 
-	return (ReceiverManager3Receiver::ePlaying);
+	return (ReceiverManager3Receiver::eConnected);
 }
 
 void ReceiverManager3::Play(ReceiverManager2Receiver& aReceiver)

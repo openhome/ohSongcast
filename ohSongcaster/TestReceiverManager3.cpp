@@ -67,14 +67,11 @@ void ReceiverManager3Logger::ReceiverAdded(ReceiverManager3Receiver& aReceiver)
 	case ReceiverManager3Receiver::eDisconnected:
 		Print("Disconnected");
 		break;
-	case ReceiverManager3Receiver::eStopped:
-		Print("Stopped");
+	case ReceiverManager3Receiver::eConnecting:
+		Print("Connecting");
 		break;
-	case ReceiverManager3Receiver::eBuffering:
-		Print("Buffering");
-		break;
-	case ReceiverManager3Receiver::ePlaying:
-		Print("Playing");
+	case ReceiverManager3Receiver::eConnected:
+		Print("Connected");
 		break;
 	}
 
@@ -93,14 +90,11 @@ void ReceiverManager3Logger::ReceiverChanged(ReceiverManager3Receiver& aReceiver
 	case ReceiverManager3Receiver::eDisconnected:
 		Print("Disconnected");
 		break;
-	case ReceiverManager3Receiver::eStopped:
-		Print("Stopped");
+	case ReceiverManager3Receiver::eConnecting:
+		Print("Connecting");
 		break;
-	case ReceiverManager3Receiver::eBuffering:
-		Print("Buffering");
-		break;
-	case ReceiverManager3Receiver::ePlaying:
-		Print("Playing");
+	case ReceiverManager3Receiver::eConnected:
+		Print("Connected");
 		break;
 	}
 

@@ -39,9 +39,8 @@ namespace OpenHome.Songcaster
     public enum EReceiverStatus
     {
         eDisconnected,
-        eStopped,
-        eBuffering,
-        ePlaying
+        eConnecting,
+        eConnected
     }
 
     public interface IReceiver
