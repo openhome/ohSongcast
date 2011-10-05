@@ -31,8 +31,8 @@
 
 - (void) stopReceiver:(Receiver*)aReceiver;
 - (void) stopReceivers;
-- (void) playReceiver:(Receiver*)aReceiver andReconnect:(bool)aReconnect;
-- (void) playReceiversAndReconnect:(bool)aReconnect;
+- (void) playReceiver:(Receiver*)aReceiver;
+- (void) playReceivers;
 
 @end
 

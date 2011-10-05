@@ -38,9 +38,11 @@
     // make sure preferences are synchronised so the songcaster is correctly initialised
     [iPreferences synchronize];
 
+    // the songcaster is always started disabled - ensure that the preferences reflect this
+    [iPreferences setEnabled:false];
+
     // create the songcaster model
     iModelSongcaster = [[ModelSongcaster alloc] initWithReceivers:[iPreferences receiverList] andSelectedUdns:[iPreferences selectedUdnList]];
-    [iModelSongcaster setEnabled:[iPreferences enabled]];
     [iModelSongcaster setReceiversChangedObserver:self selector:@selector(receiversChanged)];
     [iModelSongcaster setConfigurationChangedObserver:self selector:@selector(configurationChanged)];
 }
@@ -51,8 +53,12 @@
     if (!iModelSongcaster)
         return;
 
-    // stop the receivers before destroying the songcaster
-    [iModelSongcaster stopReceivers];
+    // disable the songcaster before destroying the songcaster - make sure the preferences reflect this and
+    // the songcaster is disabled synchronously - if [self setEnabled:false] was called, the songcaster
+    // would get disabled asynchronously, by which time it would have been destroyed and, therefore, the
+    // receivers will not be put into standby
+    [iModelSongcaster setEnabled:false];
+    [iPreferences setEnabled:false];
 
     // dispose of the songcaster model before releasing - this will shutdown the
     // songcaster
@@ -97,7 +103,7 @@
 - (void) reconnectReceivers
 {
     if (iModelSongcaster) {
-        [iModelSongcaster playReceiversAndReconnect:true];
+        [iModelSongcaster playReceivers];
     }
 }
 

@@ -7,9 +7,8 @@ typedef enum
 {
     eReceiverStateOffline,
     eReceiverStateDisconnected,
-    eReceiverStateStopped,
-    eReceiverStateBuffering,
-    eReceiverStatePlaying
+    eReceiverStateConnecting,
+    eReceiverStateConnected
     
 } EReceiverState;
 

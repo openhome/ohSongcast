@@ -353,17 +353,16 @@ static NSString* textSongcasterOff;
             break;
 
         case eReceiverStateDisconnected:
-        case eReceiverStateStopped:
             statusText = [CellResources textDisconnected];
             statusImage = [CellResources imageDisconnected];
             break;
 
-        case eReceiverStateBuffering:
+        case eReceiverStateConnecting:
             statusText = [CellResources textConnecting];
             statusImage = [CellResources imageDisconnected];
             break;
 
-        case eReceiverStatePlaying:
+        case eReceiverStateConnected:
             statusText = [CellResources textConnected];
             statusImage = [CellResources imageConnected];
             break;

@@ -99,12 +99,10 @@
             {
                 case eDisconnected:
                     return eReceiverStateDisconnected;
-                case eStopped:
-                    return eReceiverStateStopped;
-                case eBuffering:
-                    return eReceiverStateBuffering;
-                case ePlaying:
-                    return eReceiverStatePlaying;
+                case eConnecting:
+                    return eReceiverStateConnecting;
+                case eConnected:
+                    return eReceiverStateConnected;
                 default:
                     return eReceiverStateOffline;
             };

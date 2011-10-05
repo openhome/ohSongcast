@@ -39,7 +39,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     // setup observer for the receiver list
     [iReceivers setObserver:self];
 
-    // create the songcaster object
+    // create the songcaster object - always create disabled
     uint32_t subnet = 0;
     uint32_t channel = 0;
     uint32_t ttl = 4;
@@ -122,9 +122,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     // start receivers after songcaster is enabled
     if (aValue)
     {
-        // On switching on the songcaster, only explicitly play receivers that are in the
-        // stopped state - receivers that are disconnected are left alone
-        [self playReceiversAndReconnect:false];
+        // On switching on the songcaster, play receivers that are in the group
+        [self playReceivers];
     }
 }
 
@@ -174,7 +173,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
         {
             if ([selected containsObject:[receiver udn]])
             {
-                [self playReceiver:receiver andReconnect:true];
+                [self playReceiver:receiver];
             }
         }
     }
@@ -209,9 +208,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
             // tamper with them
             break;
 
-        case eReceiverStateStopped:
-        case eReceiverStateBuffering:
-        case eReceiverStatePlaying:
+        case eReceiverStateConnecting:
+        case eReceiverStateConnected:
             // These states imply the receiver is still connected to this songcast
             // sender for this songcaster, so stop them and put them into standby
             [aReceiver stop];
@@ -233,31 +231,18 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 }
 
 
-- (void) playReceiver:(Receiver*)aReceiver andReconnect:(bool)aReconnect
+- (void) playReceiver:(Receiver*)aReceiver
 {
-    switch ([aReceiver status])
+    // Only set the receiver to playing if it is disconnected - all other states imply that
+    // the receiver is already playing or unavailable
+    if ([aReceiver status] == eReceiverStateDisconnected)
     {
-        case eReceiverStateOffline:
-        case eReceiverStateBuffering:
-        case eReceiverStatePlaying:
-            // These states imply playing is not possible or not necessary
-            break;
-
-        case eReceiverStateDisconnected:
-            // if reconnect flag is not set, do not play this receiver, otherwise fall
-            // through to play it
-            if (!aReconnect)
-                break;
-
-        case eReceiverStateStopped:
-            // The receiver is stopped, so play it
-            [aReceiver play];
-            break;
+        [aReceiver play];
     }
 }
 
 
-- (void) playReceiversAndReconnect:(bool)aReconnect
+- (void) playReceivers
 {
     if (![self enabled])
         return;
@@ -266,7 +251,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     {
         if ([iSelectedUdns containsObject:[receiver udn]])
         {
-            [self playReceiver:receiver andReconnect:aReconnect];
+            [self playReceiver:receiver];
         }
     }
 }
@@ -281,10 +266,9 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     // the receiver has just appeared on the network - start playing if required i.e.
     //  - songcaster is switched on
     //  - receiver is selected
-    //  - receiver is connected and not playing i.e. stopped
     if ([self enabled] && [iSelectedUdns containsObject:[aReceiver udn]])
     {
-        [self playReceiver:aReceiver andReconnect:false];
+        [self playReceiver:aReceiver];
     }
 
     // notify upper layers
