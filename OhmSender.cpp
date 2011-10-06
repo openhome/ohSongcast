@@ -167,6 +167,7 @@ OhmSenderDriver::OhmSenderDriver()
     , iFrame(0)
     , iSamplesTotal(0)
     , iSampleStart(0)
+	, iLatency(100)
 {
 }
 
@@ -227,6 +228,13 @@ void OhmSenderDriver::SetTtl(TUint aValue)
     iMutex.Signal();
 }
 
+void OhmSenderDriver::SetLatency(TUint aValue)
+{
+    iMutex.Wait();
+    iLatency = aValue;
+    iMutex.Signal();
+}
+
 void OhmSenderDriver::SetTrackPosition(TUint64 aSamplesTotal, TUint64 aSampleStart)
 {
     iMutex.Wait();
@@ -258,11 +266,21 @@ void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
         iMutex.Signal();
         return;
     }
+
+	TUint multiplier = 48000 * 256;
+
+	if ((iSampleRate % 441) == 0)
+	{
+		multiplier = 44100 * 256;
+	}
+
+	TUint latency = iLatency * multiplier / 1000;
     
     OhmHeaderAudio headerAudio(false,  // halt
                                iLossless,
                                samples,
                                iFrame,
+							   latency,
                                iSampleStart,
                                iSamplesTotal,
                                iSampleRate,
@@ -298,13 +316,14 @@ void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
 
 // OhmSender
 
-OhmSender::OhmSender(DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aName, TUint aChannel, TIpAddress aInterface, TUint aTtl, TBool aMulticast, TBool aEnabled, const Brx& aImage, const Brx& aMimeType, TUint aPreset)
+OhmSender::OhmSender(DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aName, TUint aChannel, TIpAddress aInterface, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, const Brx& aImage, const Brx& aMimeType, TUint aPreset)
     : iDevice(aDevice)
     , iDriver(aDriver)
     , iName(aName)
     , iChannel(aChannel)
     , iInterface(aInterface)
     , iTtl(aTtl)
+	, iLatency(aLatency)
     , iMulticast(aMulticast)
 	, iImage(aImage)
 	, iMimeType(aMimeType)
@@ -334,6 +353,10 @@ OhmSender::OhmSender(DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aN
     iDriver.SetTtl(iTtl);
 
 	LOG(kMedia, "OHM SENDER DRIVER TTL %d\n", iTtl);
+       
+	iDriver.SetLatency(iLatency);
+
+	LOG(kMedia, "OHM SENDER DRIVER LATENCY %d\n", iLatency);
        
     iThreadMulticast = new ThreadFunctor("MTXM", MakeFunctor(*this, &OhmSender::RunMulticast), kThreadPriorityNetwork, kThreadStackBytesNetwork);
     iThreadMulticast->Start();
@@ -462,6 +485,28 @@ void OhmSender::SetTtl(TUint aValue)
 			iTtl = aValue;
 			iDriver.SetTtl(iTtl);
 			LOG(kMedia, "OHM SENDER DRIVER TTL %d\n", iTtl);
+		}
+	}
+    
+    iMutexStartStop.Signal();
+}
+
+void OhmSender::SetLatency(TUint aValue)
+{
+    iMutexStartStop.Wait();
+    
+	if (iLatency != aValue) {
+		if (iStarted) {
+			Stop();
+			iLatency = aValue;
+			iDriver.SetLatency(iLatency);
+			LOG(kMedia, "OHM SENDER DRIVER LATENCY %d\n", iLatency);
+			Start();
+		}
+		else {
+			iLatency = aValue;
+			iDriver.SetLatency(iLatency);
+			LOG(kMedia, "OHM SENDER DRIVER LATENCY %d\n", iLatency);
 		}
 	}
     

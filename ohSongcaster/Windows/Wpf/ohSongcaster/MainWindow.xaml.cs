@@ -83,7 +83,7 @@ namespace OpenHome.Songcaster
 
             try
             {
-                iSongcaster = new Songcaster("av.openhome.org", iConfigurationWindow.Subnet, iConfigurationWindow.Channel, iConfigurationWindow.Ttl, iConfigurationWindow.Multicast, iConfigurationWindow.Enabled, iConfigurationWindow.Preset, iMediaPlayerWindow.ReceiverList, iConfigurationWindow.SubnetList, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+                iSongcaster = new Songcaster("av.openhome.org", iConfigurationWindow.Subnet, iConfigurationWindow.Channel, iConfigurationWindow.Ttl, iConfigurationWindow.Latency, iConfigurationWindow.Multicast, iConfigurationWindow.Enabled, iConfigurationWindow.Preset, iMediaPlayerWindow.ReceiverList, iConfigurationWindow.SubnetList, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
             }
             catch (SongcasterError e)
             {
@@ -95,6 +95,7 @@ namespace OpenHome.Songcaster
             iConfigurationWindow.MulticastChanged += EventMulticastChanged;
             iConfigurationWindow.ChannelChanged += EventMulticastChannelChanged;
             iConfigurationWindow.TtlChanged += EventTtlChanged;
+            iConfigurationWindow.LatencyChanged += EventLatencyChanged;
             iConfigurationWindow.PresetChanged += EventPresetChanged;
 
             bool value = iConfigurationWindow.Enabled;
@@ -174,6 +175,11 @@ namespace OpenHome.Songcaster
         private void EventTtlChanged()
         {
             iSongcaster.SetTtl(iConfigurationWindow.Ttl);
+        }
+
+        private void EventLatencyChanged()
+        {
+            iSongcaster.SetLatency(iConfigurationWindow.Latency);
         }
 
         private void EventPresetChanged()

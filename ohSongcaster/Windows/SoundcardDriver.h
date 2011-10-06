@@ -33,6 +33,7 @@ private:
 	virtual void SetEndpoint(const Endpoint& aEndpoint);
 	virtual void SetActive(TBool aValue);
 	virtual void SetTtl(TUint aValue);
+	virtual void SetLatency(TUint aValue);
 	virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
 
 	// IMMNotificationClient

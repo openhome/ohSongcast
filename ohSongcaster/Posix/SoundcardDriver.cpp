@@ -24,6 +24,7 @@ private:
     virtual void SetEndpoint(const Endpoint& aEndpoint);
     virtual void SetActive(TBool aValue);
     virtual void SetTtl(TUint aValue);
+    virtual void SetLatency(TUint aValue);
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
 };
 
@@ -59,6 +60,11 @@ void OhmSenderDriverPosix::SetActive(TBool aValue)
 void OhmSenderDriverPosix::SetTtl(TUint aValue)
 {
     printf("OhmSenderDriverPosix: TTL %d\n", aValue);
+}
+
+void OhmSenderDriverPosix::SetLatency(TUint aValue)
+{
+    printf("OhmSenderDriverPosix: Latency %d\n", aValue);
 }
 
 void OhmSenderDriverPosix::SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal)

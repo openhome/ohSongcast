@@ -23,7 +23,7 @@ DEFINE_GUID(OHSOUNDCARD_GUID, 0x2685C863, 0x5E57, 0x4D9A, 0x86, 0xEC, 0x2E, 0xC9
 
 // C interface
 
-THandle STDCALL SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
+THandle STDCALL SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aLatency, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
 {
 	try {
         printf("%s\n", aDomain);
@@ -45,7 +45,7 @@ THandle STDCALL SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t
         OhmSenderDriverWindows* driver = new OhmSenderDriverWindows(aDomain, aManufacturer, enabled);
 
         // create the soundcard
-		Songcaster* songcaster = new Songcaster(aSubnet, aChannel, aTtl, multicast, enabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl);
+		Songcaster* songcaster = new Songcaster(aSubnet, aChannel, aTtl, aLatency, multicast, enabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl);
 
 		driver->SetSongcaster(*songcaster);
 
@@ -65,6 +65,7 @@ static const TUint KSPROPERTY_OHSOUNDCARD_ENABLED = 1;
 static const TUint KSPROPERTY_OHSOUNDCARD_ACTIVE = 2;
 static const TUint KSPROPERTY_OHSOUNDCARD_ENDPOINT = 3;
 static const TUint KSPROPERTY_OHSOUNDCARD_TTL = 4;
+static const TUint KSPROPERTY_OHSOUNDCARD_LATENCY = 5;
 
 OhmSenderDriverWindows::OhmSenderDriverWindows(const char* aDomain, const char* aManufacturer, TBool aEnabled)
 	: iEnabled(aEnabled)
@@ -411,6 +412,19 @@ void OhmSenderDriverWindows::SetTtl(TUint aValue)
 				
 	prop.Set = OHSOUNDCARD_GUID;
     prop.Id = KSPROPERTY_OHSOUNDCARD_TTL;
+    prop.Flags = KSPROPERTY_TYPE_SET;
+
+    DWORD bytes;
+
+    DeviceIoControl(iHandle, IOCTL_KS_PROPERTY, &prop, sizeof(KSPROPERTY), &aValue, sizeof(aValue), &bytes, 0);
+}
+
+void OhmSenderDriverWindows::SetLatency(TUint aValue)
+{
+    KSPROPERTY prop;
+				
+	prop.Set = OHSOUNDCARD_GUID;
+    prop.Id = KSPROPERTY_OHSOUNDCARD_LATENCY;
     prop.Flags = KSPROPERTY_TYPE_SET;
 
     DWORD bytes;

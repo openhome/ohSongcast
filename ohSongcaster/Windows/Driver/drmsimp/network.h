@@ -124,7 +124,8 @@ public:
 	CSocketOhm();
 	NTSTATUS Initialise(CWinsock& aWsk, NETWORK_CALLBACK* aCallback, void*  aContext);
 	void SetTtl(ULONG aValue);
-	void Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels);
+	void SetLatency(ULONG aValue);
+	void Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels, ULONG aLatency);
 
 	bool Initialised();
 	void Close();
@@ -154,6 +155,7 @@ private:
 	ULONG iSampleRate;
 	ULONG iTimestampMultiplier;
 	ULONGLONG iPerformanceCounter;
+	ULONG iLatencyMultiplier;
 };
 
 #endif          // (NTDDI_VERSION >= NTDDI_VISTA)

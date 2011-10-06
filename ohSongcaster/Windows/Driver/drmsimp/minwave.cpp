@@ -29,6 +29,7 @@ extern KSPIN_LOCK MpusSpinLock;
 extern UINT MpusEnabled;
 extern UINT MpusActive;
 extern UINT MpusTtl;
+extern UINT MpusLatency;
 extern UINT MpusAddr;
 extern UINT MpusPort;
 
@@ -298,10 +299,10 @@ Return Value:
         m_fRenderAllocated = FALSE;
     }
 
-	MpusAudioSampleRate = 0;
-	MpusAudioBitRate = 0;
-	MpusAudioBitDepth = 0;
-	MpusAudioChannels = 0;
+	MpusAudioSampleRate = 44100;
+	MpusAudioBitRate = 1411200;
+	MpusAudioBitDepth = 16;
+	MpusAudioChannels = 2;
 	MpusSendFormat = 0;
 
 	Wsk = NULL;
@@ -781,7 +782,7 @@ void MpusStopLocked()
 
 	ULONG bytes = MpusAudioBitDepth * MpusAudioChannels / 8;
 
-	Socket->Send(&MpusAddress, silence, bytes, 1, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels);
+	Socket->Send(&MpusAddress, silence, bytes, 1, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels, MpusLatency);
 
 	MpusSendFormat = 1;
 }
@@ -821,10 +822,10 @@ void MpusSend(UCHAR* aBuffer, UINT aBytes)
 		{
 			MpusSendFormat = 0;
 
-			Socket->Send(&MpusAddress, (UCHAR*)0, 0, 0, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels);
+			Socket->Send(&MpusAddress, (UCHAR*)0, 0, 0, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels, MpusLatency);
 		}
 
-		Socket->Send(&MpusAddress, aBuffer, aBytes, 0, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels);
+		Socket->Send(&MpusAddress, aBuffer, aBytes, 0, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels, MpusLatency);
 	}
 
 	KeReleaseSpinLock(&MpusSpinLock, oldIrql);

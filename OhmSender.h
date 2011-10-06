@@ -22,6 +22,7 @@ public:
     virtual void SetEndpoint(const Endpoint& aEndpoint) = 0;
     virtual void SetActive(TBool aValue) = 0;
     virtual void SetTtl(TUint aValue) = 0;
+    virtual void SetLatency(TUint aValue) = 0;
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal) = 0;
     virtual ~IOhmSenderDriver() {}
 };
@@ -41,6 +42,7 @@ private:
     virtual void SetActive(TBool aValue);
     virtual void SetEndpoint(const Endpoint& aEndpoint);
     virtual void SetTtl(TUint aValue);
+    virtual void SetLatency(TUint aValue);
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
 
 private:
@@ -59,6 +61,7 @@ private:
     Bws<Ohm::kMaxCodecNameBytes> iCodecName;
     TUint64 iSamplesTotal;
     TUint64 iSampleStart;
+	TUint iLatency;
     SocketUdp iSocket;
 };
 
@@ -88,7 +91,7 @@ public:
 	static const TUint kMaxTrackMetatextBytes = Ohm::kMaxTrackMetatextBytes;
 
 public:
-    OhmSender(DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aName, TUint aChannel, TIpAddress aInterface, TUint aTtl, TBool aMulticast, TBool aEnabled, const Brx& aImage, const Brx& aMimeType, TUint aPreset);
+    OhmSender(DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aName, TUint aChannel, TIpAddress aInterface, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, const Brx& aImage, const Brx& aMimeType, TUint aPreset);
     ~OhmSender();
 
 	const Brx& Image() const;
@@ -100,6 +103,7 @@ public:
 	void SetChannel(TUint aValue);
     void SetInterface(TIpAddress aValue);
     void SetTtl(TUint aValue);
+    void SetLatency(TUint aValue);
     void SetMulticast(TBool aValue);
 	void SetEnabled(TBool aValue);
     void SetTrack(const Brx& aUri, const Brx& aMetadata, TUint64 aSamplesTotal, TUint64 aSampleStart);
@@ -148,6 +152,7 @@ private:
     TUint iChannel;
     TIpAddress iInterface;
     TUint iTtl;
+    TUint iLatency;
     TBool iMulticast;
     TBool iEnabled;
 	Bws<kMaxImageBytes> iImage;

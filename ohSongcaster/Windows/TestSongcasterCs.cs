@@ -18,7 +18,7 @@ using OpenHome.Songcaster;
 
             try
             {
-                Songcaster songcaster = new Songcaster("av.openhome.org", 0, 1, 1, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+                Songcaster songcaster = new Songcaster("av.openhome.org", 0, 1, 1, 100, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
 
                 while (true)
                 {

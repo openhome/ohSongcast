@@ -24,6 +24,11 @@ uint32_t STDCALL SongcasterTtl(THandle aSongcaster)
 	return (((Songcaster*)aSongcaster)->GetTtl());
 }
 
+uint32_t STDCALL SongcasterLatency(THandle aSongcaster)
+{
+	return (((Songcaster*)aSongcaster)->GetLatency());
+}
+
 uint32_t STDCALL SongcasterMulticast(THandle aSongcaster)
 {
 	return (((Songcaster*)aSongcaster)->GetMulticast() ? 1 : 0);
@@ -52,6 +57,11 @@ void STDCALL SongcasterSetChannel(THandle aSongcaster, uint32_t aValue)
 void STDCALL SongcasterSetTtl(THandle aSongcaster, uint32_t aValue)
 {
 	((Songcaster*)aSongcaster)->SetTtl(aValue);
+}
+
+void STDCALL SongcasterSetLatency(THandle aSongcaster, uint32_t aValue)
+{
+	((Songcaster*)aSongcaster)->SetLatency(aValue);
 }
 
 void STDCALL SongcasterSetMulticast(THandle aSongcaster, uint32_t aValue)
@@ -248,7 +258,7 @@ Subnet::Subnet(TIpAddress aSubnet)
 TBool Subnet::IsAttachedTo(NetworkAdapter& aAdapter)
 {
 	if (iAdapter != 0) {
-		return (iAdapter ==	&aAdapter);
+		return (iAdapter->Address() == aAdapter.Address());
 	}
 	return (false);
 }
@@ -308,10 +318,11 @@ Subnet::~Subnet()
     
 // Songcaster
 
-Songcaster::Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
+Songcaster::Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl)
 	: iSubnet(aSubnet)
 	, iChannel(aChannel)
 	, iTtl(aTtl)
+	, iLatency(aLatency)
 	, iMulticast(aMulticast)
 	, iEnabled(aEnabled)
 	, iPreset(aPreset)
@@ -383,7 +394,7 @@ Songcaster::Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMu
 
 	Brn icon(icon_png, icon_png_len);
 
-	iSender = new OhmSender(*iDevice, *iDriver, name, aChannel, iAdapter, aTtl, aMulticast, aEnabled, icon, Brn("image/png"), aPreset);
+	iSender = new OhmSender(*iDevice, *iDriver, name, iChannel, iAdapter, iTtl, iLatency, iMulticast, iEnabled, icon, Brn("image/png"), iPreset);
 	
 	iDevice->SetEnabled();
 
@@ -416,7 +427,7 @@ void Songcaster::SubnetListChanged()
 
 		TBool found = false;
 
-		// find adapter's subnet in current subnet list
+		// find new subnet in current subnet list
 
 		std::vector<Subnet*>::iterator it2 = iSubnetList.begin();
 
@@ -424,7 +435,7 @@ void Songcaster::SubnetListChanged()
 			Subnet* subnet = *it2;
 
 			if (subnet->Address() == adapter->Subnet()) {
-				// adapter's subnet existed in the old subnet list, so check if the subnet is still using the same adapter
+				// new subnet existed in the old subnet list, so check if the subnet is still using the same adapter
 
 				if (!subnet->IsAttachedTo(*adapter))
 				{
@@ -464,7 +475,6 @@ void Songcaster::SubnetListChanged()
 			Subnet* subnet = new Subnet(iSubnet);
 			iSubnetList.push_back(subnet);
 			(*iSubnetCallback)(iSubnetPtr, eAdded, (THandle)subnet);
-			return;
 		}
 	}
 }
@@ -521,6 +531,14 @@ TUint Songcaster::GetTtl()
 	TUint ttl = iTtl;
 	iMutex.Signal();
 	return (ttl);
+}
+
+TUint Songcaster::GetLatency()
+{
+	iMutex.Wait();
+	TUint latency = iLatency;
+	iMutex.Signal();
+	return (latency);
 }
 
 TBool Songcaster::GetMulticast()
@@ -599,6 +617,24 @@ void Songcaster::SetTtl(TUint aValue)
 	iMutex.Signal();
 
 	iSender->SetTtl(aValue);
+
+	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
+}
+
+void Songcaster::SetLatency(TUint aValue)
+{
+	iMutex.Wait();
+
+	if (iLatency == aValue) {
+		iMutex.Signal();
+		return;
+	}
+
+	iLatency = aValue;
+
+	iMutex.Signal();
+
+	iSender->SetLatency(aValue);
 
 	(*iConfigurationChangedCallback)(iConfigurationChangedPtr, this);
 }

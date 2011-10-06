@@ -19,6 +19,7 @@ namespace OpenHome.Songcaster
         uint Subnet();
         uint Channel();
         uint Ttl();
+        uint Latency();
         bool Multicast();
         bool Enabled(); 
         uint Preset();
@@ -236,7 +237,7 @@ namespace OpenHome.Songcaster
         private delegate void DelegateConfigurationChangedCallback(IntPtr aPtr, IntPtr aSongcaster);
 
         [DllImport("ohSongcaster.dll")]
-        static extern unsafe IntPtr SongcasterCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, DelegateConfigurationChangedCallback aConfigurationChangedCallback, IntPtr aConfigurationChangedPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl);
+        static extern unsafe IntPtr SongcasterCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, uint aLatency, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, DelegateConfigurationChangedCallback aConfigurationChangedCallback, IntPtr aConfigurationChangedPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl);
 
         [DllImport("ohSongcaster.dll")]
         static extern uint SongcasterSubnet(IntPtr aHandle);
@@ -244,6 +245,8 @@ namespace OpenHome.Songcaster
         static extern uint SongcasterChannel(IntPtr aHandle);
         [DllImport("ohSongcaster.dll")]
         static extern uint SongcasterTtl(IntPtr aHandle);
+        [DllImport("ohSongcaster.dll")]
+        static extern uint SongcasterLatency(IntPtr aHandle);
         [DllImport("ohSongcaster.dll")]
         static extern bool SongcasterMulticast(IntPtr aHandle);
         [DllImport("ohSongcaster.dll")]
@@ -257,6 +260,8 @@ namespace OpenHome.Songcaster
         static extern void SongcasterSetChannel(IntPtr aHandle, uint aValue);
         [DllImport("ohSongcaster.dll")]
         static extern void SongcasterSetTtl(IntPtr aHandle, uint aValue);
+        [DllImport("ohSongcaster.dll")]
+        static extern void SongcasterSetLatency(IntPtr aHandle, uint aValue);
         [DllImport("ohSongcaster.dll")]
         static extern void SongcasterSetMulticast(IntPtr aHandle, bool aValue);
         [DllImport("ohSongcaster.dll")]
@@ -272,7 +277,7 @@ namespace OpenHome.Songcaster
         [DllImport("ohSongcaster.dll")]
         static extern void SongcasterDestroy(IntPtr aHandle);
 
-        public unsafe Songcaster(string aDomain, uint aSubnet, uint aChannel, uint aTtl, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler, IConfigurationChangedHandler aConfigurationChangedHandler, string aManufacturer, string aManufacturerUrl, string aModelUrl)
+        public unsafe Songcaster(string aDomain, uint aSubnet, uint aChannel, uint aTtl, uint aLatency, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler, IConfigurationChangedHandler aConfigurationChangedHandler, string aManufacturer, string aManufacturerUrl, string aModelUrl)
         {
             iReceiverHandler = aReceiverHandler;
             iSubnetHandler = aSubnetHandler;
@@ -282,7 +287,7 @@ namespace OpenHome.Songcaster
             iConfigurationChangedCallback = new DelegateConfigurationChangedCallback(ConfigurationChangedCallback);
             iReceiverList = new List<Receiver>();
             iSubnetList = new List<Subnet>();
-            iHandle = SongcasterCreate(aDomain, aSubnet, aChannel, aTtl, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, iConfigurationChangedCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl);
+            iHandle = SongcasterCreate(aDomain, aSubnet, aChannel, aTtl, aLatency, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, iConfigurationChangedCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl);
 
             if (iHandle == IntPtr.Zero)
             {
@@ -408,6 +413,11 @@ namespace OpenHome.Songcaster
             return (SongcasterTtl(iHandle));
         }
 
+        public uint Latency()
+        {
+            return (SongcasterLatency(iHandle));
+        }
+
         public bool Multicast()
         {
             return (SongcasterMulticast(iHandle));
@@ -436,6 +446,11 @@ namespace OpenHome.Songcaster
         public void SetTtl(uint aValue)
         {
             SongcasterSetTtl(iHandle, aValue);
+        }
+
+        public void SetLatency(uint aValue)
+        {
+            SongcasterSetLatency(iHandle, aValue);
         }
 
         public void SetMulticast(bool aValue)

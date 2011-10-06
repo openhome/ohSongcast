@@ -225,6 +225,7 @@ OhmHeaderAudio::OhmHeaderAudio(TBool aHalt,
                                TBool aLossless,
                                TUint aSamples,
                                TUint aFrame,
+							   TUint aMediaLatency,
                                TUint64 aSampleStart,
                                TUint64 aSamplesTotal,
                                TUint aSampleRate,
@@ -239,7 +240,7 @@ OhmHeaderAudio::OhmHeaderAudio(TBool aHalt,
     , iSamples(aSamples)
     , iFrame(aFrame)
     , iNetworkTimestamp(0)
-    , iMediaLatency(0)
+    , iMediaLatency(aMediaLatency)
     , iMediaTimestamp(0)
     , iSampleStart(aSampleStart)
     , iSamplesTotal(aSamplesTotal)

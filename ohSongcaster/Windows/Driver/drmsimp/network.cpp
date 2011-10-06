@@ -373,8 +373,7 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 }
 */
 
-
-void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels)
+void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels, ULONG aLatency)
 {
 	PIRP irp;
 
@@ -435,7 +434,7 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 
 	header->iAudioFlags = flags;
 
-	USHORT samples = (USHORT)(aBytes / ((ULONG)aChannels * (ULONG)aBitDepth / 8));
+	USHORT samples = (USHORT)(aBytes / (aChannels * aBitDepth / 8));
 
 	header->iAudioSamples = samples >> 8 & 0x00ff;
 	header->iAudioSamples += samples << 8 & 0xff00;
@@ -470,16 +469,19 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 		iSampleRate = aSampleRate;
 
 		iTimestampMultiplier = 48000 * 256;
+		iLatencyMultiplier = 48000 * 32; // divide by 125 for ms (256/1000 = 32/125)
 
 		if ((iSampleRate % 441) == 0)
 		{
 			iTimestampMultiplier = 44100 * 256;
+			iLatencyMultiplier = 44100 * 32;
 		}
 	}
 
 	// set media latency
 
-	ULONG latency = kMediaLatencyMs * iTimestampMultiplier / 1000;
+	ULONG latency = aLatency * iLatencyMultiplier / 125;
+
 	iHeader.iAudioMediaLatency = latency >> 24 & 0x000000ff;
 	iHeader.iAudioMediaLatency += latency >> 8 & 0x0000ff00;
 	iHeader.iAudioMediaLatency += latency << 8 & 0x00ff0000;

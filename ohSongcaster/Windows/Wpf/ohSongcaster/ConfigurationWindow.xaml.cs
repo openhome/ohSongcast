@@ -70,6 +70,7 @@ namespace OpenHome.Songcaster
             Subnet = aConfiguration.Subnet();
             Channel = aConfiguration.Channel();
             Ttl = aConfiguration.Ttl();
+            Latency = aConfiguration.Latency();
             Preset = aConfiguration.Preset();
 
             bool enabled = aConfiguration.Enabled();
@@ -156,6 +157,7 @@ namespace OpenHome.Songcaster
         public Action MulticastChanged;
         public Action ChannelChanged;
         public Action TtlChanged;
+        public Action LatencyChanged;
         public Action PresetChanged;
 
         public string Version
@@ -249,6 +251,28 @@ namespace OpenHome.Songcaster
                     if (PropertyChanged != null)
                     {
                         PropertyChanged(this, new PropertyChangedEventArgs("Ttl"));
+                    }
+                }
+            }
+        }
+
+        public uint Latency
+        {
+            get
+            {
+                return (iConfiguration.Latency);
+            }
+            set
+            {
+                if (iConfiguration.Latency != value)
+                {
+                    iConfiguration.Latency = value;
+                    iConfiguration.Save();
+                    InformListeners(LatencyChanged);
+
+                    if (PropertyChanged != null)
+                    {
+                        PropertyChanged(this, new PropertyChangedEventArgs("Latency"));
                     }
                 }
             }

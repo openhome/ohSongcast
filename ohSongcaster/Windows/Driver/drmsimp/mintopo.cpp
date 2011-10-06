@@ -34,6 +34,7 @@ UINT MpusActive;
 UINT MpusTtl;
 UINT MpusAddr;
 UINT MpusPort;
+UINT MpusLatency;
 
 
 PHYSICALCONNECTIONTABLE TopologyPhysicalConnections =
@@ -247,6 +248,7 @@ Return Value:
 	MpusTtl = 0;
 	MpusAddr = 0;
 	MpusPort = 0;
+	MpusLatency = 0;
 
 	KeInitializeSpinLock(&MpusSpinLock);
 
@@ -699,9 +701,27 @@ PropertyHandler_Wave
 				KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
 				if (MpusTtl != ttl) {
-					MpusTtl = *pValue;
+					MpusTtl = ttl;
 					MpusUpdateTtlLocked();
 				}
+
+				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+				return STATUS_SUCCESS;
+			}
+			else if (PropertyRequest->PropertyItem->Id == KSPROPERTY_OHSOUNDCARD_LATENCY) {
+
+				if (PropertyRequest->ValueSize != sizeof (UINT)) {
+					return STATUS_INVALID_PARAMETER;
+				}
+
+				UINT* pValue = (UINT*)PropertyRequest->Value;
+
+				KIRQL oldIrql;
+
+				KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
+
+				MpusLatency = *pValue;
 
 				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 

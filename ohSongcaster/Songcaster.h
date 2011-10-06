@@ -39,11 +39,12 @@ typedef void (STDCALL *ReceiverCallback)(void* aPtr, ECallbackType aType, THandl
 typedef void (STDCALL *SubnetCallback)(void* aPtr, ECallbackType aType, THandle aSubnet);
 typedef void (STDCALL *ConfigurationChangedCallback)(void* aPtr, THandle aSongcaster);
 
-DllExport THandle STDCALL SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
+DllExport THandle STDCALL SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aLatency, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
 
 DllExport uint32_t STDCALL SongcasterSubnet(THandle aSongcaster);
 DllExport uint32_t STDCALL SongcasterChannel(THandle aSongcaster);
 DllExport uint32_t STDCALL SongcasterTtl(THandle aSongcaster);
+DllExport uint32_t STDCALL SongcasterLatency(THandle aSongcaster);
 DllExport uint32_t STDCALL SongcasterMulticast(THandle aSongcaster);
 DllExport uint32_t STDCALL SongcasterEnabled(THandle aSongcaster);
 DllExport uint32_t STDCALL SongcasterPreset(THandle aSongcaster);
@@ -51,6 +52,7 @@ DllExport uint32_t STDCALL SongcasterPreset(THandle aSongcaster);
 DllExport void STDCALL SongcasterSetSubnet(THandle aSongcaster, uint32_t aValue);
 DllExport void STDCALL SongcasterSetChannel(THandle aSongcaster, uint32_t aValue);
 DllExport void STDCALL SongcasterSetTtl(THandle aSongcaster, uint32_t aValue);
+DllExport void STDCALL SongcasterSetLatency(THandle aSongcaster, uint32_t aValue);
 DllExport void STDCALL SongcasterSetMulticast(THandle aSongcaster, uint32_t aValue);
 DllExport void STDCALL SongcasterSetEnabled(THandle aSongcaster, uint32_t aValue);
 DllExport void STDCALL SongcasterSetPreset(THandle aSongcaster, uint32_t aValue);
@@ -150,11 +152,12 @@ public:
 	static const TUint kMaxUdnBytes = 200;
 
 public:
-    Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
+    Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl);
 
 	TIpAddress GetSubnet();
 	TUint GetChannel();
 	TUint GetTtl();
+	TUint GetLatency();
 	TBool GetMulticast();
 	TBool GetEnabled();
 	TUint GetPreset();
@@ -162,6 +165,7 @@ public:
 	void SetSubnet(TIpAddress aValue);
 	void SetChannel(TUint aValue);
     void SetTtl(TUint aValue);
+    void SetLatency(TUint aValue);
     void SetMulticast(TBool aValue);
 	void SetEnabled(TBool aValue);
 	void SetPreset(TUint aValue);
@@ -184,6 +188,7 @@ private:
 	TIpAddress iSubnet;
 	TUint iChannel;
 	TUint iTtl;
+	TUint iLatency;
 	TBool iMulticast;
 	TBool iEnabled;
 	TUint iPreset;

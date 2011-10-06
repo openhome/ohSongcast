@@ -128,6 +128,7 @@ public:
                    TBool aLossless,
                    TUint aSamples,
                    TUint aFrame,
+                   TUint aMediaLatency,
                    TUint64 aSampleStart,
                    TUint64 aSamplesTotal,
                    TUint aSampleRate,

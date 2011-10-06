@@ -107,11 +107,12 @@ int CDECL main(int /* aArgc */, char** /* aArgv[] */)
 	TIpAddress subnet = 522;
     TUint channel = 0;
     TUint ttl = 4;
+	TUint latency = 100;
     TBool multicast = false;
     TBool disabled = false;
     TUint preset = 99;
 
-	THandle songcaster = SongcasterCreate("av.openhome.org", subnet, channel, ttl, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0, loggerConfigurationChanged, 0, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+	THandle songcaster = SongcasterCreate("av.openhome.org", subnet, channel, ttl, latency, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0, loggerConfigurationChanged, 0, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
 
 	if (songcaster == 0) {
 		printf("Songcaster error\n");

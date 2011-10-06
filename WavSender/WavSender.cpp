@@ -233,6 +233,9 @@ int CDECL main(int aArgc, char* aArgv[])
     OptionUint optionTtl("-t", "--ttl", 1, "[ttl] ttl");
     parser.AddOption(&optionTtl);
 
+    OptionUint optionLatency("-l", "--latency", 100, "[latency] latency in ms");
+    parser.AddOption(&optionLatency);
+
     OptionBool optionMulticast("-m", "--multicast", "[multicast] use multicast instead of unicast");
     parser.AddOption(&optionMulticast);
 
@@ -264,6 +267,7 @@ int CDECL main(int aArgc, char* aArgv[])
     Brhz name(optionName.Value());
     TUint channel = optionChannel.Value();
     TUint ttl = optionTtl.Value();
+    TUint latency = optionLatency.Value();
     TBool multicast = optionMulticast.Value();
     TBool disabled = optionDisabled.Value();
 
@@ -452,7 +456,7 @@ int CDECL main(int aArgc, char* aArgv[])
     
 	Brn icon(icon_png, icon_png_len);
 
-	OhmSender* sender = new OhmSender(*device, *driver, name, channel, adapter, ttl, multicast, !disabled, icon, Brn("image/png"), 0);
+	OhmSender* sender = new OhmSender(*device, *driver, name, channel, adapter, ttl, latency, multicast, !disabled, icon, Brn("image/png"), 0);
 	
     PcmSender* pcmsender = new PcmSender(sender, driver, file, data, sampleCount, sampleRate, byteRate * 8, numChannels, bitsPerSample);
     

@@ -60,6 +60,7 @@ namespace OpenHome.Songcaster
             configuration.Multicast = false;
             configuration.Channel = (uint)(new Random().Next(65535) + 1);
             configuration.Ttl = 1;
+            configuration.Latency = 100;
             configuration.Preset = 0;
             configuration.SetPath(aPath);
             configuration.Save();
@@ -140,6 +141,20 @@ namespace OpenHome.Songcaster
             }
         }
 
+        [XmlElement("Latency")]
+
+        public uint Latency
+        {
+            get
+            {
+                return (iLatency);
+            }
+            set
+            {
+                iLatency = value;
+            }
+        }
+
         [XmlElement("Preset")]
 
         public uint Preset
@@ -173,6 +188,7 @@ namespace OpenHome.Songcaster
         private bool iMulticast;
         private uint iMulticastChannel;
         private uint iTtl;
+        private uint iLatency;
         private uint iPreset;
         private bool iEnabled;
     }
