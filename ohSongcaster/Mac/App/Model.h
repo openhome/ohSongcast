@@ -1,7 +1,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "Preferences.h"
-#import "ReceiverList.h"
+#import "ModelSongcaster.h"
 
 
 @protocol IModelObserver
@@ -12,15 +12,11 @@
 @end
 
 
-@interface Model : NSObject<IReceiverListObserver>
+@interface Model : NSObject
 {
-    void* iSoundcard;
     Preferences* iPreferences;
-    bool iEnabled;
-    bool iAutoplay;
-    ReceiverList* iReceiverList;
-    NSArray* iSelectedUdnList;
     id<IModelObserver> iObserver;
+    ModelSongcaster* iModelSongcaster;
 }
 
 - (void) start;
@@ -35,7 +31,6 @@
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;
 - (void) preferenceIconVisibleChanged:(NSNotification*)aNotification;
 - (void) preferenceSelectedUdnListChanged:(NSNotification*)aNotification;
-- (void) preferenceAutoplayReceiversChanged:(NSNotification*)aNotification;
 - (void) preferenceRefreshReceiverList:(NSNotification*)aNotification;
 - (void) preferenceReconnectReceivers:(NSNotification*)aNotification;
 

@@ -13,5 +13,5 @@
 "TableCellStatusUnavailable" = "Unavailable";
 
 /* Text in the table cell for the songcaster off status of a receiver */
-"TableCellStatusSoundcardOff" = "Songcaster Off";
+"TableCellStatusSongcasterOff" = "Songcaster Off";
 

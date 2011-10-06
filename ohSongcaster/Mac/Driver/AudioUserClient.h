@@ -1,49 +1,40 @@
 #ifndef HEADER_AUDIOUSERCLIENT
 #define HEADER_AUDIOUSERCLIENT
 
-
+#include <IOKit/audio/IOAudioDevice.h>
 #include <IOKit/IOUserClient.h>
 #include "AudioDevice.h"
-#include "AudioDeviceInterface.h"
 
-#define AudioUserClient BRANDING_AUDIOUSERCLIENT_CLASS
 
+// Implementation of the user client class for the audio driver.
+
+#define AudioUserClient BRANDING_AUDIOUSERCLIENT_CLASSNAME
 
 class AudioUserClient : public IOUserClient
 {
     OSDeclareDefaultStructors(AudioUserClient);
 
-public:
+private:
     virtual bool start(IOService* aProvider);
     virtual void stop(IOService* aProvider);
     virtual IOReturn clientClose();
     virtual IOReturn clientDied();
-
-private:
-    static const IOExternalMethodDispatch iMethods[eNumDriverMethods];
-
     virtual IOReturn externalMethod(uint32_t aSelector, IOExternalMethodArguments* aArgs, IOExternalMethodDispatch* aDispatch, OSObject* aTarget, void* aReference);
 
-    static IOReturn DispatchOpen(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
-    static IOReturn DispatchClose(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
-    static IOReturn DispatchSetActive(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
-    static IOReturn DispatchSetEndpoint(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
-    static IOReturn DispatchSetTtl(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
-
+    IOReturn DeviceOk();
     IOReturn Open();
     IOReturn Close();
     IOReturn SetActive(uint64_t aActive);
     IOReturn SetEndpoint(uint64_t aIpAddress, uint64_t aPort);
     IOReturn SetTtl(uint64_t aTtl);
 
-    IOReturn DeviceOk();
-    
-private:
+    friend class AudioUserClientDispatcher;
     AudioDevice* iDevice;
 };
 
 
 #endif // HEADER_AUDIOUSERCLIENT
+
 
 
 

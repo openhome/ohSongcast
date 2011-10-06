@@ -30,11 +30,7 @@ ReceiverManager3Receiver::ReceiverManager3Receiver(IReceiverManager3Handler& aHa
 
 ReceiverManager3Receiver::EStatus ReceiverManager3Receiver::EvaluateStatus()
 {
-	if (iReceiver.Selected()) {
-		return (iManager.Status(iReceiver));
-	}
-
-	return (eDisconnected);
+	return (iManager.Status(iReceiver));
 }
 
 const Brx& ReceiverManager3Receiver::Udn() const
@@ -142,6 +138,10 @@ void ReceiverManager3::SetMetadata(const Brx& aMetadata)
 
 ReceiverManager3Receiver::EStatus ReceiverManager3::Status(ReceiverManager2Receiver& aReceiver)
 {
+    if (!aReceiver.Selected()) {
+        return (ReceiverManager3Receiver::eDisconnected);
+    }
+
 	Bws<kMaxUriBytes> uri;
 	aReceiver.SenderUri(uri);
 

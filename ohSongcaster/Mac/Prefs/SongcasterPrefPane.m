@@ -13,7 +13,7 @@
 + (NSString*) textConnected;
 + (NSString*) textDisconnected;
 + (NSString*) textUnavailable;
-+ (NSString*) textSoundcardOff;
++ (NSString*) textSongcasterOff;
 
 @end
 
@@ -24,7 +24,6 @@
 
 @synthesize icon;
 @synthesize buttonOnOff;
-@synthesize buttonAutoplay;
 @synthesize textDescription;
 @synthesize buttonShowInStatusBar;
 @synthesize buttonHelp;
@@ -57,7 +56,6 @@
     // initialise UI from preferences
     [self updateButtonOnOff];
     [buttonShowInStatusBar setState:([iPreferences iconVisible] ? NSOnState : NSOffState)];
-    [buttonAutoplay setState:([iPreferences autoplayReceivers] ? NSOnState : NSOffState)];
 }
 
 
@@ -72,12 +70,6 @@
 - (IBAction) buttonOnOffClicked:(id)aSender
 {
     [iPreferences setEnabled:([buttonOnOff state] == NSOnState)];
-}
-
-
-- (IBAction) buttonAutoplayClicked:(id)aSender
-{
-    [iPreferences setAutoplayReceivers:([buttonAutoplay state] == NSOnState)];
 }
 
 
@@ -284,7 +276,7 @@ static NSString* textConnected;
 static NSString* textConnecting;
 static NSString* textDisconnected;
 static NSString* textUnavailable;
-static NSString* textSoundcardOff;
+static NSString* textSongcasterOff;
 
 + (void) loadResources:(NSBundle*)aBundle
 {
@@ -295,7 +287,7 @@ static NSString* textSoundcardOff;
     textConnecting = NSLocalizedStringFromTableInBundle(@"TableCellStatusConnecting", nil, aBundle, @"");
     textDisconnected = NSLocalizedStringFromTableInBundle(@"TableCellStatusDisconnected", nil, aBundle, @"");
     textUnavailable = NSLocalizedStringFromTableInBundle(@"TableCellStatusUnavailable", nil, aBundle, @"");
-    textSoundcardOff = NSLocalizedStringFromTableInBundle(@"TableCellStatusSoundcardOff", nil, aBundle, @"");
+    textSongcasterOff = NSLocalizedStringFromTableInBundle(@"TableCellStatusSongcasterOff", nil, aBundle, @"");
 }
 
 + (NSImage*) imageConnected
@@ -328,9 +320,9 @@ static NSString* textSoundcardOff;
     return textUnavailable;
 }
 
-+ (NSString*) textSoundcardOff
++ (NSString*) textSongcasterOff
 {
-    return textSoundcardOff;
+    return textSongcasterOff;
 }
 
 @end
@@ -378,7 +370,7 @@ static NSString* textSoundcardOff;
 
     if (![[[self objectValue] objectAtIndex:1] boolValue])
     {
-        statusText = [CellResources textSoundcardOff];
+        statusText = [CellResources textSongcasterOff];
         statusImage = [CellResources imageDisconnected];
     }
 

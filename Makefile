@@ -61,7 +61,7 @@ make_obj_dir :
 clean :
 	rm -rf $(objdir)
 
-all : all_common $(objdir)$(dllprefix)ohSongcaster.$(dllext) $(objdir)TestSoundcard.$(exeext)
+all : all_common $(objdir)$(dllprefix)ohSongcaster.$(dllext) $(objdir)TestSongcaster.$(exeext)
 
 
 ifeq ($(MACHINE), Darwin)
@@ -81,8 +81,8 @@ $(objdir)$(dllprefix)ohSongcaster.$(dllext) : $(objects_songcast) $(objects_song
 	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcaster.$(dllext) $(objects_topology) $(objects_songcast) $(objects_songcaster) $(objects_songcaster_os) $(ohnetdir)$(libprefix)ohNetCore.$(libext)
 
 
-$(objdir)TestSoundcard.$(exeext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster/TestSoundcard.cpp
-	$(compiler)TestSoundcard.$(objext) -c $(cflags) $(includes) ohSongcaster/TestSoundcard.cpp
-	$(link) $(linkoutput)$(objdir)TestSoundcard.$(exeext) $(objdir)TestSoundcard.$(objext) $(objdir)$(dllprefix)ohSongcaster.$(dllext)
+$(objdir)TestSongcaster.$(exeext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster/TestSongcaster.cpp
+	$(compiler)TestSongcaster.$(objext) -c $(cflags) $(includes) ohSongcaster/TestSongcaster.cpp
+	$(link) $(linkoutput)$(objdir)TestSongcaster.$(exeext) $(objdir)TestSongcaster.$(objext) $(objdir)$(dllprefix)ohSongcaster.$(dllext)
 
 

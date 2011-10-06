@@ -22,9 +22,9 @@ enum ECallbackType {
 };
 
 enum EReceiverStatus {
-	eDisconnected,
-	eConnecting,
-	eConnected
+    eDisconnected,
+    eConnecting,
+    eConnected
 };
 
 /**

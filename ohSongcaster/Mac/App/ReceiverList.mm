@@ -1,7 +1,7 @@
 
 #import "ReceiverList.h"
 #import "Receiver.h"
-#include "../../Soundcard.h"
+#include "../../Songcaster.h"
 
 
 // Implementation of receiver list class
@@ -30,9 +30,20 @@
 }
 
 
-- (void) addObserver:(NSObject<IReceiverListObserver>*)aObserver
+- (void) setObserver:(NSObject<IReceiverListObserver>*)aObserver
 {
-    iObserver = aObserver;
+    @synchronized(iLock)
+    {
+        if (iObserver) {
+            [iObserver release];
+        }
+
+        iObserver = aObserver;
+
+        if (iObserver) {
+            [iObserver retain];
+        }
+    }
 }
 
 
@@ -63,7 +74,7 @@
 
 - (void) receiverChangedCallback:(THandle)aPtr type:(ECallbackType)aType
 {
-    // This is called from the soundcard receiver manager thread
+    // This is called from the ohSongcaster receiver manager thread
     NSString* udn = [NSString stringWithUTF8String:ReceiverUdn(aPtr)];
 
     // lock access to the receiver list
@@ -126,7 +137,7 @@
 
 
 
-// Callback from the ohSoundcard code for a receiver event
+// Callback from the ohSongcaster code for a receiver event
 void ReceiverListCallback(void* aPtr, ECallbackType aType, THandle aReceiver)
 {
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];

@@ -17,8 +17,8 @@ bool AudioDevice::initHardware(IOService* aProvider)
     }
 
     // set device names
-    setDeviceName(BRANDING_AUDIODEVICE_DEVICENAME);
-    setDeviceShortName(BRANDING_AUDIODEVICE_DEVICESHORTNAME);
+    setDeviceName(BRANDING_AUDIODEVICE_NAME);
+    setDeviceShortName(BRANDING_AUDIODEVICE_SHORTNAME); 
     setManufacturerName(BRANDING_AUDIODEVICE_MANUFACTURERNAME);
 
     // create, initialise and activate the audio engine
@@ -33,7 +33,11 @@ bool AudioDevice::initHardware(IOService* aProvider)
         engine->release();
         return false;
     }
-    engine->SetSocket(iSocket);
+
+    // create the songcast socket
+    iSocket = new SongcastSocket();
+    engine->SetSocket(*iSocket);
+    engine->SetDescription(BRANDING_AUDIODEVICE_NAME);
 
     if (activateAudioEngine(engine) != kIOReturnSuccess) {
         IOLog("Songcaster AudioDevice[%p]::initHardware(%p) failed to activate engine\n", this, aProvider);
@@ -54,7 +58,9 @@ void AudioDevice::free()
     IOLog("Songcaster AudioDevice[%p]::free()\n", this);
 
     // close the kernel socket
-    iSocket.Close();
+    iSocket->Close();
+    delete iSocket;
+    iSocket = 0;
     
     IOAudioDevice::free();
 }

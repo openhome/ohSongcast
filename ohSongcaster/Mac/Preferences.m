@@ -111,25 +111,6 @@
 }
 
 
-- (bool) autoplayReceivers
-{
-    return [self getBoolPreference:@"AutoplayReceivers" default:true];
-}
-
-
-- (void) setAutoplayReceivers:(bool)aAutoplayReceivers
-{
-    [self setBoolPreference:@"AutoplayReceivers" value:aAutoplayReceivers notification:@"PreferenceAutoplayReceiversChanged"];
-}
-
-
-- (void) addObserverAutoplayReceivers:(id)aObserver selector:(SEL)aSelector
-{
-    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
-    [centre addObserver:aObserver selector:aSelector name:@"PreferenceAutoplayReceiversChanged" object:(NSString*)appId];
-}
-
-
 - (bool) enabled
 {
     return [self getBoolPreference:@"Enabled" default:false];

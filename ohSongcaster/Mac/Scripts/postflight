@@ -1,0 +1,34 @@
+#!/bin/sh
+
+
+# define paths for setting permissions
+
+folders=("/System/Library/Extensions/ohSongcaster.kext"
+         "/Library/OpenHome/ohSongcaster.app"
+         "/Library/PreferencePanes/ohSongcaster.prefPane")
+
+exefiles=("/Library/OpenHome/ohSongcaster.app/Contents/MacOS/ohSongcaster"
+          "/Library/OpenHome/ohSongcaster.app/Contents/MacOS/libohSongcaster.so"
+          "/Library/PreferencePanes/ohSongcaster.prefPane/Contents/MacOS/ohSongcaster")
+
+agent_path="/Library/LaunchAgents/org.openhome.av.songcaster.plist"
+
+
+
+# ensure permissions for all files are correctly set
+
+for f in "${folders[@]}"; do
+    chown -R root:wheel "$f"
+    find "$f" -type d -exec chmod 0755 {} \;
+    find "$f" -type f -exec chmod 0644 {} \;
+done
+
+for f in "${exefiles[@]}"; do
+    chmod 0755 "$f"
+done
+
+chown root:wheel "$agent_path"
+chmod 0644 "$agent_path"
+
+
+

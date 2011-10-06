@@ -11,7 +11,74 @@
 @synthesize menuItemPrefs;
 
 
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+- (void) sessionDidResignActive:(NSNotification*)aNotification
+{
+    // set the system state
+    iSessionResigned = true;
+
+    // user session has been resigned - stop the songcaster - this will do nothing
+    // if the model has not been started i.e. this notification has occurred on
+    // startup of the application
+    [model stop];
+}
+
+
+- (void) sessionDidBecomeActive:(NSNotification*)aNotification
+{
+    // set the system state
+    iSessionResigned = false;
+
+    // user session has just become active again - restart the songcaster
+    [model start];
+}
+
+
+- (void) networkReachabilityChanged:(SCNetworkReachabilityFlags)aFlags
+{
+    // ignore any changes when sleeping or when this user session is resigned
+    if (iSleeping || iSessionResigned) {
+        return;
+    }
+
+    if (aFlags == kSCNetworkReachabilityFlagsReachable)
+    {
+        [model start];
+    }
+    else
+    {
+        [model stop];
+    }
+}
+
+
+void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
+                                SCNetworkReachabilityFlags aFlags,
+                                void* aInfo)
+{
+    SongcasterAppDelegate* app = (SongcasterAppDelegate*)aInfo;
+    [app networkReachabilityChanged:aFlags];
+}
+
+
+- (void) willSleep:(NSNotification*)aNotification
+{
+    // set the system state
+    iSleeping = true;
+
+    // stop the songcaster
+    [model stop];
+}
+
+
+- (void) didWake:(NSNotification*)aNotification
+{
+    // set the system state - do not restart the songcaster here since the network
+    // may be unavailable
+    iSleeping = false;
+}
+
+
+- (void) awakeFromNib
 {
     // get the bundle name from the info.plist
     NSString* appName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
@@ -20,14 +87,44 @@
     [menuItemReconnect setTitle:NSLocalizedString(@"MenuReconnect", @"")];
     [menuItemPrefs setTitle:[NSString stringWithFormat:NSLocalizedString(@"MenuPreferences", @""), appName]];
 
-    // create and start the model
+    // create and initialise the model
     model = [[Model alloc] init];
-    [model start];
     [model setObserver:self];
 
-    // initialise the state dependent parts of the UI
-    [self iconVisibleChanged];
-    [self enabledChanged];
+    // initialise system state
+    iSessionResigned = false;
+    iSleeping = false;
+
+    // setup system event notifications
+    NSNotificationCenter* center = [[NSWorkspace sharedWorkspace] notificationCenter];
+    [center addObserver:self selector:@selector(willSleep:)
+                             name:NSWorkspaceWillSleepNotification object:NULL];
+    [center addObserver:self selector:@selector(didWake:)
+                             name:NSWorkspaceDidWakeNotification object:NULL];
+    [center addObserver:self selector:@selector(sessionDidResignActive:)
+                             name:NSWorkspaceSessionDidResignActiveNotification object:NULL];
+    [center addObserver:self selector:@selector(sessionDidBecomeActive:)
+                             name:NSWorkspaceSessionDidBecomeActiveNotification object:NULL];
+
+    SCNetworkReachabilityContext context;
+    context.version = 0;
+    context.retain = NULL;
+    context.release = NULL;
+    context.copyDescription = NULL;
+    context.info = self;
+
+    iReachability = SCNetworkReachabilityCreateWithName(NULL, "www.google.com");
+    SCNetworkReachabilitySetCallback(iReachability, NetworkReachabilityChanged, &context);
+    SCNetworkReachabilityScheduleWithRunLoop(iReachability, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+}
+
+
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+{
+    // start the songcaster if the user session is active and the system is not asleep
+    if (!iSessionResigned && !iSleeping) {
+        [model start];
+    }
 }
 
 
@@ -47,7 +144,7 @@
 
 - (IBAction)menuItemOnOffClicked:(id)aSender
 {
-    // toggle the state of the soundcard - allow the eventing to come back
+    // toggle the state of the songcaster - allow the eventing to come back
     // up through enabledChanged to update the UI
     [model setEnabled:![model enabled]];
 }

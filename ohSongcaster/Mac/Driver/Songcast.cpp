@@ -85,7 +85,7 @@ void SongcastSocket::Send(SongcastAudioMessage& aMsg)
         return;
     }
     
-    if (iState == eSongcastStatePendingInactiveHalt) {
+    if (iState == eSongcastStatePendingInactive) {
         aMsg.SetHaltFlag(true);
     }
     
@@ -103,10 +103,13 @@ void SongcastSocket::Send(SongcastAudioMessage& aMsg)
     msg.msg_flags = 0;
     
     size_t bytesSent;
-    sock_send(iSocket, &msg, 0, &bytesSent);
+    errno_t ret = sock_send(iSocket, &msg, 0, &bytesSent);
+    if (ret != 0) {
+        IOLog("Songcaster SongcastSocket[%p]::Send() sock_send returned %d\n", this, ret);
+    }
 
     // set state to inactive if pending
-    if (iState == eSongcastStatePendingInactiveHalt) {
+    if (iState == eSongcastStatePendingInactive) {
         IOLog("Songcaster SongcastSocket[%p]::Send() pending->inactive\n", this);
         iState = eSongcastStateInactive;
     }
@@ -116,14 +119,7 @@ void SongcastSocket::Send(SongcastAudioMessage& aMsg)
 void SongcastSocket::SetActive(uint64_t aActive)
 {
     IOLog("Songcaster SongcastSocket[%p]::SetActive(%llu)\n", this, aActive);
-    iState = (aActive != 0) ? eSongcastStateActive : eSongcastStateInactive;
-}
-
-
-void SongcastSocket::SetInactiveAndHalt()
-{
-    IOLog("Songcaster SongcastSocket[%p]::SetInactiveAndHalt()\n", this);
-    iState = eSongcastStatePendingInactiveHalt;
+    iState = (aActive != 0) ? eSongcastStateActive : eSongcastStatePendingInactive;
 }
 
 

@@ -2,10 +2,10 @@
 
 ifeq ($(release), 1)
 debug_specific_flags = -Os -mdynamic-no-pic -fvisibility=hidden
-libohSoundcard = ../../../Build/Obj/Mac/Release/libohSoundcard.so
+libohSongcaster = ../../../Build/Obj/Mac/Release/libohSongcaster.so
 else
 debug_specific_flags = -O0 -mfix-and-continue
-libohSoundcard = ../../../Build/Obj/Mac/Debug/libohSoundcard.so
+libohSongcaster = ../../../Build/Obj/Mac/Debug/libohSongcaster.so
 endif
 
 
@@ -25,7 +25,7 @@ objcc_flags = -x objective-c++ -fvisibility-inlines-hidden $(compiler_flags)
 
 link = g++
 linkflags1 = -isysroot /Developer/SDKs/MacOSX10.6.sdk
-linkflags2 = -mmacosx-version-min=10.6 -framework Cocoa
+linkflags2 = -mmacosx-version-min=10.6 -framework Cocoa -framework SystemConfiguration
 
 copystrings = /Developer/Library/Xcode/Plug-ins/CoreBuildTasks.xcplugin/Contents/Resources/copystrings
 copystrings_flags = --validate --inputencoding utf-8 --outputencoding UTF-16
@@ -53,10 +53,10 @@ $(outputdir)%.o : %.mm
 $(outputdir)Preferences.o : ../Preferences.m
 	$(compiler) $(arch_flags) $(objc_flags) $< -o $@
 
-objects = $(outputdir)main.o $(outputdir)SongcasterAppDelegate.o $(outputdir)Model.o $(outputdir)Preferences.o $(outputdir)ReceiverList.o $(outputdir)Receiver.o
+objects = $(outputdir)main.o $(outputdir)SongcasterAppDelegate.o $(outputdir)Model.o $(outputdir)ModelSongcaster.o $(outputdir)Preferences.o $(outputdir)ReceiverList.o $(outputdir)Receiver.o
 
 $(outputdir)$(product_name) : $(objects)
-	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(libohSoundcard) $(linkflags2) -o $@
+	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(libohSongcaster) $(linkflags2) -o $@
 
 $(resourcedir)%.strings : %.strings
 	$(copystrings) $(copystrings_flags) $< --outdir $(@D)
@@ -64,9 +64,9 @@ $(resourcedir)%.strings : %.strings
 $(resourcedir)%.nib : %.xib
 	$(ibtool) $(ibtool_flags) --compile $@ $<
 
-$(outputdir)$(product_name).app : $(outputdir)$(product_name) $(resourcedir)NonLocalizable.strings $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib Info.plist MenuIconOff.png MenuIconOn.png Icon.icns $(libohSoundcard)
+$(outputdir)$(product_name).app : $(outputdir)$(product_name) $(resourcedir)NonLocalizable.strings $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib Info.plist MenuIconOff.png MenuIconOn.png Icon.icns $(libohSongcaster)
 	cp $< $(macosdir)
-	cp $(libohSoundcard) $(macosdir)
+	cp $(libohSongcaster) $(macosdir)
 	cp MenuIconOff.png $(resourcedir)
 	cp MenuIconOn.png $(resourcedir)
 	cp Icon.icns $(resourcedir)

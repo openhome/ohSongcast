@@ -1,5 +1,6 @@
 
 #import <Cocoa/Cocoa.h>
+#import <SystemConfiguration/SCNetworkReachability.h>
 #import "Model.h"
 
 
@@ -13,6 +14,9 @@
 
     NSStatusItem* statusItem;
     Model* model;
+    bool iSessionResigned;
+    bool iSleeping;
+    SCNetworkReachabilityRef iReachability;
 }
 
 @property (assign) IBOutlet NSMenu* menu;

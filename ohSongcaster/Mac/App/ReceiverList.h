@@ -24,7 +24,7 @@
 
 - (id) initWithReceivers:(NSArray*)aReceivers;
 - (NSArray*) receivers;
-- (void) addObserver:(NSObject<IReceiverListObserver>*)aObserver;
+- (void) setObserver:(NSObject<IReceiverListObserver>*)aObserver;
 - (void) removeUnavailableUnselected:(NSArray*)aSelected;
 
 @end

@@ -4,6 +4,7 @@
 #include <IOKit/audio/IOAudioEngine.h>
 #include <IOKit/IOTimerEventSource.h>
 #include "Songcast.h"
+#include "Branding.h"
 
 
 
@@ -34,6 +35,9 @@ private:
 
 
 // Main class for the audio engine
+
+#define AudioEngine BRANDING_AUDIOENGINE_CLASSNAME
+
 class AudioEngine : public IOAudioEngine
 {
     OSDeclareDefaultStructors(AudioEngine);
@@ -43,6 +47,7 @@ public:
     virtual void free();
     
     void SetSocket(ISongcastSocket& aSocket);
+    void SetDescription(const char* aDescription);
 
 private:
     virtual bool initHardware(IOService* aProvider);
