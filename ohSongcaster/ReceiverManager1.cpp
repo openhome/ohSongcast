@@ -298,7 +298,7 @@ void ReceiverManager1Receiver::AddRef()
 void ReceiverManager1Receiver::RemoveRef()
 {
 	if (--iRefCount == 0) {
-		return;
+		delete this;
     }
 }
 
