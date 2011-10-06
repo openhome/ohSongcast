@@ -66,6 +66,12 @@ ProviderSender::ProviderSender(DvDevice& aDevice)
     EnableActionStatus();
     EnableActionAttributes();
     
+	EnablePropertyPresentationUrl();
+	EnablePropertyMetadata();
+	EnablePropertyAudio();
+	EnablePropertyStatus();
+	EnablePropertyAttributes();
+
     SetPropertyPresentationUrl(Brx::Empty());
     SetPropertyMetadata(Brx::Empty());
     SetPropertyAudio(false);
