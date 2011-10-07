@@ -178,7 +178,9 @@ void ReceiverManager2Receiver::EventReceiverInitialEvent()
 	iServiceReceiver->PropertyUri(iUri);
 	iServiceReceiver->PropertyMetadata(iMetadata);
 
+	iMutex.Wait();
 	iActive = true;
+	iMutex.Signal();
 
 	iHandler.ReceiverAdded(*this);
 }
@@ -202,14 +204,31 @@ void ReceiverManager2Receiver::EventReceiverUriChanged()
 
 void ReceiverManager2Receiver::ChangedSelected()
 {
-	iHandler.ReceiverChanged(*this);
+	iMutex.Wait();
+
+	if (iActive) {
+		iMutex.Signal();
+		iHandler.ReceiverChanged(*this);
+	}
+	else
+	{
+		iMutex.Signal();
+	}
 }
 
 void ReceiverManager2Receiver::Removed()
 {
+	iMutex.Wait();
+
 	if (iActive) {
+		iMutex.Signal();
 		iHandler.ReceiverRemoved(*this);
 	}
+	else
+	{
+		iMutex.Signal();
+	}
+
 
 	RemoveRef();
 }

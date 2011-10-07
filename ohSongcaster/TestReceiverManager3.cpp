@@ -117,7 +117,7 @@ int CDECL main(int aArgc, char* aArgv[])
 
     OptionParser parser;
     
-    OptionUint optionDuration("-d", "--duration", 30, "Number of seconds to run the test");
+    OptionUint optionDuration("-d", "--duration", 15, "Number of seconds to run the test");
 
     parser.AddOption(&optionDuration);
     
@@ -137,14 +137,16 @@ int CDECL main(int aArgc, char* aArgv[])
 
     // Debug::SetLevel(Debug::kTopology);
 
-	ReceiverManager3Logger* logger = new ReceiverManager3Logger(optionUri.Value());
+	while (true) {
+		ReceiverManager3Logger* logger = new ReceiverManager3Logger(optionUri.Value());
 	
-    Blocker* blocker = new Blocker;
-    blocker->Wait(optionDuration.Value());
+		Blocker* blocker = new Blocker;
+		blocker->Wait(optionDuration.Value());
 
-	delete blocker;
+		delete (blocker);
 	
-	delete (logger);
+		delete (logger);
+	}
 
 	UpnpLibrary::Close();
 }
