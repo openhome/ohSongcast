@@ -43,6 +43,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     uint32_t subnet = 0;
     uint32_t channel = 0;
     uint32_t ttl = 4;
+    uint32_t latency = 100;
     uint32_t multicast = 0;
     uint32_t enabled = 0;
     uint32_t preset = 0;
@@ -51,7 +52,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     NSString* manufacturerUrl = NSLocalizedStringFromTable(@"SongcasterManufacturerUrl", @"NonLocalizable", @"");
     NSString* modelUrl = NSLocalizedStringFromTable(@"SongcasterModelUrl", @"NonLocalizable", @"");
 
-    iSongcaster = SongcasterCreate([domain UTF8String], subnet, channel, ttl, multicast, enabled, preset, ReceiverListCallback, iReceivers, ModelSubnetCallback, self, ModelConfigurationChangedCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String]);
+    iSongcaster = SongcasterCreate([domain UTF8String], subnet, channel, ttl, latency, multicast, enabled, preset, ReceiverListCallback, iReceivers, ModelSubnetCallback, self, ModelConfigurationChangedCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String]);
 
     return self;
 }
