@@ -569,7 +569,7 @@ void Songcaster::SetSubnet(TIpAddress aValue)
 {
 	iMutex.Wait();
 
-	if (iSubnet == aValue) {
+	if (iSubnet == aValue || iClosing) {
 		iMutex.Signal();
 		return;
 	}
@@ -589,7 +589,7 @@ void Songcaster::SetChannel(TUint aValue)
 {
 	iMutex.Wait();
 
-	if (iChannel == aValue) {
+	if (iChannel == aValue || iClosing) {
 		iMutex.Signal();
 		return;
 	}
@@ -607,7 +607,7 @@ void Songcaster::SetTtl(TUint aValue)
 {
 	iMutex.Wait();
 
-	if (iTtl == aValue) {
+	if (iTtl == aValue || iClosing) {
 		iMutex.Signal();
 		return;
 	}
@@ -625,7 +625,7 @@ void Songcaster::SetLatency(TUint aValue)
 {
 	iMutex.Wait();
 
-	if (iLatency == aValue) {
+	if (iLatency == aValue  || iClosing) {
 		iMutex.Signal();
 		return;
 	}
@@ -643,7 +643,7 @@ void Songcaster::SetMulticast(TBool aValue)
 {
 	iMutex.Wait();
 
-	if (iMulticast == aValue) {
+	if (iMulticast == aValue || iClosing) {
 		iMutex.Signal();
 		return;
 	}
@@ -663,7 +663,7 @@ void Songcaster::SetEnabled(TBool aValue)
 {
 	iMutex.Wait();
 
-	if (iEnabled == aValue) {
+	if (iEnabled == aValue || iClosing) {
 		iMutex.Signal();
 		return;
 	}
@@ -681,7 +681,7 @@ void Songcaster::SetPreset(TUint aValue)
 {
 	iMutex.Wait();
 
-	if (iPreset == aValue) {
+	if (iPreset == aValue || iClosing) {
 		iMutex.Signal();
 		return;
 	}
@@ -714,6 +714,14 @@ Songcaster::~Songcaster()
 {
     LOG(kMedia, "Songcaster::~Songcaster\n");
 
+	iMutex.Wait();
+
+	iClosing = true;
+
+	iMutex.Signal();
+
+    LOG(kMedia, "Songcaster::~Songcaster registered closing\n");
+
 	delete (iReceiverManager);
 
     LOG(kMedia, "Songcaster::~Songcaster receiver manager destroyed\n");
@@ -729,14 +737,6 @@ Songcaster::~Songcaster()
 	delete (iDriver);
 
     LOG(kMedia, "Songcaster::~Songcaster driver destroyed\n");
-
-	iMutex.Wait();
-
-	iClosing = true;
-
-	iMutex.Signal();
-
-    LOG(kMedia, "Songcaster::~Songcaster registered closing\n");
 
 	std::vector<Subnet*>::iterator it = iSubnetList.begin();
 

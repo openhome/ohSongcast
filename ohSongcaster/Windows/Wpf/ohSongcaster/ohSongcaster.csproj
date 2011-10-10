@@ -50,7 +50,7 @@
   <ItemGroup>
     <Reference Include="ohSongcaster.net, Version=0.0.0.0, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Build\Obj\Windows\Release\ohSongcaster.net.dll</HintPath>
+      <HintPath>..\..\..\..\Build\Obj\Windows\Debug\ohSongcaster.net.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Drawing" />
@@ -127,7 +127,7 @@
     <None Include="Resources\Icon.ico" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\..\..\..\Build\Obj\Windows\Release\ohSongcaster.dll">
+    <Content Include="..\..\..\..\Build\Obj\Windows\Debug\ohSongcaster.dll">
       <Link>ohSongcaster.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

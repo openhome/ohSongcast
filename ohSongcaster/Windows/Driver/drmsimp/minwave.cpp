@@ -321,7 +321,7 @@ Return Value:
 
 	LARGE_INTEGER timeout;
 
-	timeout.QuadPart = -100000000; // 10 seconds
+	timeout.QuadPart = -600000000; // 60 seconds
 
 	ntStatus = KeWaitForSingleObject(&WskInitialisedEvent, Executive, KernelMode, false, &timeout);
 

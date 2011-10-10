@@ -190,6 +190,7 @@ namespace OpenHome.Songcaster
             iSubnet = aSubnet;
             iAddress = (uint)SubnetAddress(iSubnet);
             iAdapterName = Marshal.PtrToStringAnsi(SubnetAdapterName(iSubnet));
+            SubnetAddRef(iSubnet);
         }
 
         internal bool Owns(IntPtr aSubnet)
