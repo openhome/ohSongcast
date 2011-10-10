@@ -125,7 +125,7 @@ namespace OpenHome.Songcaster
 
         public void ConfigurationChanged(IConfiguration aConfiguration)
         {
-            Dispatcher.BeginInvoke(new Action(SafeConfigurationChanged));
+            Dispatcher.Invoke(new Action(SafeConfigurationChanged));
         }
 
         public void SafeConfigurationChanged()

@@ -60,18 +60,18 @@ ProviderSender::ProviderSender(DvDevice& aDevice)
     , iMutex("PSND")
     , iTimerAudioPresent(MakeFunctor(*this, &ProviderSender::TimerAudioPresentExpired))
 {
-    EnableActionPresentationUrl();
-    EnableActionMetadata();
-    EnableActionAudio();
-    EnableActionStatus();
-    EnableActionAttributes();
-    
 	EnablePropertyPresentationUrl();
 	EnablePropertyMetadata();
 	EnablePropertyAudio();
 	EnablePropertyStatus();
 	EnablePropertyAttributes();
 
+	EnableActionPresentationUrl();
+    EnableActionMetadata();
+    EnableActionAudio();
+    EnableActionStatus();
+    EnableActionAttributes();
+    
     SetPropertyPresentationUrl(Brx::Empty());
     SetPropertyMetadata(Brx::Empty());
     SetPropertyAudio(false);
