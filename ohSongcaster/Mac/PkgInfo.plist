@@ -10,5 +10,7 @@
 	<false/>
 	<key>IFPkgFlagRestartAction</key>
 	<string>RequiredRestart</string>
+    <key>IFPkgFlagAllowBackRev</key>
+    <true/>
 </dict>
 </plist>
