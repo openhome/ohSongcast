@@ -35,6 +35,11 @@ compiler_flags = -c -fmessage-length=0 -pipe -nostdinc -Wno-trigraphs -fasm-bloc
 kernel_cc_flags = -x c++ $(compiler_flags) -msoft-float -fno-builtin -fno-common -mkernel -fno-exceptions -fno-rtti -fcheck-new -fapple-kext
 kernel_c_flags = -x c -std=gnu99 $(compiler_flags) -msoft-float -fno-builtin -fno-common -mkernel
 
+
+# AudioClip.cpp is the only file containing floating point operations - this is compiled with floating point support as recommended in the apple documentation
+audio_clip_flags = -x c++ -c -fmessage-length=0 -pipe -Wno-trigraphs -fasm-blocks -O3 -Wreturn-type -Wunused-variable -DKERNEL=1 -DKERNEL_PRIVATE=1 -gdwarf-2 -isysroot /Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.6 -I/System/Library/Frameworks/Kernel.framework/PrivateHeaders -I/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/Kernel.framework/Headers -fno-exceptions -fno-rtti -fpascal-strings -fno-schedule-insns -fno-schedule-insns2 -static -findirect-virtual-calls -mlong-branch
+
+
 ar = ar rc
 
 link = g++
@@ -65,6 +70,9 @@ $(outputdir)%.o : %.cpp
 
 $(outputdir)%.o : %.c
 	$(compiler) $(arch_flags) $(kernel_c_flags) $< -o $@
+
+$(outputdir)AudioClip.o : AudioClip.cpp
+	$(compiler) $(arch_flags) $(audio_clip_flags) $< -o $@
 
 objects = $(outputdir)AudioDevice.o $(outputdir)AudioEngine.o $(outputdir)AudioUserClient.o $(outputdir)AudioClip.o $(outputdir)Songcast.o $(outputdir)KextInfo.o
 

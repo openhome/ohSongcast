@@ -65,17 +65,17 @@ private:
     uint32_t iCurrentBlock;
     uint32_t iCurrentFrame;
     IOAudioSampleRate iSampleRate;
-    uint32_t iTimerIntervalNs;
-    uint64_t iTimestamp;
 
+    // all timer related integers are 64-bit to avoid conversion errors between 32 and 64 bit
     IOTimerEventSource* iTimer;
     uint64_t iTimeZero;
-    uint32_t iTimerFiredCount;
+    uint64_t iTimerFiredCount;
+    uint64_t iTimerIntervalNs;
+    uint64_t iTimestamp;
     bool iAudioStopping;
     
     BlockBuffer* iBuffer;
     SongcastAudioMessage* iAudioMsg;
-
     ISongcastSocket* iSocket;
 };
 
