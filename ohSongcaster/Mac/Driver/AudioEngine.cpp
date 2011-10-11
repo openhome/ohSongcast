@@ -4,7 +4,7 @@
 
 
 
-static const uint32_t BLOCKS = 16;
+static const uint32_t BLOCKS = 200;
 static const uint32_t BLOCK_FRAMES = 220;
 static const uint32_t CHANNELS = 2;
 static const uint32_t BIT_DEPTH = 24;
