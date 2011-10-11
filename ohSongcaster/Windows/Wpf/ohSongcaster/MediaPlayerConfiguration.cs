@@ -387,7 +387,7 @@ namespace OpenHome.Songcaster
 
             XmlSerializer xml = new XmlSerializer(typeof(MediaPlayerConfiguration));
 
-            string common = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+            string common = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             string folder = Path.Combine(common, "ohSongcaster");
 
             if (!Directory.Exists(folder))

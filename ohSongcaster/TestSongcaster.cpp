@@ -104,7 +104,7 @@ void STDCALL loggerConfigurationChanged(void* /* aPtr */, THandle aSongcaster)
 
 int CDECL main(int /* aArgc */, char** /* aArgv[] */)
 {
-	TIpAddress subnet = 522;
+	TIpAddress subnet = 522; // 10.2.0.0
     TUint channel = 0;
     TUint ttl = 4;
 	TUint latency = 100;
@@ -165,7 +165,11 @@ int CDECL main(int /* aArgc */, char** /* aArgv[] */)
                 SongcasterSetEnabled(songcaster, false);
             }
         }
-    }
+
+        if (key == 'a') {
+            SongcasterSetSubnet(songcaster, 43200); // 192.168.0.0
+        }
+	}
     
 	SongcasterDestroy(songcaster);
 

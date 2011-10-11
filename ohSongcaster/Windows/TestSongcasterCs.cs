@@ -18,7 +18,7 @@ using OpenHome.Songcaster;
 
             try
             {
-                Songcaster songcaster = new Songcaster("av.openhome.org", 0, 1, 1, 100, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+                Songcaster songcaster = new Songcaster("av.openhome.org", 522, 1, 1, 100, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
 
                 while (true)
                 {
@@ -27,6 +27,11 @@ using OpenHome.Songcaster;
                     if (key.KeyChar == 'q')
                     {
                         break;
+                    }
+
+                    if (key.KeyChar == 'a')
+                    {
+                        songcaster.SetSubnet(43200);
                     }
 
                     if (key.KeyChar == 'e')

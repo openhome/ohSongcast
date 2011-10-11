@@ -106,12 +106,6 @@ namespace OpenHome.Songcaster
                 index++;
             }
 
-            if (iSubnetList.Count > 0)
-            {
-                comboBoxNetwork.SelectedIndex = 0;
-                return;
-            }
-
             comboBoxNetwork.SelectedIndex = -1;
         }
 

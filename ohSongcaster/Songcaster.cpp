@@ -366,11 +366,13 @@ Songcaster::Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLa
 	UpnpLibrary::Initialise(initParams);
 
 	// Fixes bug in stack
+	/* Removing this because I think stack is now fixed
 	if (iSubnet == 0) {
 		SubnetListChanged();
 		iSubnet = iSubnetList[0]->Address();
 		iAdapter = iSubnetList[0]->AdapterAddress();
 	}
+	*/
 	/////////////////////
 
 	UpnpLibrary::StartCombined(iSubnet);
