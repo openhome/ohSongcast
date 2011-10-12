@@ -7,8 +7,10 @@
 // Declaration for receiver callback - defined in ReceiverList.mm
 extern void ReceiverListCallback(void* aPtr, ECallbackType aType, THandle aReceiver);
 
+// Declaration for subnet callback - defined in SubnetList.mm
+extern void SubnetListCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
+
 // Forward declarations of callback functions defined below
-void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 
@@ -32,12 +34,14 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
         [receivers addObject:[[[Receiver alloc] initWithPref:pref] autorelease]];
     }
 
-    // create the receiver list
+    // create the lists
     iReceivers = [[ReceiverList alloc] initWithReceivers:receivers];
     iSelectedUdns = [aSelectedUdns retain];
+    iSubnets = [[SubnetList alloc] init];
 
-    // setup observer for the receiver list
+    // setup observer for the lists
     [iReceivers setObserver:self];
+    [iSubnets setObserver:self];
 
     // create the songcaster object - always create disabled
     uint32_t subnet = 0;
@@ -52,7 +56,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     NSString* manufacturerUrl = NSLocalizedStringFromTable(@"SongcasterManufacturerUrl", @"NonLocalizable", @"");
     NSString* modelUrl = NSLocalizedStringFromTable(@"SongcasterModelUrl", @"NonLocalizable", @"");
 
-    iSongcaster = SongcasterCreate([domain UTF8String], subnet, channel, ttl, latency, multicast, enabled, preset, ReceiverListCallback, iReceivers, ModelSubnetCallback, self, ModelConfigurationChangedCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String]);
+    iSongcaster = SongcasterCreate([domain UTF8String], subnet, channel, ttl, latency, multicast, enabled, preset, ReceiverListCallback, iReceivers, SubnetListCallback, iSubnets, ModelConfigurationChangedCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String]);
 
     return self;
 }
@@ -78,6 +82,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     iConfigurationChangedSelector = 0;
 
     [iReceivers setObserver:nil];
+    [iSubnets setObserver:nil];
 }
 
 
@@ -85,6 +90,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 {
     [iReceivers release];
     [iSelectedUdns release];
+    [iSubnets release];
 
     [super dealloc];
 }
@@ -299,6 +305,35 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 }
 
 
+- (void) subnetAdded:(Subnet*)aSubnet
+{
+    // do nothing if the songcaster has been disposed
+    if (!iSongcaster)
+        return;
+
+    if (SongcasterSubnet(iSongcaster) != 0)
+        return;
+
+    SongcasterSetSubnet(iSongcaster, [aSubnet address]);
+}
+
+
+- (void) subnetRemoved:(Subnet*)aSubnet
+{
+    // do nothing if the songcaster has been disposed
+    if (!iSongcaster)
+        return;
+}
+
+
+- (void) subnetChanged:(Subnet*)aSubnet
+{
+    // do nothing if the songcaster has been disposed
+    if (!iSongcaster)
+        return;
+}
+
+
 - (void) configurationChanged
 {
     // notify upper layers
@@ -309,12 +344,6 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 @end
 
 
-
-
-// Callbacks from the ohSongcaster code
-void ModelSubnetCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
-{
-}
 
 void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster)
 {

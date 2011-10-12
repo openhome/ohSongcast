@@ -1,13 +1,15 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ReceiverList.h"
+#import "SubnetList.h"
 
 
-@interface ModelSongcaster : NSObject<IReceiverListObserver>
+@interface ModelSongcaster : NSObject<IReceiverListObserver, ISubnetListObserver>
 {
     void* iSongcaster;
     ReceiverList* iReceivers;
     NSArray* iSelectedUdns;
+    SubnetList* iSubnets;
 
     id iReceiversChangedObject;
     SEL iReceiversChangedSelector;
