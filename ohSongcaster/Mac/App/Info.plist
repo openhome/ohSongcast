@@ -34,5 +34,13 @@
 	<string>org.openhome.av.songcaster</string>
 	<key>SongcasterPreferencePane</key>
 	<string>/Library/PreferencePanes/ohSongcaster.prefPane</string>
+	<key>SongcasterDomain</key>
+	<string>av.openhome.org</string>
+	<key>SongcasterManufacturerName</key>
+	<string>OpenHome</string>
+	<key>SongcasterManufacturerUrl</key>
+	<string>http://www.openhome.org</string>
+	<key>SongcasterModelUrl</key>
+	<string>http://www.openhome.org</string>
 </dict>
 </plist>
