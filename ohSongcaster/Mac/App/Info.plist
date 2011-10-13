@@ -30,5 +30,9 @@
 	<string>NSApplication</string>
 	<key>LSUIElement</key>
 	<string>1</string>
+	<key>SongcasterPreferencesId</key>
+	<string>org.openhome.av.songcaster</string>
+	<key>SongcasterPreferencePane</key>
+	<string>/Library/PreferencePanes/ohSongcaster.prefPane</string>
 </dict>
 </plist>

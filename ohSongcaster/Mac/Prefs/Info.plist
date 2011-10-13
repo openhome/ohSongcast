@@ -30,5 +30,7 @@
 	<string>ohSongcaster</string>
 	<key>NSPrincipalClass</key>
 	<string>SongcasterPrefPane</string>
+	<key>SongcasterPreferencesId</key>
+	<string>org.openhome.av.songcaster</string>
 </dict>
 </plist>

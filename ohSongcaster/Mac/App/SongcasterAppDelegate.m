@@ -158,7 +158,7 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 
 - (IBAction)menuItemPrefsClicked:(id)aSender
 {
-    NSString* prefPaneName = NSLocalizedStringFromTable(@"PreferencePaneName", @"NonLocalizable", @"");
+    NSString* prefPaneName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterPreferencePane"];
     [[NSWorkspace sharedWorkspace] openFile:prefPaneName];
 }
 

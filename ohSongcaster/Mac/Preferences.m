@@ -45,9 +45,9 @@
 - (id) initWithBundle:(NSBundle*)aBundle
 {
     self = [super init];
-    
-    appId = (CFStringRef)[NSLocalizedStringFromTableInBundle(@"PreferencesAppId", @"NonLocalizable", aBundle, @"") retain];
-    
+
+    appId = (CFStringRef)[[[aBundle infoDictionary] objectForKey:@"SongcasterPreferencesId"] retain];
+
     return self;
 }
 

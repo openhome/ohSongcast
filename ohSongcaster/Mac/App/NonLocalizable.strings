@@ -1,10 +1,4 @@
 
-/* App name for the preference pane */
-"PreferencePaneName" = "/Library/PreferencePanes/ohSongcaster.prefPane";
-
-/* Reverse DNS format app name that the preferences will use */
-"PreferencesAppId" = "org.openhome.av.songcaster";
-
 /* Domain used when constructing the songcaster */
 "SongcasterDomain" = "av.openhome.org";
 
