@@ -109,6 +109,8 @@
 
 - (IBAction) buttonHelpClicked:(id)aSender
 {
+    NSURL* manualUrl = [NSURL URLWithString:[[[self bundle] infoDictionary] objectForKey:@"SongcasterManualUrl"]];
+    [[NSWorkspace sharedWorkspace] openURL:manualUrl];
 }
 
 
