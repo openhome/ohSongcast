@@ -1,5 +1,6 @@
 
 #import "SongcasterAppDelegate.h"
+#import "CrashLogging.h"
 
 
 @implementation SongcasterAppDelegate
@@ -80,6 +81,22 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 
 - (void) awakeFromNib
 {
+    NSString* productId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
+    NSString* crashLogUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterCrashLogUrl"];
+
+    // check for any new crash logs
+    if ([crashLogUrl length] != 0)
+    {
+        CrashLogDumperReport* crashDumper = [[CrashLogDumperReport alloc] initWithProductId:productId uri:crashLogUrl];
+
+        CrashMonitor* crashMonitor = [[CrashMonitor alloc] init];
+        [crashMonitor addDumper:crashDumper];
+        [crashMonitor start];
+
+        [crashMonitor release];
+        [crashDumper release];
+    }
+
     // get the bundle name from the info.plist
     NSString* appName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
 

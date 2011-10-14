@@ -42,5 +42,9 @@
 	<string>http://www.openhome.org</string>
 	<key>SongcasterModelUrl</key>
 	<string>http://www.openhome.org</string>
+	<key>SongcasterCrashLogProductId</key>
+	<string>ohSongcaster</string>
+	<key>SongcasterCrashLogUrl</key>
+	<string></string>
 </dict>
 </plist>
