@@ -29,6 +29,10 @@
 @synthesize boxGettingStarted;
 @synthesize boxMain;
 @synthesize textStep1Text;
+@synthesize buttonSongcastMode;
+@synthesize textMulticastChannel;
+@synthesize textLatencyMs;
+@synthesize sliderLatencyMs;
 
 
 
@@ -60,6 +64,9 @@
     // initialise UI from preferences
     [self updateButtonOnOff];
     [buttonShowInStatusBar setState:([iPreferences iconVisible] ? NSOnState : NSOffState)];
+    [buttonSongcastMode selectCellAtRow:0 column:([iPreferences multicastEnabled] ? 1 : 0)];
+    [textMulticastChannel setIntegerValue:[iPreferences multicastChannel]];
+    [textLatencyMs setIntegerValue:[iPreferences latencyMs]];
 
     // show/hide the getting started view
     if ([iPreferences hasRunWizard])
@@ -120,6 +127,44 @@
     [boxMain setHidden:false];
 
     [iPreferences setHasRunWizard:true];
+}
+
+
+- (IBAction) buttonSongcastModeClicked:(id)aSender
+{
+    // get the selected radio button coordinates
+    NSInteger row, column;
+    [buttonSongcastMode getRow:&row column:&column ofCell:[buttonSongcastMode selectedCell]];
+
+    // set the preference
+    [iPreferences setMulticastEnabled:(column == 1)];
+}
+
+
+- (IBAction) buttonMulticastChannelClicked:(id)aSender
+{
+    // generate a new random channel in range [5000, 65000]
+    srandom([iPreferences multicastChannel]);
+    uint64_t maxRand = (((uint64_t)1)<<31)-1;
+    uint64_t channel = random();
+    channel *= 60000;
+    channel /= maxRand;
+    channel += 5000;
+
+    // set preference and update UI
+    [iPreferences setMulticastChannel:channel];
+    [textMulticastChannel setIntegerValue:channel];
+}
+
+
+- (IBAction) sliderLatencyMsChanged:(id)aSender
+{
+    // get slider value
+    uint64_t latencyMs = [sliderLatencyMs integerValue];
+
+    // set preference and update UI
+    [iPreferences setLatencyMs:latencyMs];
+    [textLatencyMs setIntegerValue:latencyMs];
 }
 
 

@@ -54,6 +54,18 @@ typedef enum
 - (bool) hasRunWizard;
 - (void) setHasRunWizard:(bool)aHasRunWizard;
 
+- (bool) multicastEnabled;
+- (void) setMulticastEnabled:(bool)aEnabled;
+- (void) addObserverMulticastEnabled:(id)aObserver selector:(SEL)aSelector;
+
+- (uint32_t) multicastChannel;
+- (void) setMulticastChannel:(uint32_t)aChannel;
+- (void) addObserverMulticastChannel:(id)aObserver selector:(SEL)aSelector;
+
+- (uint32_t) latencyMs;
+- (void) setLatencyMs:(uint32_t)aLatencyMs;
+- (void) addObserverLatencyMs:(id)aObserver selector:(SEL)aSelector;
+
 - (NSArray*) receiverList;
 - (void) setReceiverList:(NSArray*)aReceiverList;
 - (void) addObserverReceiverList:(id)aObserver selector:(SEL)aSelector;
