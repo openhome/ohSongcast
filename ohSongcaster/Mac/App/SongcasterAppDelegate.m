@@ -81,7 +81,7 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 
 - (void) awakeFromNib
 {
-    NSString* productId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
+    NSString* productId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterCrashLogProductId"];
     NSString* crashLogUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterCrashLogUrl"];
 
     // check for any new crash logs
@@ -138,6 +138,11 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
+    // fire open the preferences if the wizard has not been run
+    if (![model hasRunWizard]) {
+        [self menuItemPrefsClicked:self];
+    }
+
     // start the songcaster if the user session is active and the system is not asleep
     if (!iSessionResigned && !iSleeping) {
         [model start];

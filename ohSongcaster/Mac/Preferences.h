@@ -51,6 +51,9 @@ typedef enum
 - (void) setEnabled:(bool)aEnabled;
 - (void) addObserverEnabled:(id)aObserver selector:(SEL)aSelector;
 
+- (bool) hasRunWizard;
+- (void) setHasRunWizard:(bool)aHasRunWizard;
+
 - (NSArray*) receiverList;
 - (void) setReceiverList:(NSArray*)aReceiverList;
 - (void) addObserverReceiverList:(id)aObserver selector:(SEL)aSelector;
