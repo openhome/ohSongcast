@@ -58,7 +58,7 @@ $(resourcedir)%.strings : %.strings
 $(resourcedir)%.nib : %.xib
 	$(ibtool) $(ibtool_flags) --compile $@ $<
 
-$(outputdir)$(product_name).prefPane : $(outputdir)$(product_name) $(resourcedir)NonLocalizable.strings $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/SongcasterPrefPane.nib Info.plist Icon.png IconLarge.png green.tiff red.tiff
+$(outputdir)$(product_name).prefPane : $(outputdir)$(product_name) $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/SongcasterPrefPane.nib Info.plist Icon.png IconLarge.png green.tiff red.tiff
 	cp $< $(macosdir)
 	cp Icon.png $(resourcedir)
 	cp IconLarge.png $(resourcedir)

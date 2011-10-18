@@ -100,6 +100,12 @@
 }
 
 
+- (bool) hasRunWizard
+{
+    return [iPreferences hasRunWizard];
+}
+
+
 - (void) reconnectReceivers
 {
     if (iModelSongcaster) {

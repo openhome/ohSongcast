@@ -45,9 +45,9 @@
 - (id) initWithBundle:(NSBundle*)aBundle
 {
     self = [super init];
-    
-    appId = (CFStringRef)[NSLocalizedStringFromTableInBundle(@"PreferencesAppId", @"NonLocalizable", aBundle, @"") retain];
-    
+
+    appId = (CFStringRef)[[[aBundle infoDictionary] objectForKey:@"SongcasterPreferencesId"] retain];
+
     return self;
 }
 
@@ -87,8 +87,11 @@
     CFPreferencesAppSynchronize(appId);
     
     // send notification that this has changed
-    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
-    CFNotificationCenterPostNotification(centre, (CFStringRef)aNotification, appId, NULL, TRUE);
+    if (aNotification != nil)
+    {
+        CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
+        CFNotificationCenterPostNotification(centre, (CFStringRef)aNotification, appId, NULL, TRUE);
+    }
 }
 
 
@@ -120,6 +123,18 @@
 - (void) setEnabled:(bool)aEnabled
 {
     [self setBoolPreference:@"Enabled" value:aEnabled notification:@"PreferenceEnabledChanged"];
+}
+
+
+- (bool) hasRunWizard
+{
+    return [self getBoolPreference:@"HasRunWizard" default:false];
+}
+
+
+- (void) setHasRunWizard:(bool)aHasRunWizard
+{
+    [self setBoolPreference:@"HasRunWizard" value:aHasRunWizard notification:nil];
 }
 
 

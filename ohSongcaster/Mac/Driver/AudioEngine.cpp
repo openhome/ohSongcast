@@ -4,7 +4,7 @@
 
 
 
-static const uint32_t BLOCKS = 16;
+static const uint32_t BLOCKS = 200;
 static const uint32_t BLOCK_FRAMES = 220;
 static const uint32_t CHANNELS = 2;
 static const uint32_t BIT_DEPTH = 24;
@@ -23,15 +23,15 @@ bool AudioEngine::init(OSDictionary* aProperties)
         return false;
     }
 
-    iTimer = 0;
     iCurrentBlock = 0;
     iCurrentFrame = 0;
-
     iSampleRate.whole = 44100;
     iSampleRate.fraction = 0;
     
+    iTimer = 0;
     iTimeZero = 0;
     iTimerFiredCount = 0;
+    iTimestamp = 0;
     iAudioStopping = false;
 
     // calculate the timer interval making sure no overflows occur
@@ -39,7 +39,6 @@ bool AudioEngine::init(OSDictionary* aProperties)
     interval *= BLOCK_FRAMES;
     interval /= iSampleRate.whole;    
     iTimerIntervalNs = interval;
-    iTimestamp = 0;
 
     // allocate the output buffers
     iBuffer = new BlockBuffer(BLOCKS, BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
@@ -278,7 +277,9 @@ void AudioEngine::TimerFired()
         uint64_t currTimeAbs, currTimeNs;
         clock_get_uptime(&currTimeAbs);
         absolutetime_to_nanoseconds(currTimeAbs, &currTimeNs);
-        iTimer->setTimeout((uint32_t)(timeOfNextFire - currTimeNs));
+
+        uint32_t interval = (timeOfNextFire > currTimeNs) ? (uint32_t)(timeOfNextFire - currTimeNs) : 0;
+        iTimer->setTimeout(interval);
     }    
     
     // construct the audio message to send

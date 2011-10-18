@@ -26,6 +26,7 @@
 - (bool) iconVisible;
 - (bool) enabled;
 - (void) setEnabled:(bool)aValue;
+- (bool) hasRunWizard;
 - (void) reconnectReceivers;
 
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;

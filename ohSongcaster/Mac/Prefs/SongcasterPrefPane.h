@@ -25,22 +25,25 @@
 // Main class for the preference pane
 @interface SongcasterPrefPane : NSPreferencePane 
 {
-    IBOutlet NSImageView* icon;
     IBOutlet NSButton* buttonOnOff;
     IBOutlet NSTextField* textDescription;
     IBOutlet NSButton* buttonShowInStatusBar;
-    IBOutlet NSButton* buttonHelp;
     IBOutlet NSTableView* tableViewReceiverList;
+    IBOutlet NSBox* boxGettingStarted;
+    IBOutlet NSBox* boxMain;
+    IBOutlet NSTextField* textStep1Text;
 
     Preferences* iPreferences;
     NSArray* iReceiverList;
 }
 
-@property (assign) NSImageView* icon;
 @property (assign) NSButton* buttonOnOff;
 @property (assign) NSTextField* textDescription;
 @property (assign) NSButton* buttonShowInStatusBar;
-@property (assign) NSButton* buttonHelp;
+@property (assign) NSTableView* tableViewReceiverList;
+@property (assign) NSBox* boxGettingStarted;
+@property (assign) NSBox* boxMain;
+@property (assign) NSTextField* textStep1Text;
 
 - (void) mainViewDidLoad;
 - (void) updateButtonOnOff;
@@ -49,6 +52,7 @@
 - (IBAction) buttonReconnectClicked:(id)aSender;
 - (IBAction) buttonShowInStatusBarClicked:(id)aSender;
 - (IBAction) buttonHelpClicked:(id)aSender;
+- (IBAction) buttonWizardClicked:(id)aSender;
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;
 - (void) preferenceReceiverListChanged:(NSNotification*)aNotification;
 

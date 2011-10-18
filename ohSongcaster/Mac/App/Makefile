@@ -53,7 +53,7 @@ $(outputdir)%.o : %.mm
 $(outputdir)Preferences.o : ../Preferences.m
 	$(compiler) $(arch_flags) $(objc_flags) $< -o $@
 
-objects = $(outputdir)main.o $(outputdir)SongcasterAppDelegate.o $(outputdir)Model.o $(outputdir)ModelSongcaster.o $(outputdir)Preferences.o $(outputdir)ReceiverList.o $(outputdir)Receiver.o
+objects = $(outputdir)main.o $(outputdir)SongcasterAppDelegate.o $(outputdir)Model.o $(outputdir)ModelSongcaster.o $(outputdir)Preferences.o $(outputdir)ReceiverList.o $(outputdir)Receiver.o $(outputdir)SubnetList.o $(outputdir)CrashLogging.o
 
 $(outputdir)$(product_name) : $(objects)
 	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(libohSongcaster) $(linkflags2) -o $@
@@ -64,7 +64,7 @@ $(resourcedir)%.strings : %.strings
 $(resourcedir)%.nib : %.xib
 	$(ibtool) $(ibtool_flags) --compile $@ $<
 
-$(outputdir)$(product_name).app : $(outputdir)$(product_name) $(resourcedir)NonLocalizable.strings $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib Info.plist MenuIconOff.png MenuIconOn.png Icon.icns $(libohSongcaster)
+$(outputdir)$(product_name).app : $(outputdir)$(product_name) $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib Info.plist MenuIconOff.png MenuIconOn.png Icon.icns $(libohSongcaster)
 	cp $< $(macosdir)
 	cp $(libohSongcaster) $(macosdir)
 	cp MenuIconOff.png $(resourcedir)

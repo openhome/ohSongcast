@@ -22,11 +22,14 @@
 // Implementation of preference pane
 @implementation SongcasterPrefPane
 
-@synthesize icon;
 @synthesize buttonOnOff;
 @synthesize textDescription;
 @synthesize buttonShowInStatusBar;
-@synthesize buttonHelp;
+@synthesize tableViewReceiverList;
+@synthesize boxGettingStarted;
+@synthesize boxMain;
+@synthesize textStep1Text;
+
 
 
 - (void) mainViewDidLoad
@@ -41,6 +44,7 @@
     [buttonOnOff setAlternateTitle:[NSString stringWithFormat:[buttonOnOff alternateTitle], appName]];
     [textDescription setStringValue:[NSString stringWithFormat:[textDescription stringValue], appName]];
     [buttonShowInStatusBar setTitle:[NSString stringWithFormat:[buttonShowInStatusBar title], appName]];    
+    [textStep1Text setStringValue:[NSString stringWithFormat:[textStep1Text stringValue], appName]];
     
     // create the preferences object
     iPreferences = [[Preferences alloc] initWithBundle:[self bundle]];    
@@ -56,6 +60,18 @@
     // initialise UI from preferences
     [self updateButtonOnOff];
     [buttonShowInStatusBar setState:([iPreferences iconVisible] ? NSOnState : NSOffState)];
+
+    // show/hide the getting started view
+    if ([iPreferences hasRunWizard])
+    {
+        [boxMain setHidden:false];
+        [boxGettingStarted setHidden:true];
+    }
+    else
+    {
+        [boxMain setHidden:true];
+        [boxGettingStarted setHidden:false];
+    }
 }
 
 
@@ -93,6 +109,17 @@
 
 - (IBAction) buttonHelpClicked:(id)aSender
 {
+    NSURL* manualUrl = [NSURL URLWithString:[[[self bundle] infoDictionary] objectForKey:@"SongcasterManualUrl"]];
+    [[NSWorkspace sharedWorkspace] openURL:manualUrl];
+}
+
+
+- (IBAction) buttonWizardClicked:(id)aSender
+{
+    [boxGettingStarted setHidden:true];
+    [boxMain setHidden:false];
+
+    [iPreferences setHasRunWizard:true];
 }
 
 
