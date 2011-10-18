@@ -38,24 +38,19 @@ class CWinsock
 	friend class CSocketOhm;
 
 public:
+	static CWinsock* Create();
 	static void Initialise(PSOCKADDR aSocket);
 	static void Initialise(PSOCKADDR aSocket, ULONG aAddress, ULONG aPort);
-	static CWinsock* Create(NETWORK_CALLBACK* aCallback, void*  aContext);
-	bool Initialised();
 	void Close();
 
 private:
 	static KSTART_ROUTINE Init;
 
 private:
-    KSPIN_LOCK iSpinLock;
-	bool iInitialised;
-
+	KEVENT iInitialised;
 	WSK_CLIENT_DISPATCH iAppDispatch;
 	WSK_REGISTRATION iRegistration;
 	WSK_PROVIDER_NPI iProviderNpi;
-	NETWORK_CALLBACK* iCallback;
-	void* iContext;
 };
 
 

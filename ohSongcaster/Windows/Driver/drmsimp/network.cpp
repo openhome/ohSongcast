@@ -42,60 +42,59 @@ void CWinsock::Initialise(PSOCKADDR aSocket)
 	Initialise(aSocket, 0, 0);
 }
 
-CWinsock* CWinsock::Create(NETWORK_CALLBACK aCallback, void* aContext)
+CWinsock* CWinsock::Create()
 {
 	CWinsock* winsock = (CWinsock*) ExAllocatePoolWithTag(NonPagedPool, sizeof(CWinsock), '1ten');
 
-	if (winsock != NULL)
+	if (winsock == NULL) {
+		return (NULL);
+	}
+
+	KeInitializeEvent(&winsock->iInitialised, NotificationEvent, false);
+
+	winsock->iAppDispatch.Version = MAKE_WSK_VERSION(1,0);
+	winsock->iAppDispatch.Reserved = 0;
+	winsock->iAppDispatch.WskClientEvent = NULL;
+
+	// Register as a WSK application
+
+	WSK_CLIENT_NPI clientNpi;
+
+	clientNpi.ClientContext = winsock;
+	clientNpi.Dispatch = &winsock->iAppDispatch;
+
+	NTSTATUS status = WskRegister(&clientNpi, &winsock->iRegistration);
+
+	if(status == STATUS_SUCCESS)
 	{
-		winsock->iInitialised = false;
+		HANDLE handle;
 
-		KeInitializeSpinLock(&winsock->iSpinLock);
+		OBJECT_ATTRIBUTES oa;
 
-		winsock->iAppDispatch.Version = MAKE_WSK_VERSION(1,0);
-		winsock->iAppDispatch.Reserved = 0;
-		winsock->iAppDispatch.WskClientEvent = NULL;
+		InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
 
-		winsock->iCallback = aCallback;
-		winsock->iContext = aContext;
+		status = PsCreateSystemThread(&handle, THREAD_ALL_ACCESS, &oa, NULL, NULL, Init, winsock);
 
-		// Register as a WSK application
-
-		WSK_CLIENT_NPI clientNpi;
-
-		clientNpi.ClientContext = winsock;
-		clientNpi.Dispatch = &winsock->iAppDispatch;
-
-		NTSTATUS status = WskRegister(&clientNpi, &winsock->iRegistration);
-
-		if(status == STATUS_SUCCESS)
+		if (status == STATUS_SUCCESS)
 		{
-			HANDLE handle;
-			OBJECT_ATTRIBUTES oa;
-			InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
-			status = PsCreateSystemThread(&handle, THREAD_ALL_ACCESS, &oa, NULL, NULL, Init, winsock);
+			LARGE_INTEGER timeout;
 
-			if (status == STATUS_SUCCESS)
+			timeout.QuadPart = -600000000; // 60 seconds
+
+			status = KeWaitForSingleObject(&winsock->iInitialised, Executive, KernelMode, false, &timeout);
+
+			if(status == STATUS_SUCCESS)
 			{
 				return (winsock);
 			}
-
-			WskDeregister(&winsock->iRegistration);
 		}
 
-		ExFreePoolWithTag(winsock, '1ten');
+		WskDeregister(&winsock->iRegistration);
 	}
 
+	ExFreePoolWithTag(winsock, '1ten');
+
 	return (NULL);
-}
-
-void CWinsock::Close()
-{
-	WskReleaseProviderNPI(&iRegistration);
-
-	WskDeregister(&iRegistration);
-
-	ExFreePoolWithTag(this, '1ten');
 }
 
 void CWinsock::Init(void* aContext)
@@ -115,28 +114,16 @@ void CWinsock::Init(void* aContext)
 
 	// Indicate that we are initialised
 
-	KIRQL oldIrql;
-
-	KeAcquireSpinLock (&(winsock->iSpinLock), &oldIrql);
-
-	winsock->iInitialised = true;
-
-	KeReleaseSpinLock (&(winsock->iSpinLock), oldIrql);
-
-	(*winsock->iCallback)(winsock->iContext);
+	KeSetEvent(&winsock->iInitialised, 0, false);
 }
 
-bool CWinsock::Initialised()
+void CWinsock::Close()
 {
-	KIRQL oldIrql;
+	WskReleaseProviderNPI(&iRegistration);
 
-	KeAcquireSpinLock (&iSpinLock, &oldIrql);
+	WskDeregister(&iRegistration);
 
-	bool initialised = iInitialised;
-
-	KeReleaseSpinLock (&iSpinLock, oldIrql);
-
-	return initialised;
+	ExFreePoolWithTag(this, '1ten');
 }
 
 // CSocketOhm
@@ -168,9 +155,9 @@ CSocketOhm::CSocketOhm()
 	iHeader.iCodecName[0] = 'P';
 	iHeader.iCodecName[1] = 'C';
 	iHeader.iCodecName[2] = 'M';
-	iHeader.iCodecName[3] = '/';
-	iHeader.iCodecName[4] = 'S';
-	iHeader.iCodecName[5] = 'C';
+	iHeader.iCodecName[3] = ' ';
+	iHeader.iCodecName[4] = ' ';
+	iHeader.iCodecName[5] = ' ';
 
 	iFrame = 0;
 	iSampleStart = 0;
