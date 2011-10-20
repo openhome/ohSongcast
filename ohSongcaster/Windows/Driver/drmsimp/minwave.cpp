@@ -310,7 +310,7 @@ Return Value:
 
 	CWinsock::Initialise(&MpusAddress, MpusAddr, MpusPort);
 
-	KeInitializeEvent(&WskInitialisedEvent, NotificationEvent, false);
+	KeInitializeEvent(&WskInitialisedEvent, SynchronizationEvent, false);
 
 	Wsk = CWinsock::Create();
 
@@ -325,7 +325,7 @@ Return Value:
 
 	LARGE_INTEGER timeout;
 
-	timeout.QuadPart = -600000000; // 60 seconds
+	timeout.QuadPart = -1200000000; // 120 seconds
 
 	ntStatus = KeWaitForSingleObject(&WskInitialisedEvent, Executive, KernelMode, false, &timeout);
 

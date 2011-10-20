@@ -151,6 +151,10 @@ private:
 	ULONG iTimestampMultiplier;
 	ULONGLONG iPerformanceCounter;
 	ULONG iLatencyMultiplier;
+	KEVENT iSendEvent;
+	WSK_BUF iSendBuf;
+	SOCKADDR iSendAddr;
+	void* iSendMessage;
 };
 
 #endif          // (NTDDI_VERSION >= NTDDI_VISTA)
