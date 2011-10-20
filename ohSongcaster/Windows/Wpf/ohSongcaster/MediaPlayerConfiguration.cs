@@ -65,6 +65,10 @@ namespace OpenHome.Songcaster
                     {
                         Standby();
                     }
+                    else // this defends against us not knowing the status due to some failure in eventing
+                    {
+                        Stop();
+                    }
                 }
             }
 
@@ -206,14 +210,16 @@ namespace OpenHome.Songcaster
 
                     if (iReceiver != null)
                     {
-                        if (iAttached && iEnabled)
+                        if (iEnabled)
                         {
-                            Play();
-                        }
-
-                        if (!iAttached && iReceiver.Status != EReceiverStatus.eDisconnected)
-                        {
-                            Standby();
+                            if (iAttached)
+                            {
+                                Play();
+                            }
+                            else
+                            {
+                                Stop();
+                            }
                         }
                     }
                 }
