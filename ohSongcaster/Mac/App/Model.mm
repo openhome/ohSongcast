@@ -25,6 +25,9 @@
     [iPreferences addObserverSelectedUdnList:self selector:@selector(preferenceSelectedUdnListChanged:)];
     [iPreferences addObserverRefreshReceiverList:self selector:@selector(preferenceRefreshReceiverList:)];
     [iPreferences addObserverReconnectReceivers:self selector:@selector(preferenceReconnectReceivers:)];
+    [iPreferences addObserverMulticastEnabled:self selector:@selector(preferenceMulticastEnabledChanged:)];
+    [iPreferences addObserverMulticastChannel:self selector:@selector(preferenceMulticastChannelChanged:)];
+    [iPreferences addObserverLatencyMs:self selector:@selector(preferenceLatencyMsChanged:)];
 
     return self;
 }
@@ -42,7 +45,7 @@
     [iPreferences setEnabled:false];
 
     // create the songcaster model
-    iModelSongcaster = [[ModelSongcaster alloc] initWithReceivers:[iPreferences receiverList] andSelectedUdns:[iPreferences selectedUdnList]];
+    iModelSongcaster = [[ModelSongcaster alloc] initWithReceivers:[iPreferences receiverList] andSelectedUdns:[iPreferences selectedUdnList] multicastEnabled:[iPreferences multicastEnabled] multicastChannel:[iPreferences multicastChannel] latencyMs:[iPreferences latencyMs]];
     [iModelSongcaster setReceiversChangedObserver:self selector:@selector(receiversChanged)];
     [iModelSongcaster setConfigurationChangedObserver:self selector:@selector(configurationChanged)];
 }
@@ -162,6 +165,39 @@
 - (void) preferenceReconnectReceivers:(NSNotification*)aNotification
 {
     [self reconnectReceivers];
+}
+
+
+- (void) preferenceMulticastEnabledChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences
+    [iPreferences synchronize];
+
+    if (iModelSongcaster) {
+        [iModelSongcaster setMulticastEnabled:[iPreferences multicastEnabled]];
+    }
+}
+
+
+- (void) preferenceMulticastChannelChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences
+    [iPreferences synchronize];
+
+    if (iModelSongcaster) {
+        [iModelSongcaster setMulticastChannel:[iPreferences multicastChannel]];
+    }
+}
+
+
+- (void) preferenceLatencyMsChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences
+    [iPreferences synchronize];
+
+    if (iModelSongcaster) {
+        [iModelSongcaster setLatencyMs:[iPreferences latencyMs]];
+    }
 }
 
 

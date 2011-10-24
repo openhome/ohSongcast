@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="212"/>
+			<integer value="180"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -772,20 +772,16 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																								<object class="NSButtonCell" key="NSCell" id="451970510">
 																									<int key="NSCellFlags">67239424</int>
 																									<int key="NSCellFlags2">134217728</int>
-																									<string key="NSContents">Button</string>
-																									<object class="NSFont" key="NSSupport">
-																										<string key="NSName">LucidaGrande</string>
-																										<double key="NSSize">12</double>
-																										<int key="NSfFlags">4883</int>
-																									</object>
-																									<reference key="NSControlView" ref="526970374"/>
-																									<int key="NSButtonFlags">-2038284033</int>
-																									<int key="NSButtonFlags2">164</int>
-																									<object class="NSFont" key="NSAlternateImage">
+																									<string key="NSContents">New</string>
+																									<object class="NSFont" key="NSSupport" id="423997823">
 																										<string key="NSName">LucidaGrande</string>
 																										<double key="NSSize">12</double>
 																										<int key="NSfFlags">16</int>
 																									</object>
+																									<reference key="NSControlView" ref="526970374"/>
+																									<int key="NSButtonFlags">-2038284033</int>
+																									<int key="NSButtonFlags2">164</int>
+																									<reference key="NSAlternateImage" ref="423997823"/>
 																									<string key="NSAlternateContents"/>
 																									<string key="NSKeyEquivalent"/>
 																									<int key="NSPeriodicDelay">200</int>

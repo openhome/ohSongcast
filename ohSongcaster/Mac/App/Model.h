@@ -34,5 +34,8 @@
 - (void) preferenceSelectedUdnListChanged:(NSNotification*)aNotification;
 - (void) preferenceRefreshReceiverList:(NSNotification*)aNotification;
 - (void) preferenceReconnectReceivers:(NSNotification*)aNotification;
+- (void) preferenceMulticastEnabledChanged:(NSNotification*)aNotification;
+- (void) preferenceMulticastChannelChanged:(NSNotification*)aNotification;
+- (void) preferenceLatencyMsChanged:(NSNotification*)aNotification;
 
 @end
