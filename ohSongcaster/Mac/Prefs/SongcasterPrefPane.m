@@ -67,6 +67,7 @@
     [buttonSongcastMode selectCellAtRow:0 column:([iPreferences multicastEnabled] ? 1 : 0)];
     [textMulticastChannel setIntegerValue:[iPreferences multicastChannel]];
     [textLatencyMs setIntegerValue:[iPreferences latencyMs]];
+    [sliderLatencyMs setIntegerValue:[iPreferences latencyMs]];
 
     // show/hide the getting started view
     if ([iPreferences hasRunWizard])
