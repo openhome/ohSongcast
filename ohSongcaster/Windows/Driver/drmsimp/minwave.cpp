@@ -310,18 +310,22 @@ Return Value:
 
 	CWinsock::Initialise(&MpusAddress, MpusAddr, MpusPort);
 
-	KeInitializeEvent(&WskInitialisedEvent, NotificationEvent, false);
+	KeInitializeEvent(&WskInitialisedEvent, SynchronizationEvent, false);
 
-	Wsk = CWinsock::Create(WskInitialised, this);
+	Wsk = CWinsock::Create();
 
 	if (Wsk == NULL)
 	{
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
+	Socket = new (NonPagedPool, OHSOUNDCARD_POOLTAG) CSocketOhm();
+
+	Socket->Initialise(*Wsk, SocketInitialised, this);
+
 	LARGE_INTEGER timeout;
 
-	timeout.QuadPart = -600000000; // 60 seconds
+	timeout.QuadPart = -1200000000; // 120 seconds
 
 	ntStatus = KeWaitForSingleObject(&WskInitialisedEvent, Executive, KernelMode, false, &timeout);
 
@@ -742,16 +746,6 @@ void SocketInitialised(void* aContext)
     UNREFERENCED_PARAMETER(aContext);
 
 	KeSetEvent(&WskInitialisedEvent, 0, false);
-}
-
-//=============================================================================
-// WskInitialised
-//=============================================================================
-
-void WskInitialised(void* aContext)
-{
-	Socket = new (NonPagedPool, OHSOUNDCARD_POOLTAG) CSocketOhm();
-	Socket->Initialise(*Wsk, SocketInitialised, aContext);
 }
 
 //=============================================================================

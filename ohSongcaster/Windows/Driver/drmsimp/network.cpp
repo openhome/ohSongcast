@@ -42,60 +42,59 @@ void CWinsock::Initialise(PSOCKADDR aSocket)
 	Initialise(aSocket, 0, 0);
 }
 
-CWinsock* CWinsock::Create(NETWORK_CALLBACK aCallback, void* aContext)
+CWinsock* CWinsock::Create()
 {
 	CWinsock* winsock = (CWinsock*) ExAllocatePoolWithTag(NonPagedPool, sizeof(CWinsock), '1ten');
 
-	if (winsock != NULL)
+	if (winsock == NULL) {
+		return (NULL);
+	}
+
+	KeInitializeEvent(&winsock->iInitialised, SynchronizationEvent, false);
+
+	winsock->iAppDispatch.Version = MAKE_WSK_VERSION(1,0);
+	winsock->iAppDispatch.Reserved = 0;
+	winsock->iAppDispatch.WskClientEvent = NULL;
+
+	// Register as a WSK application
+
+	WSK_CLIENT_NPI clientNpi;
+
+	clientNpi.ClientContext = winsock;
+	clientNpi.Dispatch = &winsock->iAppDispatch;
+
+	NTSTATUS status = WskRegister(&clientNpi, &winsock->iRegistration);
+
+	if(status == STATUS_SUCCESS)
 	{
-		winsock->iInitialised = false;
+		HANDLE handle;
 
-		KeInitializeSpinLock(&winsock->iSpinLock);
+		OBJECT_ATTRIBUTES oa;
 
-		winsock->iAppDispatch.Version = MAKE_WSK_VERSION(1,0);
-		winsock->iAppDispatch.Reserved = 0;
-		winsock->iAppDispatch.WskClientEvent = NULL;
+		InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
 
-		winsock->iCallback = aCallback;
-		winsock->iContext = aContext;
+		status = PsCreateSystemThread(&handle, THREAD_ALL_ACCESS, &oa, NULL, NULL, Init, winsock);
 
-		// Register as a WSK application
-
-		WSK_CLIENT_NPI clientNpi;
-
-		clientNpi.ClientContext = winsock;
-		clientNpi.Dispatch = &winsock->iAppDispatch;
-
-		NTSTATUS status = WskRegister(&clientNpi, &winsock->iRegistration);
-
-		if(status == STATUS_SUCCESS)
+		if (status == STATUS_SUCCESS)
 		{
-			HANDLE handle;
-			OBJECT_ATTRIBUTES oa;
-			InitializeObjectAttributes(&oa, NULL, OBJ_KERNEL_HANDLE, NULL, NULL);
-			status = PsCreateSystemThread(&handle, THREAD_ALL_ACCESS, &oa, NULL, NULL, Init, winsock);
+			LARGE_INTEGER timeout;
 
-			if (status == STATUS_SUCCESS)
+			timeout.QuadPart = -1200000000; // 120 seconds in 100nS units
+
+			status = KeWaitForSingleObject(&winsock->iInitialised, Executive, KernelMode, false, &timeout);
+
+			if(status == STATUS_SUCCESS)
 			{
 				return (winsock);
 			}
-
-			WskDeregister(&winsock->iRegistration);
 		}
 
-		ExFreePoolWithTag(winsock, '1ten');
+		WskDeregister(&winsock->iRegistration);
 	}
 
+	ExFreePoolWithTag(winsock, '1ten');
+
 	return (NULL);
-}
-
-void CWinsock::Close()
-{
-	WskReleaseProviderNPI(&iRegistration);
-
-	WskDeregister(&iRegistration);
-
-	ExFreePoolWithTag(this, '1ten');
 }
 
 void CWinsock::Init(void* aContext)
@@ -115,28 +114,16 @@ void CWinsock::Init(void* aContext)
 
 	// Indicate that we are initialised
 
-	KIRQL oldIrql;
-
-	KeAcquireSpinLock (&(winsock->iSpinLock), &oldIrql);
-
-	winsock->iInitialised = true;
-
-	KeReleaseSpinLock (&(winsock->iSpinLock), oldIrql);
-
-	(*winsock->iCallback)(winsock->iContext);
+	KeSetEvent(&winsock->iInitialised, 0, false);
 }
 
-bool CWinsock::Initialised()
+void CWinsock::Close()
 {
-	KIRQL oldIrql;
+	WskReleaseProviderNPI(&iRegistration);
 
-	KeAcquireSpinLock (&iSpinLock, &oldIrql);
+	WskDeregister(&iRegistration);
 
-	bool initialised = iInitialised;
-
-	KeReleaseSpinLock (&iSpinLock, oldIrql);
-
-	return initialised;
+	ExFreePoolWithTag(this, '1ten');
 }
 
 // CSocketOhm
@@ -146,6 +133,8 @@ CSocketOhm::CSocketOhm()
 	iInitialised = false;
 
 	KeInitializeSpinLock(&iSpinLock);
+
+	KeInitializeEvent(&iSendEvent, SynchronizationEvent, true);
 
 	iHeader.iMagic[0] = 'O';
 	iHeader.iMagic[1] = 'h';
@@ -168,9 +157,9 @@ CSocketOhm::CSocketOhm()
 	iHeader.iCodecName[0] = 'P';
 	iHeader.iCodecName[1] = 'C';
 	iHeader.iCodecName[2] = 'M';
-	iHeader.iCodecName[3] = '/';
-	iHeader.iCodecName[4] = 'S';
-	iHeader.iCodecName[5] = 'C';
+	iHeader.iCodecName[3] = ' ';
+	iHeader.iCodecName[4] = ' ';
+	iHeader.iCodecName[5] = ' ';
 
 	iFrame = 0;
 	iSampleStart = 0;
@@ -219,7 +208,6 @@ NTSTATUS CSocketOhm::Initialise(CWinsock& aWsk, NETWORK_CALLBACK aCallback, void
 		  NULL,
 		  irp
 		  );
-
 
 	return (status);
 }
@@ -318,12 +306,6 @@ NTSTATUS CSocketOhm::InitialiseComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp,
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-typedef struct
-{
-	WSK_BUF iBuf;
-	SOCKADDR iAddr;
-} UDPSEND, *PUDPSEND;
-
 void CSocketOhm::SetTtl(ULONG aValue)
 {
     UNREFERENCED_PARAMETER(aValue);
@@ -375,6 +357,18 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 
 void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels, ULONG aLatency)
 {
+	ULONG sampleBytes = aChannels * aBitDepth / 8;
+
+	if (sampleBytes == 0) {
+		return;
+	}
+
+	LARGE_INTEGER timeout;
+
+	timeout.QuadPart = 0; // wait forever
+
+	KeWaitForSingleObject(&iSendEvent, Executive, KernelMode, false, &timeout);
+
 	PIRP irp;
 
 	// Allocate an IRP
@@ -388,32 +382,34 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
         return;
     }
 
-	void* alloc = ExAllocatePoolWithTag(NonPagedPool, sizeof(UDPSEND) + sizeof(OHMHEADER) + aBytes, '2ten');
+	iSendMessage = ExAllocatePoolWithTag(NonPagedPool, sizeof(OHMHEADER) + aBytes, '2ten');
 
-	if (alloc == NULL)
+	if (iSendMessage == NULL)
 	{
 		IoFreeIrp(irp);
+		KeSetEvent(&iSendEvent, 0, false);
         return;
 	}
 
-	PUDPSEND udp = (PUDPSEND) alloc;
-	POHMHEADER header = (POHMHEADER) (udp + 1);
+	OHMHEADER* header = (OHMHEADER*) iSendMessage;
+
 	UCHAR* audio = (UCHAR*) (header + 1);
 
-	udp->iBuf.Offset = 0;
-	udp->iBuf.Length = aBytes + sizeof(OHMHEADER);
-	udp->iBuf.Mdl = IoAllocateMdl(header, sizeof(OHMHEADER) + aBytes, FALSE, FALSE, NULL);
+	iSendBuf.Offset = 0;
+	iSendBuf.Length = aBytes + sizeof(OHMHEADER);
+	iSendBuf.Mdl = IoAllocateMdl(header, sizeof(OHMHEADER) + aBytes, FALSE, FALSE, NULL);
 
-	if (udp->iBuf.Mdl == NULL)
+	if (iSendBuf.Mdl == NULL)
 	{
 		IoFreeIrp(irp);
-		ExFreePool(alloc);
+		ExFreePoolWithTag(iSendMessage, '2ten');
+		KeSetEvent(&iSendEvent, 0, false);
         return;
 	}
 
-	MmBuildMdlForNonPagedPool(udp->iBuf.Mdl);
+	MmBuildMdlForNonPagedPool(iSendBuf.Mdl);
 
-	RtlCopyMemory(&udp->iAddr, aAddress, sizeof(SOCKADDR));
+	RtlCopyMemory(&iSendAddr, aAddress, sizeof(SOCKADDR));
 
 	KIRQL oldIrql;
 
@@ -434,7 +430,7 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 
 	header->iAudioFlags = flags;
 
-	USHORT samples = (USHORT)(aBytes / (aChannels * aBitDepth / 8));
+	USHORT samples = (USHORT)(aBytes / sampleBytes);
 
 	header->iAudioSamples = samples >> 8 & 0x00ff;
 	header->iAudioSamples += samples << 8 & 0xff00;
@@ -507,13 +503,9 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 
 	// Set the completion routine for the IRP
 
-	IoSetCompletionRoutine(irp,	SendComplete, alloc, TRUE, TRUE, TRUE);
+	IoSetCompletionRoutine(irp,	SendComplete, this, TRUE, TRUE, TRUE);
 
-	((PWSK_PROVIDER_DATAGRAM_DISPATCH)(iSocket->Dispatch))->WskSendTo(iSocket, &udp->iBuf, 0, &udp->iAddr, 0, NULL, irp);
-
-	// create timestamp for next time
-
-    iPerformanceCounter = KeQueryInterruptTime();
+	((PWSK_PROVIDER_DATAGRAM_DISPATCH)(iSocket->Dispatch))->WskSendTo(iSocket, &iSendBuf, 0, &iSendAddr, 0, NULL, irp);
 
 	KeReleaseSpinLock (&iSpinLock, oldIrql);
 }
@@ -544,11 +536,17 @@ NTSTATUS CSocketOhm::SendComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID
 {
     UNREFERENCED_PARAMETER(aDeviceObject);
 
-	PUDPSEND udpsend = (PUDPSEND)aContext;
+	CSocketOhm* socket = (CSocketOhm*) aContext;
+
+	// create timestamp for next message
+
+    socket->iPerformanceCounter = KeQueryInterruptTime();
 
 	IoFreeIrp(aIrp);
-	IoFreeMdl(udpsend->iBuf.Mdl);
-	ExFreePool(aContext);
+	IoFreeMdl(socket->iSendBuf.Mdl);
+	ExFreePoolWithTag(socket->iSendMessage, '2ten');
+
+	KeSetEvent(&socket->iSendEvent, 0, false);
 
 	// Always return STATUS_MORE_PROCESSING_REQUIRED to
 	// terminate the completion processing of the IRP.
