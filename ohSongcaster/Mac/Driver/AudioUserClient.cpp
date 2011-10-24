@@ -16,6 +16,7 @@ public:
     static IOReturn SetActive(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
     static IOReturn SetEndpoint(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
     static IOReturn SetTtl(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
+    static IOReturn SetLatencyMs(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
 };
 
 
@@ -42,6 +43,10 @@ const IOExternalMethodDispatch AudioUserClientDispatcher::iMethods[eNumDriverMet
     // eSetTtl
     {
         (IOExternalMethodAction)&AudioUserClientDispatcher::SetTtl, 1, 0, 0, 0
+    },
+    // eSetLatencyMs
+    {
+        (IOExternalMethodAction)&AudioUserClientDispatcher::SetLatencyMs, 1, 0, 0, 0
     }
 };
 
@@ -71,6 +76,11 @@ IOReturn AudioUserClientDispatcher::SetEndpoint(AudioUserClient* aTarget, void* 
 IOReturn AudioUserClientDispatcher::SetTtl(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
 {
     return aTarget->SetTtl(aArgs->scalarInput[0]);
+}
+
+IOReturn AudioUserClientDispatcher::SetLatencyMs(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
+{
+    return aTarget->SetLatencyMs(aArgs->scalarInput[0]);
 }
 
 
@@ -240,6 +250,24 @@ IOReturn AudioUserClient::SetTtl(uint64_t aTtl)
     }
     return ret;
 }
+
+
+// eSetLatencyMs
+
+IOReturn AudioUserClient::SetLatencyMs(uint64_t aLatencyMs)
+{
+    IOReturn ret = DeviceOk();
+    if (ret == kIOReturnSuccess) {
+        iDevice->Engine().SetLatencyMs(aLatencyMs);
+    }
+    else {
+        IOLog("Songcaster AudioUserClient[%p]::SetLatencyMs(%llu) returns %x\n", this, aLatencyMs, ret);
+    }
+    return ret;
+}
+
+
+
 
 
 

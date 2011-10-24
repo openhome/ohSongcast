@@ -3,6 +3,7 @@
 
 #include <IOKit/audio/IOAudioDevice.h>
 #include "Branding.h"
+#include "AudioEngine.h"
 
 class SongcastSocket;
 
@@ -17,12 +18,14 @@ class AudioDevice : public IOAudioDevice
 
 public:
     SongcastSocket& Socket() { return *iSocket; }
+    AudioEngine& Engine() { return *iEngine; }
 
 private:
     virtual bool initHardware(IOService* aProvider);
     virtual void free();
 
     SongcastSocket* iSocket;
+    AudioEngine* iEngine;
 };
 
 

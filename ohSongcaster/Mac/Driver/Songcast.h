@@ -45,7 +45,7 @@ typedef struct SongcastAudioHeader
 class SongcastAudioMessage
 {
 public:
-    SongcastAudioMessage(uint32_t aBufferFrames, uint32_t aFrames, uint32_t aChannels, uint32_t aBitDepth);
+    SongcastAudioMessage(uint32_t aFrames, uint32_t aChannels, uint32_t aBitDepth);
     ~SongcastAudioMessage();
     
     void* Ptr() const { return iPtr; }
@@ -55,6 +55,7 @@ public:
     void SetSampleRate(uint32_t aSampleRate);
     void SetFrame(uint32_t aFrame);
     void SetTimestamp(uint32_t aTimestamp);
+    void SetMediaLatency(uint32_t aLatency);
     void SetData(void* aPtr, uint32_t aBytes);
     
 private:
