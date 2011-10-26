@@ -296,7 +296,13 @@
 
     for (PrefSubnet* subnet in iSubnetList)
     {
-        NSString* title = [NSString stringWithFormat:@"%d (%@)", [subnet address], [subnet name]];
+        uint32_t address = [subnet address];
+        uint32_t byte1 = address & 0xff;
+        uint32_t byte2 = (address >> 8) & 0xff;
+        uint32_t byte3 = (address >> 16) & 0xff;
+        uint32_t byte4 = (address >> 24) & 0xff;
+
+        NSString* title = [NSString stringWithFormat:@"%d.%d.%d.%d (%@)", byte1, byte2, byte3, byte4, [subnet name]];
         [buttonNetworkAdapter addItemWithTitle:title];
 
         if (selected && ([subnet address] == [selected address]))
