@@ -23,6 +23,7 @@
 @implementation SongcasterPrefPane
 
 @synthesize buttonOnOff;
+@synthesize textAbout;
 @synthesize textDescription;
 @synthesize buttonShowInStatusBar;
 @synthesize tableViewReceiverList;
@@ -50,6 +51,12 @@
     [textDescription setStringValue:[NSString stringWithFormat:[textDescription stringValue], appName]];
     [buttonShowInStatusBar setTitle:[NSString stringWithFormat:[buttonShowInStatusBar title], appName]];    
     [textStep1Text setStringValue:[NSString stringWithFormat:[textStep1Text stringValue], appName]];
+
+    // initialise the about text
+    NSString* aboutFormat = [[[self bundle] infoDictionary] objectForKey:@"SongcasterAboutText"];
+    NSString* version = [[[self bundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+    NSString* copyright = [[[self bundle] infoDictionary] objectForKey:@"NSHumanReadableCopyright"];
+    [textAbout setStringValue:[NSString stringWithFormat:aboutFormat, appName, version, copyright]];
     
     // create the preferences object
     iPreferences = [[Preferences alloc] initWithBundle:[self bundle]];    

@@ -26,6 +26,7 @@
 @interface SongcasterPrefPane : NSPreferencePane 
 {
     IBOutlet NSButton* buttonOnOff;
+    IBOutlet NSTextField* textAbout;
     IBOutlet NSTextField* textDescription;
     IBOutlet NSButton* buttonShowInStatusBar;
     IBOutlet NSTableView* tableViewReceiverList;
@@ -44,6 +45,7 @@
 }
 
 @property (assign) NSButton* buttonOnOff;
+@property (assign) NSTextField* textAbout;
 @property (assign) NSTextField* textDescription;
 @property (assign) NSButton* buttonShowInStatusBar;
 @property (assign) NSTableView* tableViewReceiverList;
