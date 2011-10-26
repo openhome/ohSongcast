@@ -37,5 +37,6 @@
 - (void) preferenceMulticastEnabledChanged:(NSNotification*)aNotification;
 - (void) preferenceMulticastChannelChanged:(NSNotification*)aNotification;
 - (void) preferenceLatencyMsChanged:(NSNotification*)aNotification;
+- (void) preferenceSelectedSubnetChanged:(NSNotification*)aNotification;
 
 @end

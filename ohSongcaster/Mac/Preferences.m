@@ -13,7 +13,7 @@
 
 - (id) initWithDict:(NSDictionary*)aDict
 {
-    [super init];
+    self = [super init];
 
     udn = [[aDict objectForKey:@"Udn"] retain];
     room = [[aDict objectForKey:@"Room"] retain];
@@ -34,6 +34,36 @@
             name, @"Name",
             [NSNumber numberWithInt:status], @"Status", nil];
 }
+
+@end
+
+
+
+@implementation PrefSubnet
+
+@synthesize address;
+@synthesize name;
+
+
+- (id) initWithDict:(NSDictionary*)aDict
+{
+    self = [super init];
+
+    address = [[aDict objectForKey:@"Address"] unsignedIntValue];
+    name = [[aDict objectForKey:@"Name"] retain];
+
+    return self;
+}
+
+
+- (NSDictionary*) convertToDict
+{
+    return [NSDictionary dictionaryWithObjectsAndKeys:
+            [NSNumber numberWithUnsignedInt:address], @"Address",
+            name, @"Name",
+            nil];
+}
+
 
 @end
 
@@ -133,6 +163,38 @@
         CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
         CFNotificationCenterPostNotification(centre, (CFStringRef)aNotification, appId, NULL, TRUE);
     }
+}
+
+
+- (NSArray*) getListPreference:(NSString*)aName itemType:(CFTypeID)aItemType
+{
+    // create a temporary mutable list to build the list from the preference
+    NSMutableArray* list = [NSMutableArray arrayWithCapacity:0];
+
+    CFPropertyListRef pref = CFPreferencesCopyAppValue((CFStringRef)aName, appId);
+
+    if (pref)
+    {
+        if (CFGetTypeID(pref) == CFArrayGetTypeID())
+        {
+            CFArrayRef prefList = (CFArrayRef)pref;
+
+            for (CFIndex i=0 ; i<CFArrayGetCount(prefList) ; i++)
+            {
+                const void* item = CFArrayGetValueAtIndex(prefList, i);
+
+                if (item && CFGetTypeID(item) == aItemType)
+                {
+                    [list addObject:(NSObject*)item];
+                }
+            }
+        }
+
+        CFRelease(pref);
+    }
+
+    // return a new immutable array of items
+    return [NSArray arrayWithArray:list];
 }
 
 
@@ -245,31 +307,15 @@
 
 - (NSArray*) receiverList
 {
-    // create a temporary mutable array for building the list
     NSMutableArray* receiverList = [NSMutableArray arrayWithCapacity:0];
-    
-    CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("ReceiverList"), appId);
 
-    if (pref)
+    NSArray* dictList = [self getListPreference:@"ReceiverList" itemType:CFDictionaryGetTypeID()];
+
+    for (NSDictionary* dict in dictList)
     {
-        if (CFGetTypeID(pref) == CFArrayGetTypeID())
-        {
-            CFArrayRef list = (CFArrayRef)pref;
-        
-            for (CFIndex i=0 ; i<CFArrayGetCount(list) ; i++)
-            {
-                const void* item = CFArrayGetValueAtIndex(list, i);
-            
-                if (item && CFGetTypeID(item) == CFDictionaryGetTypeID())
-                {
-                    PrefReceiver* receiver = [[PrefReceiver alloc] initWithDict:(NSDictionary*)item];
-                    [receiverList addObject:receiver];
-                    [receiver release];
-                }
-            }
-        }
-
-        CFRelease(pref);
+        PrefReceiver* receiver = [[PrefReceiver alloc] initWithDict:dict];
+        [receiverList addObject:receiver];
+        [receiver release];
     }
 
     // return a new immutable array of receivers
@@ -306,34 +352,7 @@
 
 - (NSArray*) selectedUdnList
 {
-    // create a temporary mutable array for building the list
-    NSMutableArray* udnList = [NSMutableArray arrayWithCapacity:0];
-    
-    CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("SelectedUdnList"), appId);
-    
-    if (pref)
-    {
-        if (CFGetTypeID(pref) == CFArrayGetTypeID())
-        {
-            CFArrayRef list = (CFArrayRef)pref;
-            
-            for (CFIndex i=0 ; i<CFArrayGetCount(list) ; i++)
-            {
-                const void* item = CFArrayGetValueAtIndex(list, i);
-                
-                if (item && CFGetTypeID(item) == CFStringGetTypeID())
-                {
-                    NSString* udn = (NSString*)item;                    
-                    [udnList addObject:udn];                    
-                }
-            }
-        }
-        
-        CFRelease(pref);
-    }
-    
-    // return a new immutable array of udns
-    return [NSArray arrayWithArray:udnList];
+    return [self getListPreference:@"SelectedUdnList" itemType:CFStringGetTypeID()];
 }
 
 
@@ -353,6 +372,89 @@
 {
     NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
     [centre addObserver:aObserver selector:aSelector name:@"PreferenceSelectedUdnListChanged" object:(NSString*)appId];
+}
+
+
+- (NSArray*) subnetList
+{
+    NSMutableArray* subnetList = [NSMutableArray arrayWithCapacity:0];
+
+    NSArray* dictList = [self getListPreference:@"SubnetList" itemType:CFDictionaryGetTypeID()];
+
+    for (NSDictionary* dict in dictList)
+    {
+        PrefSubnet* subnet = [[PrefSubnet alloc] initWithDict:dict];
+        [subnetList addObject:subnet];
+        [subnet release];
+    }
+
+    // return a new immutable array of subnets
+    return [NSArray arrayWithArray:subnetList];
+}
+
+
+- (void) setSubnetList:(NSArray*)aSubnetList
+{
+    // construct the list in the format required for preferences
+    NSMutableArray* list = [NSMutableArray arrayWithCapacity:0];
+
+    for (uint i=0 ; i<[aSubnetList count] ; i++)
+    {
+        [list addObject:[[aSubnetList objectAtIndex:i] convertToDict]];
+    }
+
+    // set the preference and flush
+    CFPreferencesSetAppValue(CFSTR("SubnetList"), list, appId);
+    CFPreferencesAppSynchronize(appId);
+
+    // send notification that this has changed
+    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterPostNotification(centre, CFSTR("PreferenceSubnetListChanged"), appId, NULL, TRUE);
+}
+
+
+- (void) addObserverSubnetList:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"PreferenceSubnetListChanged" object:(NSString*)appId];
+}
+
+
+- (PrefSubnet*) selectedSubnet
+{
+    PrefSubnet* subnet = nil;
+
+    CFPropertyListRef pref = CFPreferencesCopyAppValue(CFSTR("SelectedSubnet"), appId);
+
+    if (pref)
+    {
+        if (CFGetTypeID(pref) == CFDictionaryGetTypeID())
+        {
+            subnet = [[[PrefSubnet alloc] initWithDict:(NSDictionary*)pref] autorelease];
+        }
+
+        CFRelease(pref);
+    }
+
+    return subnet;
+}
+
+
+- (void) setSelectedSubnet:(PrefSubnet*)aSubnet
+{
+    // set the new preference value and flush
+    CFPreferencesSetAppValue(CFSTR("SelectedSubnet"), [aSubnet convertToDict], appId);
+    CFPreferencesAppSynchronize(appId);
+
+    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterPostNotification(centre, CFSTR("PreferenceSelectedSubnetChanged"), appId, NULL, TRUE);
+}
+
+
+- (void) addObserverSelectedSubnet:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"PreferenceSelectedSubnetChanged" object:(NSString*)appId];
 }
 
 

@@ -36,9 +36,11 @@
     IBOutlet NSTextField* textMulticastChannel;
     IBOutlet NSTextField* textLatencyMs;
     IBOutlet NSSlider* sliderLatencyMs;
+    IBOutlet NSPopUpButton* buttonNetworkAdapter;
 
     Preferences* iPreferences;
     NSArray* iReceiverList;
+    NSArray* iSubnetList;
 }
 
 @property (assign) NSButton* buttonOnOff;
@@ -52,6 +54,7 @@
 @property (assign) NSTextField* textMulticastChannel;
 @property (assign) NSTextField* textLatencyMs;
 @property (assign) NSSlider* sliderLatencyMs;
+@property (assign) NSPopUpButton* buttonNetworkAdapter;
 
 - (void) mainViewDidLoad;
 - (void) updateButtonOnOff;
@@ -64,8 +67,10 @@
 - (IBAction) buttonSongcastModeClicked:(id)aSender;
 - (IBAction) buttonMulticastChannelClicked:(id)aSender;
 - (IBAction) sliderLatencyMsChanged:(id)aSender;
+- (IBAction) buttonNetworkAdapterClicked:(id)aSender;
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;
 - (void) preferenceReceiverListChanged:(NSNotification*)aNotification;
+- (void) preferenceSubnetListChanged:(NSNotification*)aNotification;
 
 @end
 

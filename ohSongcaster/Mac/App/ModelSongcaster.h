@@ -14,6 +14,9 @@
     id iReceiversChangedObject;
     SEL iReceiversChangedSelector;
 
+    id iSubnetsChangedObject;
+    SEL iSubnetsChangedSelector;
+
     id iConfigurationChangedObject;
     SEL iConfigurationChangedSelector;
 }
@@ -22,6 +25,7 @@
 - (void) dispose;
 
 - (void) setReceiversChangedObserver:(id)aObserver selector:(SEL)aSelector;
+- (void) setSubnetsChangedObserver:(id)aObserver selector:(SEL)aSelector;
 - (void) setConfigurationChangedObserver:(id)aObserver selector:(SEL)aSelector;
 
 - (bool) enabled;
@@ -38,6 +42,10 @@
 - (void) stopReceivers;
 - (void) playReceiver:(Receiver*)aReceiver;
 - (void) playReceivers;
+
+- (NSArray*) subnets;
+- (uint32_t) subnet;
+- (void) setSubnet:(uint32_t)aAddress;
 
 @end
 

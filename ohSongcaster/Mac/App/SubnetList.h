@@ -1,5 +1,6 @@
 
 #import <Cocoa/Cocoa.h>
+#import "Preferences.h"
 
 
 // Declaration of the subnet list class
@@ -10,7 +11,9 @@
 
 - (id) initWithPtr:(void*)aPtr;
 - (void) dispose;
+- (PrefSubnet*) convertToPref;
 - (uint32_t) address;
+- (NSString*) name;
 
 @end
 

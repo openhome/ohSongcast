@@ -33,6 +33,7 @@
 @synthesize textMulticastChannel;
 @synthesize textLatencyMs;
 @synthesize sliderLatencyMs;
+@synthesize buttonNetworkAdapter;
 
 
 
@@ -56,10 +57,12 @@
     
     // get the initial receiver list
     [self preferenceReceiverListChanged:nil];
+    [self preferenceSubnetListChanged:nil];
 
     // register for notifications from app
     [iPreferences addObserverEnabled:self selector:@selector(preferenceEnabledChanged:)];
     [iPreferences addObserverReceiverList:self selector:@selector(preferenceReceiverListChanged:)];
+    [iPreferences addObserverSubnetList:self selector:@selector(preferenceSubnetListChanged:)];
 
     // initialise UI from preferences
     [self updateButtonOnOff];
@@ -169,6 +172,18 @@
 }
 
 
+- (IBAction) buttonNetworkAdapterClicked:(id)aSender
+{
+    // get index of selected item
+    NSInteger selected = [buttonNetworkAdapter indexOfSelectedItem];
+
+    if (selected >= 0)
+    {
+        [iPreferences setSelectedSubnet:[iSubnetList objectAtIndex:selected]];
+    }
+}
+
+
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification
 {
     [iPreferences synchronize];
@@ -235,6 +250,40 @@
     
     // refresh the table view
     [tableViewReceiverList reloadData];
+}
+
+
+- (void) preferenceSubnetListChanged:(NSNotification*)aNotification
+{
+    [iPreferences synchronize];
+
+    // get the latest subnet list
+    if (iSubnetList)
+    {
+        [iSubnetList release];
+    }
+    iSubnetList = [[iPreferences subnetList] retain];
+
+    // get the latest selected subnet
+    PrefSubnet* selected = [iPreferences selectedSubnet];
+
+    // update UI
+    [buttonNetworkAdapter removeAllItems];
+
+    for (PrefSubnet* subnet in iSubnetList)
+    {
+        NSString* title = [NSString stringWithFormat:@"%d (%@)", [subnet address], [subnet name]];
+        [buttonNetworkAdapter addItemWithTitle:title];
+
+        if (selected && ([subnet address] == [selected address]))
+        {
+            [buttonNetworkAdapter selectItemAtIndex:[buttonNetworkAdapter numberOfItems]-1];
+        }
+    }
+
+    if ([buttonNetworkAdapter numberOfItems] == 0) {
+        [buttonNetworkAdapter selectItemAtIndex:-1];
+    }
 }
 
 

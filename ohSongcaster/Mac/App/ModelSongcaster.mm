@@ -24,6 +24,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
     iReceiversChangedObject = 0;
     iReceiversChangedSelector = 0;
+    iSubnetsChangedObject = 0;
+    iSubnetsChangedSelector = 0;
     iConfigurationChangedObject = 0;
     iConfigurationChangedSelector = 0;
 
@@ -75,6 +77,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     // clear event handlers
     iReceiversChangedObject = 0;
     iReceiversChangedSelector = 0;
+    iSubnetsChangedObject = 0;
+    iSubnetsChangedSelector = 0;
     iConfigurationChangedObject = 0;
     iConfigurationChangedSelector = 0;
 
@@ -97,6 +101,13 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 {
     iReceiversChangedObject = aObserver;
     iReceiversChangedSelector = aSelector;
+}
+
+
+- (void) setSubnetsChangedObserver:(id)aObserver selector:(SEL)aSelector
+{
+    iSubnetsChangedObject = aObserver;
+    iSubnetsChangedSelector = aSelector;
 }
 
 
@@ -279,6 +290,24 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 }
 
 
+- (NSArray*) subnets
+{
+    return [iSubnets subnets];
+}
+
+
+- (uint32_t) subnet
+{
+    return SongcasterSubnet(iSongcaster);
+}
+
+
+- (void) setSubnet:(uint32_t)aAddress
+{
+    SongcasterSetSubnet(iSongcaster, aAddress);
+}
+
+
 - (void) receiverAdded:(Receiver*)aReceiver
 {
     // do nothing if the songcaster has been disposed
@@ -326,10 +355,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     if (!iSongcaster)
         return;
 
-    if (SongcasterSubnet(iSongcaster) != 0)
-        return;
-
-    SongcasterSetSubnet(iSongcaster, [aSubnet address]);
+    // notify upper layers
+    [iSubnetsChangedObject performSelector:iSubnetsChangedSelector withObject:nil];
 }
 
 
@@ -338,6 +365,9 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     // do nothing if the songcaster has been disposed
     if (!iSongcaster)
         return;
+
+    // notify upper layers
+    [iSubnetsChangedObject performSelector:iSubnetsChangedSelector withObject:nil];
 }
 
 
@@ -346,6 +376,9 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     // do nothing if the songcaster has been disposed
     if (!iSongcaster)
         return;
+
+    // notify upper layers
+    [iSubnetsChangedObject performSelector:iSubnetsChangedSelector withObject:nil];
 }
 
 

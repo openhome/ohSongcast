@@ -26,9 +26,26 @@
 }
 
 
+- (PrefSubnet*) convertToPref
+{
+    PrefSubnet* pref = [[[PrefSubnet alloc] init] autorelease];
+
+    [pref setAddress:[self address]];
+    [pref setName:[self name]];
+
+    return pref;
+}
+
+
 - (uint32_t) address
 {
     return SubnetAddress(iPtr);
+}
+
+
+- (NSString*) name
+{
+    return [NSString stringWithUTF8String:SubnetAdapterName(iPtr)];
 }
 
 

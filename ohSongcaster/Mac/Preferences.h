@@ -36,6 +36,22 @@ typedef enum
 
 
 
+@interface PrefSubnet : NSObject
+{
+    uint32_t address;
+    NSString* name;
+}
+
+@property (assign) uint32_t address;
+@property (assign) NSString* name;
+
+- (id) initWithDict:(NSDictionary*)aDict;
+- (NSDictionary*) convertToDict;
+
+@end
+
+
+
 @interface Preferences : NSObject
 {
     CFStringRef appId;
@@ -73,6 +89,14 @@ typedef enum
 - (NSArray*) selectedUdnList;
 - (void) setSelectedUdnList:(NSArray*)aSelectedUdnList;
 - (void) addObserverSelectedUdnList:(id)aObserver selector:(SEL)aSelector;
+
+- (NSArray*) subnetList;
+- (void) setSubnetList:(NSArray*)aSubnetList;
+- (void) addObserverSubnetList:(id)aObserver selector:(SEL)aSelector;
+
+- (PrefSubnet*) selectedSubnet;
+- (void) setSelectedSubnet:(PrefSubnet*)aSubnet;
+- (void) addObserverSelectedSubnet:(id)aObserver selector:(SEL)aSelector;
 
 - (void) refreshReceiverList;
 - (void) addObserverRefreshReceiverList:(id)aObserver selector:(SEL)aSelector;

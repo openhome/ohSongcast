@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="180"/>
+			<integer value="159"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -517,7 +517,6 @@
 																									<int key="NSPeriodicInterval">75</int>
 																									<object class="NSMenuItem" key="NSMenuItem" id="862068307">
 																										<reference key="NSMenu" ref="121892659"/>
-																										<bool key="NSIsHidden">YES</bool>
 																										<string key="NSTitle">Item 1</string>
 																										<string key="NSKeyEquiv"/>
 																										<int key="NSKeyEquivModMask">1048576</int>
@@ -565,7 +564,6 @@
 																										</object>
 																										<reference key="NSMenuFont" ref="492922193"/>
 																									</object>
-																									<bool key="NSPullDown">YES</bool>
 																									<int key="NSPreferredEdge">1</int>
 																									<bool key="NSUsesItemFromMenu">YES</bool>
 																									<bool key="NSAltersState">YES</bool>
@@ -1248,6 +1246,22 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<reference key="destination" ref="617285317"/>
 					</object>
 					<int key="connectionID">224</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">buttonNetworkAdapter</string>
+						<reference key="source" ref="294453543"/>
+						<reference key="destination" ref="44185274"/>
+					</object>
+					<int key="connectionID">225</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">buttonNetworkAdapterClicked:</string>
+						<reference key="source" ref="294453543"/>
+						<reference key="destination" ref="44185274"/>
+					</object>
+					<int key="connectionID">226</int>
 				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -2113,7 +2127,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">224</int>
+			<int key="maxID">226</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -2274,12 +2288,14 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>buttonMulticastChannelClicked:</string>
+							<string>buttonNetworkAdapterClicked:</string>
 							<string>buttonSongcastModeClicked:</string>
 							<string>buttonWizardClicked:</string>
 							<string>sliderLatencyMsChanged:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -2291,6 +2307,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>buttonMulticastChannelClicked:</string>
+							<string>buttonNetworkAdapterClicked:</string>
 							<string>buttonSongcastModeClicked:</string>
 							<string>buttonWizardClicked:</string>
 							<string>sliderLatencyMsChanged:</string>
@@ -2299,6 +2316,10 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<object class="IBActionInfo">
 								<string key="name">buttonMulticastChannelClicked:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">buttonNetworkAdapterClicked:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -2321,6 +2342,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>boxGettingStarted</string>
 							<string>boxMain</string>
+							<string>buttonNetworkAdapter</string>
 							<string>buttonSongcastMode</string>
 							<string>sliderLatencyMs</string>
 							<string>textLatencyMs</string>
@@ -2331,6 +2353,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>NSBox</string>
 							<string>NSBox</string>
+							<string>NSPopUpButton</string>
 							<string>NSMatrix</string>
 							<string>NSSlider</string>
 							<string>NSTextField</string>
@@ -2344,6 +2367,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>boxGettingStarted</string>
 							<string>boxMain</string>
+							<string>buttonNetworkAdapter</string>
 							<string>buttonSongcastMode</string>
 							<string>sliderLatencyMs</string>
 							<string>textLatencyMs</string>
@@ -2359,6 +2383,10 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<object class="IBToOneOutletInfo">
 								<string key="name">boxMain</string>
 								<string key="candidateClassName">NSBox</string>
+							</object>
+							<object class="IBToOneOutletInfo">
+								<string key="name">buttonNetworkAdapter</string>
+								<string key="candidateClassName">NSPopUpButton</string>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">buttonSongcastMode</string>
