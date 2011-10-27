@@ -22,6 +22,8 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>1.0</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>© 2011 OpenHome</string>
 	<key>NSMainNibFile</key>
 	<string>SongcasterPrefPane</string>
 	<key>NSPrefPaneIconFile</key>
@@ -34,5 +36,9 @@
 	<string>org.openhome.av.songcaster</string>
 	<key>SongcasterManualUrl</key>
 	<string></string>
+	<key>SongcasterAboutText</key>
+	<string>%@
+Version %@
+%@</string>
 </dict>
 </plist>

@@ -48,6 +48,7 @@ public:
     
     void SetSocket(ISongcastSocket& aSocket);
     void SetDescription(const char* aDescription);
+    void SetLatencyMs(uint64_t aLatencyMs);
 
 private:
     virtual bool initHardware(IOService* aProvider);
@@ -73,6 +74,7 @@ private:
     uint64_t iTimerIntervalNs;
     uint64_t iTimestamp;
     bool iAudioStopping;
+    uint64_t iLatencyMs;
     
     BlockBuffer* iBuffer;
     SongcastAudioMessage* iAudioMsg;

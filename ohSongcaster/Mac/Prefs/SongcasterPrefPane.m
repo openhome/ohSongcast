@@ -23,12 +23,18 @@
 @implementation SongcasterPrefPane
 
 @synthesize buttonOnOff;
+@synthesize textAbout;
 @synthesize textDescription;
 @synthesize buttonShowInStatusBar;
 @synthesize tableViewReceiverList;
 @synthesize boxGettingStarted;
 @synthesize boxMain;
 @synthesize textStep1Text;
+@synthesize buttonSongcastMode;
+@synthesize textMulticastChannel;
+@synthesize textLatencyMs;
+@synthesize sliderLatencyMs;
+@synthesize buttonNetworkAdapter;
 
 
 
@@ -45,6 +51,12 @@
     [textDescription setStringValue:[NSString stringWithFormat:[textDescription stringValue], appName]];
     [buttonShowInStatusBar setTitle:[NSString stringWithFormat:[buttonShowInStatusBar title], appName]];    
     [textStep1Text setStringValue:[NSString stringWithFormat:[textStep1Text stringValue], appName]];
+
+    // initialise the about text
+    NSString* aboutFormat = [[[self bundle] infoDictionary] objectForKey:@"SongcasterAboutText"];
+    NSString* version = [[[self bundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+    NSString* copyright = [[[self bundle] infoDictionary] objectForKey:@"NSHumanReadableCopyright"];
+    [textAbout setStringValue:[NSString stringWithFormat:aboutFormat, appName, version, copyright]];
     
     // create the preferences object
     iPreferences = [[Preferences alloc] initWithBundle:[self bundle]];    
@@ -52,14 +64,20 @@
     
     // get the initial receiver list
     [self preferenceReceiverListChanged:nil];
+    [self preferenceSubnetListChanged:nil];
 
     // register for notifications from app
     [iPreferences addObserverEnabled:self selector:@selector(preferenceEnabledChanged:)];
     [iPreferences addObserverReceiverList:self selector:@selector(preferenceReceiverListChanged:)];
+    [iPreferences addObserverSubnetList:self selector:@selector(preferenceSubnetListChanged:)];
 
     // initialise UI from preferences
     [self updateButtonOnOff];
     [buttonShowInStatusBar setState:([iPreferences iconVisible] ? NSOnState : NSOffState)];
+    [buttonSongcastMode selectCellAtRow:0 column:([iPreferences multicastEnabled] ? 1 : 0)];
+    [textMulticastChannel setIntegerValue:[iPreferences multicastChannel]];
+    [textLatencyMs setIntegerValue:[iPreferences latencyMs]];
+    [sliderLatencyMs setIntegerValue:[iPreferences latencyMs]];
 
     // show/hide the getting started view
     if ([iPreferences hasRunWizard])
@@ -120,6 +138,73 @@
     [boxMain setHidden:false];
 
     [iPreferences setHasRunWizard:true];
+}
+
+
+- (IBAction) buttonSongcastModeClicked:(id)aSender
+{
+    // get the selected radio button coordinates
+    NSInteger row, column;
+    [buttonSongcastMode getRow:&row column:&column ofCell:[buttonSongcastMode selectedCell]];
+
+    // set the preference
+    [iPreferences setMulticastEnabled:(column == 1)];
+}
+
+
+- (IBAction) buttonMulticastChannelClicked:(id)aSender
+{
+    // generate a new random channel - the channel is the last 2 bytes of the
+    // multicast IP address 239.253.x.x
+    srandom([iPreferences multicastChannel]);
+
+    // man page for random() state the function returns an integer in range [0, 2^31 - 1]
+    uint64_t maxRand = (((uint64_t)1)<<31) - 1;
+
+    // generating a random number between [0,N] is (random() * (N+1) / (maxRand+1)) - if
+    // we use (random() * N / maxRand), the random number will only generate N when
+    // random() returns maxRand which is a chance of 1 in (2^31 -1)
+
+    // byte1 in range [1,254]
+    uint64_t byte1 = random();
+    byte1 *= 254;
+    byte1 /= maxRand + 1;
+    byte1 += 1;
+    
+    // byte2 in range [1,254]
+    uint64_t byte2 = random();
+    byte2 *= 254;
+    byte2 /= maxRand + 1;
+    byte2 += 1;
+
+    uint32_t channel = (byte1 << 8) | byte2;
+
+    // set preference and update UI
+    [iPreferences setMulticastChannel:channel];
+    [textMulticastChannel setIntegerValue:channel];
+}
+
+
+- (IBAction) sliderLatencyMsChanged:(id)aSender
+{
+    // get slider value
+    uint64_t latencyMs = [sliderLatencyMs integerValue];
+
+    // set preference and update UI
+    [iPreferences setLatencyMs:latencyMs];
+    [textLatencyMs setIntegerValue:latencyMs];
+}
+
+
+- (IBAction) buttonNetworkAdapterClicked:(id)aSender
+{
+    // get index of selected item
+    NSInteger selected = [buttonNetworkAdapter indexOfSelectedItem];
+
+    if (selected >= 0)
+    {
+        [iPreferences setSelectedSubnet:[iSubnetList objectAtIndex:selected]];
+    }
 }
 
 
@@ -189,6 +274,46 @@
     
     // refresh the table view
     [tableViewReceiverList reloadData];
+}
+
+
+- (void) preferenceSubnetListChanged:(NSNotification*)aNotification
+{
+    [iPreferences synchronize];
+
+    // get the latest subnet list
+    if (iSubnetList)
+    {
+        [iSubnetList release];
+    }
+    iSubnetList = [[iPreferences subnetList] retain];
+
+    // get the latest selected subnet
+    PrefSubnet* selected = [iPreferences selectedSubnet];
+
+    // update UI
+    [buttonNetworkAdapter removeAllItems];
+
+    for (PrefSubnet* subnet in iSubnetList)
+    {
+        uint32_t address = [subnet address];
+        uint32_t byte1 = address & 0xff;
+        uint32_t byte2 = (address >> 8) & 0xff;
+        uint32_t byte3 = (address >> 16) & 0xff;
+        uint32_t byte4 = (address >> 24) & 0xff;
+
+        NSString* title = [NSString stringWithFormat:@"%d.%d.%d.%d (%@)", byte1, byte2, byte3, byte4, [subnet name]];
+        [buttonNetworkAdapter addItemWithTitle:title];
+
+        if (selected && ([subnet address] == [selected address]))
+        {
+            [buttonNetworkAdapter selectItemAtIndex:[buttonNetworkAdapter numberOfItems]-1];
+        }
+    }
+
+    if ([buttonNetworkAdapter numberOfItems] == 0) {
+        [buttonNetworkAdapter selectItemAtIndex:-1];
+    }
 }
 
 

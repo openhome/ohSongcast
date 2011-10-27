@@ -33,6 +33,7 @@ bool AudioEngine::init(OSDictionary* aProperties)
     iTimerFiredCount = 0;
     iTimestamp = 0;
     iAudioStopping = false;
+    iLatencyMs = 100;
 
     // calculate the timer interval making sure no overflows occur
     uint64_t interval = 1000000000;
@@ -42,7 +43,7 @@ bool AudioEngine::init(OSDictionary* aProperties)
 
     // allocate the output buffers
     iBuffer = new BlockBuffer(BLOCKS, BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
-    iAudioMsg = new SongcastAudioMessage(BLOCKS*BLOCK_FRAMES, BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
+    iAudioMsg = new SongcastAudioMessage(BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
 
     if (!iBuffer || !iBuffer->Ptr() || !iAudioMsg || !iAudioMsg->Ptr()) {
         IOLog("Songcaster AudioEngine[%p]::init(%p) buffer alloc failed\n", this, aProperties);
@@ -173,6 +174,13 @@ void AudioEngine::SetDescription(const char* aDescription)
 }
 
 
+void AudioEngine::SetLatencyMs(uint64_t aLatencyMs)
+{
+    IOLog("Songcaster AudioEngine[%p]::SetLatencyMs(%llu)\n", this, aLatencyMs);
+    iLatencyMs = aLatencyMs;
+}
+
+
 void AudioEngine::stop(IOService* aProvider)
 {
     IOLog("Songcaster AudioEngine[%p]::stop(%p)\n", this, aProvider);
@@ -289,11 +297,15 @@ void AudioEngine::TimerFired()
     // convert the timestamp to the correct units
     uint64_t timestamp = (iTimestamp * iSampleRate.whole * 256) / 1000000000;
 
+    // calculate media latency
+    uint64_t latency = (iLatencyMs * iSampleRate.whole * 256) / 1000;
+
     // set the data for the audio message
     iAudioMsg->SetHaltFlag(iAudioStopping);
     iAudioMsg->SetSampleRate(iSampleRate.whole);
     iAudioMsg->SetFrame(iCurrentFrame);
     iAudioMsg->SetTimestamp((uint32_t)timestamp);
+    iAudioMsg->SetMediaLatency((uint32_t)latency);
     iAudioMsg->SetData(block, blockBytes);    
 
     

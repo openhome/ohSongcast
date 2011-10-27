@@ -53,6 +53,7 @@ private:
     Endpoint iEndpoint;
     TBool iActive;
     TUint iTtl;
+    TUint iLatencyMs;
 
     class Driver
     {
@@ -63,6 +64,7 @@ private:
         void SetEndpoint(const Endpoint& aEndpoint);
         void SetActive(TBool aValue);
         void SetTtl(TUint aValue);
+        void SetLatency(TUint aValue);
 
     private:
         io_connect_t iHandle;
@@ -203,6 +205,7 @@ OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriver
     , iEndpoint()
     , iActive(false)
     , iTtl(4)
+    , iLatencyMs(100)
     , iDriver(0)
     , iDriverClassName(aClassName)
     , iDriverName(aDriverName)
@@ -340,6 +343,7 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
         // set the current state of the driver
         iDriver->SetEndpoint(iEndpoint);
         iDriver->SetTtl(iTtl);
+        iDriver->SetLatency(iLatencyMs);
         iDriver->SetActive(iActive);
 
 
@@ -421,6 +425,11 @@ void OhmSenderDriverMac::SetTtl(TUint aValue)
 
 void OhmSenderDriverMac::SetLatency(TUint aValue)
 {
+    iLatencyMs = aValue;
+
+    if (iDriver) {
+        iDriver->SetLatency(aValue);
+    }
 }
 
 void OhmSenderDriverMac::SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal)
@@ -469,6 +478,12 @@ void OhmSenderDriverMac::Driver::SetTtl(TUint aValue)
 {
     uint64_t arg = aValue;
     IOConnectCallScalarMethod(iHandle, eSetTtl, &arg, 1, 0, 0);
+}
+
+void OhmSenderDriverMac::Driver::SetLatency(TUint aValue)
+{
+    uint64_t arg = aValue;
+    IOConnectCallScalarMethod(iHandle, eSetLatencyMs, &arg, 1, 0, 0);
 }
 
 

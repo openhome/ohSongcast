@@ -22,31 +22,30 @@ bool AudioDevice::initHardware(IOService* aProvider)
     setManufacturerName(BRANDING_AUDIODEVICE_MANUFACTURERNAME);
 
     // create, initialise and activate the audio engine
-    AudioEngine* engine = new AudioEngine();
-    if (!engine) {
+    iEngine = new AudioEngine();
+    if (!iEngine) {
         IOLog("Songcaster AudioDevice[%p]::initHardware(%p) failed to allocated engine\n", this, aProvider);
         return false;
     }
 
-    if (!engine->init(0)) {
+    if (!iEngine->init(0)) {
         IOLog("Songcaster AudioDevice[%p]::initHardware(%p) failed to initialise engine\n", this, aProvider);
-        engine->release();
+        iEngine->release();
+        iEngine = 0;
         return false;
     }
 
     // create the songcast socket
     iSocket = new SongcastSocket();
-    engine->SetSocket(*iSocket);
-    engine->SetDescription(BRANDING_AUDIODEVICE_NAME);
+    iEngine->SetSocket(*iSocket);
+    iEngine->SetDescription(BRANDING_AUDIODEVICE_NAME);
 
-    if (activateAudioEngine(engine) != kIOReturnSuccess) {
+    if (activateAudioEngine(iEngine) != kIOReturnSuccess) {
         IOLog("Songcaster AudioDevice[%p]::initHardware(%p) failed to activate engine\n", this, aProvider);
-        engine->release();
+        iEngine->release();
+        iEngine = 0;
         return false;
     }
-
-    // the engine must be released as it is retained when passed to activateAudioEngine
-    engine->release();
 
     IOLog("Songcaster AudioDevice[%p]::initHardware(%p) ok\n", this, aProvider);
     return true;
@@ -58,9 +57,17 @@ void AudioDevice::free()
     IOLog("Songcaster AudioDevice[%p]::free()\n", this);
 
     // close the kernel socket
-    iSocket->Close();
-    delete iSocket;
-    iSocket = 0;
+    if (iSocket) {
+        iSocket->Close();
+        delete iSocket;
+        iSocket = 0;
+    }
+
+    // release the engine
+    if (iEngine) {
+        iEngine->release();
+        iEngine = 0;
+    }
     
     IOAudioDevice::free();
 }

@@ -25,6 +25,10 @@
     [iPreferences addObserverSelectedUdnList:self selector:@selector(preferenceSelectedUdnListChanged:)];
     [iPreferences addObserverRefreshReceiverList:self selector:@selector(preferenceRefreshReceiverList:)];
     [iPreferences addObserverReconnectReceivers:self selector:@selector(preferenceReconnectReceivers:)];
+    [iPreferences addObserverMulticastEnabled:self selector:@selector(preferenceMulticastEnabledChanged:)];
+    [iPreferences addObserverMulticastChannel:self selector:@selector(preferenceMulticastChannelChanged:)];
+    [iPreferences addObserverLatencyMs:self selector:@selector(preferenceLatencyMsChanged:)];
+    [iPreferences addObserverSelectedSubnet:self selector:@selector(preferenceSelectedSubnetChanged:)];
 
     return self;
 }
@@ -42,8 +46,9 @@
     [iPreferences setEnabled:false];
 
     // create the songcaster model
-    iModelSongcaster = [[ModelSongcaster alloc] initWithReceivers:[iPreferences receiverList] andSelectedUdns:[iPreferences selectedUdnList]];
+    iModelSongcaster = [[ModelSongcaster alloc] initWithReceivers:[iPreferences receiverList] andSelectedUdns:[iPreferences selectedUdnList] multicastEnabled:[iPreferences multicastEnabled] multicastChannel:[iPreferences multicastChannel] latencyMs:[iPreferences latencyMs]];
     [iModelSongcaster setReceiversChangedObserver:self selector:@selector(receiversChanged)];
+    [iModelSongcaster setSubnetsChangedObserver:self selector:@selector(subnetsChanged)];
     [iModelSongcaster setConfigurationChangedObserver:self selector:@selector(configurationChanged)];
 }
 
@@ -165,6 +170,50 @@
 }
 
 
+- (void) preferenceMulticastEnabledChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences
+    [iPreferences synchronize];
+
+    if (iModelSongcaster) {
+        [iModelSongcaster setMulticastEnabled:[iPreferences multicastEnabled]];
+    }
+}
+
+
+- (void) preferenceMulticastChannelChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences
+    [iPreferences synchronize];
+
+    if (iModelSongcaster) {
+        [iModelSongcaster setMulticastChannel:[iPreferences multicastChannel]];
+    }
+}
+
+
+- (void) preferenceLatencyMsChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences
+    [iPreferences synchronize];
+
+    if (iModelSongcaster) {
+        [iModelSongcaster setLatencyMs:[iPreferences latencyMs]];
+    }
+}
+
+
+- (void) preferenceSelectedSubnetChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences
+    [iPreferences synchronize];
+
+    if (iModelSongcaster) {
+        [iModelSongcaster setSubnet:[[iPreferences selectedSubnet] address]];
+    }
+}
+
+
 - (void) receiversChanged
 {
     if (!iModelSongcaster)
@@ -180,6 +229,59 @@
     
     // set - this sends notification of the change
     [iPreferences setReceiverList:list];
+}
+
+
+- (void) subnetsChanged
+{
+    if (!iModelSongcaster)
+        return;
+
+    // build a new list of subnets to store in the preferences
+    NSMutableArray* list = [NSMutableArray arrayWithCapacity:0];
+    
+    for (Subnet* subnet in [iModelSongcaster subnets])
+    {
+        [list addObject:[subnet convertToPref]];
+    }
+
+    // set - this sends notification of the change
+    [iPreferences setSubnetList:list];
+
+    // get the currently selected subnet
+    PrefSubnet* selected = [iPreferences selectedSubnet];
+
+    if (selected)
+    {
+        if ([selected address] != [iModelSongcaster subnet])
+        {
+            // set the subnet to the selected subnet if it is available
+            for (Subnet* subnet in [iModelSongcaster subnets])
+            {
+                if ([subnet address] == [selected address])
+                {
+                    [iModelSongcaster setSubnet:[subnet address]];
+                }
+            }
+        }
+    }
+    else
+    {
+        // no selected subnet in the preferences
+        if ([iModelSongcaster subnet] == 0)
+        {
+            // songcaster currently has no subnet
+            if ([[iModelSongcaster subnets] count] != 0)
+            {
+                // set the subnet to the first in list
+                Subnet* subnet = [[iModelSongcaster subnets] objectAtIndex:0];
+                [iModelSongcaster setSubnet:[subnet address]];
+
+                // update the preference
+                [iPreferences setSelectedSubnet:[subnet convertToPref]];
+            }
+        }
+    }
 }
 
 

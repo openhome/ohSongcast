@@ -52,25 +52,25 @@ namespace OpenHome.Songcaster
 
             if (iReceiver != null)
             {
-                if (iEnabled)
+                if (iAttached)
                 {
-                    if (iAttached)
+                    if (iEnabled)
                     {
                         Play();
                     }
-                }
-                else
-                {
-                    if (iReceiver.Status != EReceiverStatus.eDisconnected)
+                    else
                     {
-                        Standby();
-                    }
-                    else // this defends against us not knowing the status due to some failure in eventing
-                    {
-                        Stop();
+                        if (iReceiver.Status != EReceiverStatus.eDisconnected)
+                        {
+                            Standby();
+                        }
+                        else // this defends against us not knowing the status due to some failure in eventing
+                        {
+                            Stop();
+                        }
                     }
                 }
-            }
+            {
 
             UpdateStatus();
         }
