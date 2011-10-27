@@ -24,34 +24,55 @@ Abstract:
 #include "wavtable.h"
 #include "network.h"
 
-extern KSPIN_LOCK MpusSpinLock;
+KSPIN_LOCK MpusSpinLock;
 
-extern UINT MpusEnabled;
-extern UINT MpusActive;
-extern UINT MpusTtl;
-extern UINT MpusLatency;
-extern UINT MpusAddr;
-extern UINT MpusPort;
+UINT MpusEnabled;
+UINT MpusActive;
+UINT MpusTtl;
+UINT MpusAddr;
+UINT MpusPort;
+UINT MpusLatency;
 
-UINT MpusAudioSampleRate;
-UINT MpusAudioBitRate;
-UINT MpusAudioBitDepth;
-UINT MpusAudioChannels;
-UINT MpusSendFormat;
+bool MpusSending;
+
+PMDL MpusMdl;
+PMDL MpusMdlLast;
 
 SOCKADDR MpusAddress;
+SOCKADDR MpusOutputAddress;
+
+UINT MpusFrame;
+
+ULONGLONG MpusPerformanceCounter;
+
+WSK_BUF MpusSendBuf;
 
 KEVENT WskInitialisedEvent;
+
+OHMHEADER MpusHeader;
+
+ULONG MpusBytes;
 
 CWinsock* Wsk;
 CSocketOhm* Socket;
 
 void SocketInitialised(void* aContext);
-void WskInitialised(void* aContext);
-void MpusStop();
-void MpusStopLocked();
-void MpusSend(UCHAR* aBuffer, UINT aBytes);
-void MpusSetFormat(UINT aSampleRate, UINT aBitRate, UINT aBitDepth, UINT aChannels);
+
+void MpusOutput();
+void MpusSetFormatLocked(UINT aSampleRate, UINT aBitRate, UINT aBitDepth, UINT aChannels);
+
+struct MpusQueueEntry
+{
+	PMDL iMdl;
+	ULONG iBytes;
+	SOCKADDR iAddress;
+};
+
+ULONG MpusQueueCount;
+ULONG MpusQueueIndexRead;
+ULONG MpusQueueIndexWrite;
+
+MpusQueueEntry MpusQueue[16];
 
 #pragma code_seg("PAGE")
 
@@ -299,11 +320,62 @@ Return Value:
         m_fRenderAllocated = FALSE;
     }
 
-	MpusAudioSampleRate = 44100;
-	MpusAudioBitRate = 1411200;
-	MpusAudioBitDepth = 16;
-	MpusAudioChannels = 2;
-	MpusSendFormat = 0;
+	MpusEnabled = 0;
+	MpusActive = 0;
+	MpusTtl = 0;
+	MpusAddr = 0;
+	MpusPort = 0;
+	MpusLatency = 100;
+
+	KeInitializeSpinLock(&MpusSpinLock);
+
+	MpusMdl = NULL;
+
+	MpusSending = false;
+
+	MpusFrame = 0;
+
+    MpusPerformanceCounter = KeQueryInterruptTime();
+
+	MpusQueueCount = 0;
+	MpusQueueIndexRead = 0;
+	MpusQueueIndexWrite = 0;
+
+	MpusSendBuf.Offset = 0;
+
+	MpusHeader.iMagic[0] = 'O';
+	MpusHeader.iMagic[1] = 'h';
+	MpusHeader.iMagic[2] = 'm';
+	MpusHeader.iMagic[3] = ' ';
+
+	MpusHeader.iMajorVersion = 1;
+	MpusHeader.iMsgType = 3;
+	MpusHeader.iAudioHeaderBytes = 50;
+	MpusHeader.iAudioFlags = 2; // lossless
+	MpusHeader.iAudioSamples = 0;
+	MpusHeader.iAudioFrame = 0;
+	MpusHeader.iAudioNetworkTimestamp = 0;
+	MpusHeader.iAudioMediaLatency = 0;
+	MpusHeader.iAudioMediaTimestamp = 0;
+	MpusHeader.iAudioSampleStartHi = 0;
+	MpusHeader.iAudioSampleStartLo = 0;
+	MpusHeader.iAudioSamplesTotalHi = 0;
+	MpusHeader.iAudioSamplesTotalLo = 0;
+	MpusHeader.iAudioSampleRate = 0;
+	MpusHeader.iAudioBitRate = 0;
+	MpusHeader.iAudioVolumeOffset = 0;
+	MpusHeader.iAudioBitDepth = 0;
+	MpusHeader.iAudioChannels = 0;
+	MpusHeader.iReserved = 0;
+	MpusHeader.iCodecNameBytes = 6;  // 3
+	MpusHeader.iCodecName[0] = 'P';
+	MpusHeader.iCodecName[1] = 'C';
+	MpusHeader.iCodecName[2] = 'M';
+	MpusHeader.iCodecName[3] = ' ';
+	MpusHeader.iCodecName[4] = ' ';
+	MpusHeader.iCodecName[5] = ' ';
+
+	MpusSetFormatLocked(44100, 1411200, 16, 2);
 
 	Wsk = NULL;
 	Socket = NULL;
@@ -749,55 +821,291 @@ void SocketInitialised(void* aContext)
 }
 
 //=============================================================================
-// MpusStop
+// MpusQueueAdd
 //=============================================================================
 
-void MpusStop()
+void MpusQueueAdd(PMDL* aMdl, ULONG* aBytes, SOCKADDR* aAddress)
 {
 	KIRQL oldIrql;
 
 	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
-	if (MpusActive && MpusEnabled)
+	if (++MpusQueueCount > 16)
 	{
-		MpusStopLocked();
+		--MpusQueueCount;
+
+		PMDL mdl = *aMdl;
+
+		*aMdl = NULL;
+		*aBytes = 0;
+
+		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+		while (mdl != NULL)
+		{
+			ExFreePoolWithTag(MmGetMdlVirtualAddress(mdl), '2ten');
+			PMDL next = mdl->Next;
+			IoFreeMdl(mdl);
+			mdl = next;
+		}
+
+		return;
 	}
+
+	MpusQueue[MpusQueueIndexWrite].iMdl = *aMdl;
+	MpusQueue[MpusQueueIndexWrite].iBytes = *aBytes;
+	RtlCopyMemory(&(MpusQueue[MpusQueueIndexWrite].iAddress), aAddress, sizeof(SOCKADDR));
+
+	if (++MpusQueueIndexWrite >= 16)
+	{
+		MpusQueueIndexWrite = 0;
+	}
+
+	*aMdl = NULL;
+	*aBytes = 0;
+
+	if (MpusSending)
+	{
+		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+		return;
+	}
+
+	MpusSending = true;
+
+	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+	MpusOutput();
+}
+
+
+//=============================================================================
+// MpusQueueRemove
+//=============================================================================
+
+bool MpusQueueRemove(PMDL* aMdl, ULONG* aBytes, SOCKADDR* aAddress)
+{
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
+
+	if (MpusQueueCount == 0)
+	{
+		MpusSending = false;
+		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+		return (false);
+	}
+
+	*aMdl = MpusQueue[MpusQueueIndexRead].iMdl;
+	*aBytes = MpusQueue[MpusQueueIndexRead].iBytes;
+	RtlCopyMemory(aAddress, &(MpusQueue[MpusQueueIndexRead].iAddress), sizeof(SOCKADDR));
+
+	if (++MpusQueueIndexRead >= 16)
+	{
+		MpusQueueIndexRead = 0;
+	}
+
+	MpusQueueCount--;
+
+	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+	return (true);
+}
+
+//=============================================================================
+// MpusUpdateEndpoint
+//=============================================================================
+
+void MpusUpdateEndpoint(UINT aAddress, UINT aPort)
+{
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
+
+	CWinsock::Initialise(&MpusAddress, aAddress, aPort);
 
 	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 }
 
 //=============================================================================
-// MpusStop
+// MpusUpdateTtl
 //=============================================================================
 
-void MpusStopLocked()
+void MpusUpdateTtl(UINT aValue)
 {
-	UCHAR silence[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	Socket->SetTtl(aValue);
+}
 
-	ULONG bytes = MpusAudioBitDepth * MpusAudioChannels / 8;
+// Forward declaration
 
-	Socket->Send(&MpusAddress, silence, bytes, 1, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels, MpusLatency);
+NTSTATUS MpusOutputComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext);
 
-	MpusSendFormat = 1;
+//=============================================================================
+// MpusOutput
+//=============================================================================
+
+void MpusOutput()
+{
+	ULONG bytes;
+
+	if (!MpusQueueRemove(&MpusSendBuf.Mdl, &bytes, &MpusOutputAddress))
+	{
+		return;
+	}
+
+	MpusSendBuf.Length = bytes;
+
+	// Fill in multipus header
+
+	OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(MpusSendBuf.Mdl);
+
+	// samples
+
+	ULONG audioBytes = bytes - sizeof(OHMHEADER);
+
+	ULONG sampleBytes = header->iAudioChannels * header->iAudioBitDepth / 8;
+
+	USHORT samples = (USHORT)(audioBytes / sampleBytes);
+
+	header->iAudioSamples = samples >> 8 & 0x00ff;
+	header->iAudioSamples += samples << 8 & 0xff00;
+
+	// frame
+
+	ULONG frame = ++MpusFrame;
+
+	header->iAudioFrame = frame >> 24 & 0x000000ff;
+	header->iAudioFrame += frame >> 8 & 0x0000ff00;
+	header->iAudioFrame += frame << 8 & 0x00ff0000;
+	header->iAudioFrame += frame << 24 & 0xff000000;
+
+	// bytes
+
+	header->iTotalBytes = bytes >> 8 & 0x00ff;
+	header->iTotalBytes += bytes << 8 & 0xff00;
+
+	// Create Timestamps
+
+	ULONG multiplier = 48000 * 256;
+
+	if ((header->iAudioSampleRate % 441) == 0)
+	{
+		multiplier = 44100 * 256;
+	}
+
+	// use last timestamp for this message
+
+	ULONGLONG timestamp = MpusPerformanceCounter;
+
+	timestamp *= multiplier;
+	timestamp /= 10000000; // InterruptTime is in 100ns units
+
+	header->iAudioNetworkTimestamp = timestamp >> 24 & 0x000000ff;
+	header->iAudioNetworkTimestamp += timestamp >> 8 & 0x0000ff00;
+	header->iAudioNetworkTimestamp += timestamp << 8 & 0x00ff0000;
+	header->iAudioNetworkTimestamp += timestamp << 24 & 0xff000000;
+
+	header->iAudioMediaTimestamp = header->iAudioNetworkTimestamp;
+
+	PIRP irp = IoAllocateIrp(1, FALSE);
+	
+	IoSetCompletionRoutine(irp, MpusOutputComplete, NULL, TRUE, TRUE, TRUE);
+
+	Socket->Send(&MpusSendBuf, &MpusOutputAddress, irp);
+}
+
+//=============================================================================
+// MpusOutputComplete
+//=============================================================================
+
+NTSTATUS MpusOutputComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext)
+{
+    UNREFERENCED_PARAMETER(aDeviceObject);
+    UNREFERENCED_PARAMETER(aContext);
+
+	// get timestamp for next message
+
+    MpusPerformanceCounter = KeQueryInterruptTime();
+
+	PMDL mdl = MpusSendBuf.Mdl;
+
+	while (mdl != NULL)
+	{
+		ExFreePoolWithTag(MmGetMdlVirtualAddress(mdl), '2ten');
+		PMDL next = mdl->Next;
+		IoFreeMdl(mdl);
+		mdl = next;
+	}
+
+	IoFreeIrp(aIrp);
+
+	MpusOutput(); // send the next message if there is one
+
+	// Always return STATUS_MORE_PROCESSING_REQUIRED to
+	// terminate the completion processing of the IRP.
+
+	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
 
 //=============================================================================
-// MpusUpdateEndpointLocked
+// MpusSendNewLocked
 //=============================================================================
 
-void MpusUpdateEndpointLocked()
+void MpusSendNewLocked()
 {
-	CWinsock::Initialise(&MpusAddress, MpusAddr, MpusPort);
+	void* header = ExAllocatePoolWithTag(NonPagedPool, sizeof(OHMHEADER), '2ten');
+
+	RtlCopyMemory(header, &MpusHeader, sizeof(OHMHEADER));
+	
+	PMDL mdl = IoAllocateMdl(header, sizeof(OHMHEADER), FALSE, FALSE, NULL);
+
+	MmBuildMdlForNonPagedPool(mdl);
+
+	MpusMdl = mdl;
+	MpusMdlLast = mdl;
+
+	MpusBytes = sizeof(OHMHEADER);
 }
 
 //=============================================================================
-// MpusUpdateTtlLocked
+// MpusSendLocked
 //=============================================================================
 
-void MpusUpdateTtlLocked()
+void MpusSendAdd(UCHAR* aBuffer, UINT aBytes)
 {
-	Socket->SetTtl(MpusTtl);
+	void* buffer = ExAllocatePoolWithTag(NonPagedPool, aBytes, '2ten');
+
+	PMDL mdl = IoAllocateMdl(buffer, aBytes, FALSE, FALSE, NULL);
+
+	MmBuildMdlForNonPagedPool(mdl);
+
+	MpusMdlLast->Next = mdl;
+	MpusMdlLast = mdl;
+
+	MpusBytes += aBytes;
+
+	// copy audio
+
+	UCHAR* dst = (UCHAR*) buffer;
+	UCHAR* src = aBuffer;
+	ULONG sb = MpusHeader.iAudioBitDepth / 8;
+
+	UINT bytes = aBytes;
+
+	while (bytes > 0)
+	{
+		UCHAR* s = src + sb;
+
+		while (s > src)
+		{
+			*dst++ = *--s;
+		}
+
+		src += sb;
+		bytes -= sb;
+	}
+
+	MpusQueueAdd(&MpusMdl, &MpusBytes, &MpusAddress);
 }
 
 //=============================================================================
@@ -812,17 +1120,285 @@ void MpusSend(UCHAR* aBuffer, UINT aBytes)
 
 	if (MpusActive && MpusEnabled)
 	{
-		if (MpusSendFormat)
+		if (MpusMdl == NULL)
 		{
-			MpusSendFormat = 0;
+			MpusSendNewLocked();
 
-			Socket->Send(&MpusAddress, (UCHAR*)0, 0, 0, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels, MpusLatency);
+			KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+			MpusSendAdd(aBuffer, aBytes);
 		}
+		else
+		{
+			KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 
-		Socket->Send(&MpusAddress, aBuffer, aBytes, 0, MpusAudioSampleRate, MpusAudioBitRate, MpusAudioBitDepth,  MpusAudioChannels, MpusLatency);
+			MpusSendAdd(aBuffer, aBytes);
+		}
+	}
+	else
+	{
+		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+	}
+}
+
+//=============================================================================
+// MpusSendStopLocked
+//=============================================================================
+
+// return true if MpusOutput has to be called to send this stop message
+
+bool MpusSendStopLocked()
+{
+	if (++MpusQueueCount > 16)
+	{
+		--MpusQueueCount;
+		return (false);
+	}
+
+	ULONG bytes = MpusHeader.iAudioBitDepth * MpusHeader.iAudioChannels / 8;
+
+	void* header = ExAllocatePoolWithTag(NonPagedPool, sizeof(OHMHEADER) + bytes, '2ten');
+
+	RtlZeroMemory(header, sizeof(OHMHEADER) + bytes);
+	RtlCopyMemory(header, &MpusHeader, sizeof(OHMHEADER));
+	
+	PMDL mdl = IoAllocateMdl(header, sizeof(OHMHEADER) + bytes, FALSE, FALSE, NULL);
+
+	MmBuildMdlForNonPagedPool(mdl);
+
+	MpusQueue[MpusQueueIndexWrite].iMdl = mdl;
+	MpusQueue[MpusQueueIndexWrite].iBytes = sizeof(OHMHEADER) + bytes;
+	RtlCopyMemory(&(MpusQueue[MpusQueueIndexWrite].iAddress), &MpusAddress, sizeof(SOCKADDR));
+
+	if (++MpusQueueIndexWrite >= 16)
+	{
+		MpusQueueIndexWrite = 0;
+	}
+
+	if (MpusSending)
+	{
+		return (false);
+	}
+
+	MpusSending = true;
+
+	return (true);
+}
+
+//=============================================================================
+// MpusStop
+//=============================================================================
+
+void MpusStop()
+{
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
+
+	if (MpusActive && MpusEnabled)
+	{
+		if (MpusMdl == NULL)
+		{
+			if (MpusSendStopLocked())
+			{
+				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+				MpusOutput();
+			}
+			else
+			{
+				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+			}
+		}
+		else
+		{
+			OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(MpusMdl);
+
+			header->iAudioFlags = 3; // lossless + halt
+
+			KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+		}
+	}
+	else
+	{
+		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+	}
+}
+
+//=============================================================================
+// MpusUpdateEnabled
+//=============================================================================
+
+void MpusUpdateEnabled(UINT aValue)
+{
+	UINT enabled = aValue;
+
+	if (enabled != 0) {
+		enabled = 1;
+	}
+
+	// PCMiniportTopology  pMiniport = (PCMiniportTopology)PropertyRequest->MajorTarget;
+
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
+
+	if (MpusEnabled != enabled) {
+		if (enabled) {
+			MpusEnabled = 1;
+		}
+		else {
+			MpusEnabled = 0;
+
+			if (MpusActive) {
+				// Issue stopped
+				/*
+				if (MpusIrp == NULL)
+				{
+					MpusSendNewLocked();
+
+					KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+					ULONG bytes = MpusHeader.iAudioBitDepth * MpusHeader.iAudioChannels / 8;
+
+					UCHAR silence[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+					MpusSendAdd(&silence, bytes);
+				}
+				else
+				{
+					KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+					PMDL mdl = MpusIrp->MdlAddress;
+
+					OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(mdl);
+
+					header->iAudioFlags = 3; // lossless + halt
+				}
+				*/
+			}
+		}
 	}
 
 	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+}
+
+//=============================================================================
+// MpusUpdateActive
+//=============================================================================
+
+void MpusUpdateActive(UINT aValue)
+{
+	UINT active = aValue;
+
+	if (active != 0) {
+		active = 1;
+	}
+
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
+
+	if (MpusActive != active) {
+		if (active) {
+			MpusActive = 1;
+		}
+		else {
+			MpusActive = 0;
+
+			if (MpusEnabled) {
+				// Issue stopped
+
+				/*
+				if (MpusIrp == NULL)
+				{
+					MpusSendNewLocked();
+
+					KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+					ULONG bytes = MpusHeader.iAudioBitDepth * MpusHeader.iAudioChannels / 8;
+
+					UCHAR silence[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+					MpusSendAdd(&silence, bytes);
+				}
+				else
+				{
+					KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+					PMDL mdl = MpusIrp->MdlAddress;
+
+					OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(mdl);
+
+					header->iAudioFlags = 3; // lossless + halt
+				}
+				*/
+			}
+		}
+	}
+
+	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+}
+
+//=============================================================================
+// MpusUpdateLatencyLocked
+//=============================================================================
+
+void MpusUpdateLatencyLocked()
+{
+	ULONG multiplier = 48000 * 32; // divide by 125 for ms (256/1000 = 32/125)
+
+	if ((MpusHeader.iAudioSampleRate % 441) == 0)
+	{
+		multiplier = 44100 * 32;
+	}
+
+	ULONG latency = MpusLatency * multiplier / 125;
+
+	MpusHeader.iAudioMediaLatency = latency >> 24 & 0x000000ff;
+	MpusHeader.iAudioMediaLatency += latency >> 8 & 0x0000ff00;
+	MpusHeader.iAudioMediaLatency += latency << 8 & 0x00ff0000;
+	MpusHeader.iAudioMediaLatency += latency << 24 & 0xff000000;
+}
+
+//=============================================================================
+// MpusUpdateLatency
+//=============================================================================
+
+void MpusUpdateLatency(UINT aValue)
+{
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
+
+	MpusLatency = aValue;
+
+	MpusUpdateLatencyLocked();
+
+	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+}
+
+//=============================================================================
+// MpusSetFormatLocked
+//=============================================================================
+
+void MpusSetFormatLocked(UINT aSampleRate, UINT aBitRate, UINT aBitDepth, UINT aChannels)
+{
+	MpusHeader.iAudioSampleRate = aSampleRate >> 24 & 0x000000ff;
+	MpusHeader.iAudioSampleRate += aSampleRate >> 8 & 0x0000ff00;
+	MpusHeader.iAudioSampleRate += aSampleRate << 8 & 0x00ff0000;
+	MpusHeader.iAudioSampleRate += aSampleRate << 24 & 0xff000000;
+
+	MpusHeader.iAudioBitRate = aBitRate >> 24 & 0x000000ff;
+	MpusHeader.iAudioBitRate += aBitRate >> 8 & 0x0000ff00;
+	MpusHeader.iAudioBitRate += aBitRate << 8 & 0x00ff0000;
+	MpusHeader.iAudioBitRate += aBitRate << 24 & 0xff000000;
+
+	MpusHeader.iAudioBitDepth = (UCHAR) aBitDepth;
+
+	MpusHeader.iAudioChannels = (UCHAR) aChannels;
+
+	MpusUpdateLatencyLocked();
 }
 
 //=============================================================================
@@ -835,11 +1411,19 @@ void MpusSetFormat(UINT aSampleRate, UINT aBitRate, UINT aBitDepth, UINT aChanne
 
 	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
-	MpusAudioSampleRate = aSampleRate;
-	MpusAudioBitRate = aBitRate;
-	MpusAudioBitDepth = aBitDepth;
-	MpusAudioChannels = aChannels;
-	MpusSendFormat = 1;
+	if (MpusMdl != NULL)
+	{
+		MpusSetFormatLocked(aSampleRate, aBitRate, aBitDepth, aChannels);
 
-	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+		MpusQueueAdd(&MpusMdl, &MpusBytes, &MpusAddress);
+	}
+	else
+	{
+		MpusSetFormatLocked(aSampleRate, aBitRate, aBitDepth, aChannels);
+
+		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+	}
 }
+

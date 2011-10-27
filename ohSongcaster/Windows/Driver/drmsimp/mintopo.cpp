@@ -23,19 +23,11 @@ Abstract:
 #include "mintopo.h"
 #include "toptable.h"
 
-extern void MpusStopLocked();
-extern void MpusUpdateEndpointLocked();
-extern void MpusUpdateTtlLocked();
-
-KSPIN_LOCK MpusSpinLock;
-
-UINT MpusEnabled;
-UINT MpusActive;
-UINT MpusTtl;
-UINT MpusAddr;
-UINT MpusPort;
-UINT MpusLatency;
-
+extern void MpusUpdateEnabled(UINT aValue);
+extern void MpusUpdateActive(UINT aValue);
+extern void MpusUpdateTtl(UINT aValue);
+extern void MpusUpdateLatency(UINT aValue);
+extern void MpusUpdateEndpoint(UINT aAddress, UINT aPort);
 
 PHYSICALCONNECTIONTABLE TopologyPhysicalConnections =
 {
@@ -242,15 +234,6 @@ Return Value:
     DPF_ENTER(("[CMiniportTopology::Init]"));
 
     NTSTATUS                    ntStatus;
-
-	MpusEnabled = 0;
-	MpusActive = 0;
-	MpusTtl = 0;
-	MpusAddr = 0;
-	MpusPort = 0;
-	MpusLatency = 0;
-
-	KeInitializeSpinLock(&MpusSpinLock);
 
     ntStatus = CMiniportTopologyMSVAD::Init (
         UnknownAdapter,
@@ -593,37 +576,9 @@ PropertyHandler_Wave
 					return STATUS_INVALID_PARAMETER;
 				}
 
-				UINT* pValue = (UINT*)PropertyRequest->Value;
+				UINT* enabled = (UINT*)PropertyRequest->Value;
 
-				UINT enabled = *pValue;
-
-				if (enabled != 0) {
-					enabled = 1;
-				}
-
-				// PCMiniportTopology  pMiniport = (PCMiniportTopology)PropertyRequest->MajorTarget;
-
-				KIRQL oldIrql;
-
-				KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
-
-				if (MpusEnabled != enabled) {
-					if (enabled) {
-						MpusEnabled = 1;
-						JackDescSpeakers.IsConnected = true;
-						//pMiniport->CreateWaveMiniport(); Not doing dynamic device any more
-					}
-					else {
-						MpusEnabled = 0;
-						JackDescSpeakers.IsConnected = false;
-						if (MpusActive) {
-							MpusStopLocked();
-						}
-						//pMiniport->DestroyWaveMiniport(); Not doing dynamic device any more
-					}
-				}
-
-				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+				MpusUpdateEnabled(*enabled);
 
 				return STATUS_SUCCESS;
 			}
@@ -633,31 +588,9 @@ PropertyHandler_Wave
 					return STATUS_INVALID_PARAMETER;
 				}
 
-				UINT* pValue = (UINT*)PropertyRequest->Value;
+				UINT* active = (UINT*)PropertyRequest->Value;
 
-				UINT active = *pValue;
-
-				if (active != 0) {
-					active = 1;
-				}
-
-				KIRQL oldIrql;
-
-				KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
-
-				if (MpusActive != active) {
-					if (active) {
-						MpusActive = 1;
-					}
-					else {
-						MpusActive = 0;
-						if (MpusEnabled) {
-							MpusStopLocked();
-						}
-					}
-				}
-
-				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+				MpusUpdateActive(*active);
 
 				return STATUS_SUCCESS;
 			}
@@ -672,17 +605,7 @@ PropertyHandler_Wave
 				UINT addr = *pValue++;
 				UINT port = *pValue;
 
-				KIRQL oldIrql;
-
-				KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
-
-				if (MpusAddr != addr || MpusPort != port) {
-					MpusAddr = addr;
-					MpusPort = port;
-					MpusUpdateEndpointLocked();
-				}
-
-				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+				MpusUpdateEndpoint(addr, port);
 
 				return STATUS_SUCCESS;
 			}
@@ -692,20 +615,9 @@ PropertyHandler_Wave
 					return STATUS_INVALID_PARAMETER;
 				}
 
-				UINT* pValue = (UINT*)PropertyRequest->Value;
+				UINT* ttl = (UINT*)PropertyRequest->Value;
 
-				UINT ttl = *pValue;
-
-				KIRQL oldIrql;
-
-				KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
-
-				if (MpusTtl != ttl) {
-					MpusTtl = ttl;
-					MpusUpdateTtlLocked();
-				}
-
-				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+				MpusUpdateTtl(*ttl);
 
 				return STATUS_SUCCESS;
 			}
@@ -715,15 +627,9 @@ PropertyHandler_Wave
 					return STATUS_INVALID_PARAMETER;
 				}
 
-				UINT* pValue = (UINT*)PropertyRequest->Value;
+				UINT* latency = (UINT*)PropertyRequest->Value;
 
-				KIRQL oldIrql;
-
-				KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
-
-				MpusLatency = *pValue;
-
-				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+				MpusUpdateLatency(*latency);
 
 				return STATUS_SUCCESS;
 			}

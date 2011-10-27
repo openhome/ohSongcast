@@ -32,25 +32,20 @@ namespace OpenHome.Songcaster
                 return (New(path));
             }
 
-            FileInfo info = new FileInfo(path);
-
-            if (info.Length == 0)
-            {
-                return (New(path));
-            }
-
             try
             {
-                TextReader reader = new StreamReader(path);
-                Configuration configuration = (Configuration)xml.Deserialize(reader);
-                configuration.SetPath(path);
-                reader.Close();
-                return (configuration);
+                using (TextReader reader = new StreamReader(path))
+                {
+                    Configuration configuration = (Configuration)xml.Deserialize(reader);
+                    configuration.SetPath(path);
+                    return (configuration);
+                }
             }
             catch (Exception)
             {
                 return (New(path));
             }
+
         }
 
         private static Configuration New(string aPath)
@@ -71,11 +66,18 @@ namespace OpenHome.Songcaster
         {
             XmlSerializer xml = new XmlSerializer(typeof(Configuration));
 
-            TextWriter writer = new StreamWriter(iPath);
+            try
+            {
+                using (TextWriter writer = new StreamWriter(iPath))
+                {
 
-            xml.Serialize(writer, this);
-
-            writer.Close();
+                    xml.Serialize(writer, this);
+                }
+            }
+            catch (Exception e)
+            {
+                throw (new ApplicationException("Unable to save configuration file", e));
+            }
         }
 
         private void SetPath(string aPath)

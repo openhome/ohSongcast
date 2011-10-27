@@ -28,6 +28,11 @@ ReceiverManager3Receiver::ReceiverManager3Receiver(IReceiverManager3Handler& aHa
 	iHandler.ReceiverAdded(*this);
 }
 
+TBool ReceiverManager3Receiver::IsAttachedTo(ReceiverManager2Receiver& aReceiver)
+{
+	return (&iReceiver == &aReceiver);
+}
+
 ReceiverManager3Receiver::EStatus ReceiverManager3Receiver::EvaluateStatus()
 {
 	return (iManager.Status(iReceiver));
@@ -198,6 +203,7 @@ void ReceiverManager3::ReceiverChanged(ReceiverManager2Receiver& aReceiver)
     LOG(kTopology, "ReceiverManager3::ReceiverChanged\n");
 	ReceiverManager3Receiver* receiver = (ReceiverManager3Receiver*)(aReceiver.UserData());
 	ASSERT(receiver);
+	ASSERT(receiver->IsAttachedTo(aReceiver));
 	receiver->Changed();
 }
 
@@ -207,5 +213,6 @@ void ReceiverManager3::ReceiverRemoved(ReceiverManager2Receiver& aReceiver)
 	ReceiverManager3Receiver* receiver = (ReceiverManager3Receiver*)(aReceiver.UserData());
     LOG(kTopology, "ReceiverManager3::~ReceiverRemoved %x\n", receiver);
 	ASSERT(receiver);
+	ASSERT(receiver->IsAttachedTo(aReceiver));
 	receiver->Removed();
 }

@@ -120,8 +120,7 @@ public:
 	NTSTATUS Initialise(CWinsock& aWsk, NETWORK_CALLBACK* aCallback, void*  aContext);
 	void SetTtl(ULONG aValue);
 	void SetLatency(ULONG aValue);
-	void Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels, ULONG aLatency);
-
+	void Send(WSK_BUF* aBuffer, SOCKADDR* aAddress, PIRP aIrp);
 	bool Initialised();
 	void Close();
 
@@ -133,9 +132,6 @@ private:
 	static IO_COMPLETION_ROUTINE CloseComplete;
 	static IO_COMPLETION_ROUTINE SetTtlComplete;
 
-	void SendPacket(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, ULONG aSampleRate, ULONG aBitDepth, ULONG aChannels);
-	static void CopyAudio(UCHAR* aDestination, UCHAR* aSource, ULONG aBytes, ULONG aBitDepth);
-
 private:
     KSPIN_LOCK iSpinLock;
 	bool iInitialised;
@@ -143,6 +139,8 @@ private:
 	NETWORK_CALLBACK* iCallback;
 	void* iContext;
 	PWSK_SOCKET iSocket;
+	/*
+	void Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels, ULONG aLatency);
 	OHMHEADER iHeader;
 	ULONG iFrame;
 	ULONGLONG iSampleStart;
@@ -151,10 +149,11 @@ private:
 	ULONG iTimestampMultiplier;
 	ULONGLONG iPerformanceCounter;
 	ULONG iLatencyMultiplier;
-	KEVENT iSendEvent;
+	KSEMAPHORE iSendSemaphore;
 	WSK_BUF iSendBuf;
 	SOCKADDR iSendAddr;
 	void* iSendMessage;
+	*/
 };
 
 #endif          // (NTDDI_VERSION >= NTDDI_VISTA)

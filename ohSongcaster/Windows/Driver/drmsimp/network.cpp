@@ -134,7 +134,8 @@ CSocketOhm::CSocketOhm()
 
 	KeInitializeSpinLock(&iSpinLock);
 
-	KeInitializeEvent(&iSendEvent, SynchronizationEvent, true);
+	/*
+	KeInitializeSemaphore(&iSendSemaphore, 1, 1);
 
 	iHeader.iMagic[0] = 'O';
 	iHeader.iMagic[1] = 'h';
@@ -167,6 +168,7 @@ CSocketOhm::CSocketOhm()
 	iSampleRate = 0;
 
     iPerformanceCounter = KeQueryInterruptTime();
+	*/
 }
 
 NTSTATUS CSocketOhm::Initialise(CWinsock& aWsk, NETWORK_CALLBACK aCallback, void* aContext)
@@ -355,6 +357,8 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 }
 */
 
+/*
+
 void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels, ULONG aLatency)
 {
 	ULONG sampleBytes = aChannels * aBitDepth / 8;
@@ -363,11 +367,7 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 		return;
 	}
 
-	LARGE_INTEGER timeout;
-
-	timeout.QuadPart = 0; // wait forever
-
-	KeWaitForSingleObject(&iSendEvent, Executive, KernelMode, false, &timeout);
+	KeWaitForSingleObject(&iSendSemaphore, Executive, KernelMode, false, NULL);
 
 	PIRP irp;
 
@@ -387,7 +387,7 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 	if (iSendMessage == NULL)
 	{
 		IoFreeIrp(irp);
-		KeSetEvent(&iSendEvent, 0, false);
+		KeReleaseSemaphore(&iSendSemaphore, 0, 1, false);
         return;
 	}
 
@@ -401,21 +401,15 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 
 	if (iSendBuf.Mdl == NULL)
 	{
-		IoFreeIrp(irp);
 		ExFreePoolWithTag(iSendMessage, '2ten');
-		KeSetEvent(&iSendEvent, 0, false);
+		IoFreeIrp(irp);
+		KeReleaseSemaphore(&iSendSemaphore, 0, 1, false);
         return;
 	}
 
 	MmBuildMdlForNonPagedPool(iSendBuf.Mdl);
 
 	RtlCopyMemory(&iSendAddr, aAddress, sizeof(SOCKADDR));
-
-	KIRQL oldIrql;
-
-	KeAcquireSpinLock (&iSpinLock, &oldIrql);
-
-	ULONG frame = ++iFrame;
 
 	RtlCopyMemory(header, &iHeader, sizeof(OHMHEADER));
 
@@ -434,6 +428,8 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 
 	header->iAudioSamples = samples >> 8 & 0x00ff;
 	header->iAudioSamples += samples << 8 & 0xff00;
+
+	ULONG frame = ++iFrame;
 
 	header->iAudioFrame = frame >> 24 & 0x000000ff;
 	header->iAudioFrame += frame >> 8 & 0x0000ff00;
@@ -506,52 +502,13 @@ void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aH
 	IoSetCompletionRoutine(irp,	SendComplete, this, TRUE, TRUE, TRUE);
 
 	((PWSK_PROVIDER_DATAGRAM_DISPATCH)(iSocket->Dispatch))->WskSendTo(iSocket, &iSendBuf, 0, &iSendAddr, 0, NULL, irp);
-
-	KeReleaseSpinLock (&iSpinLock, oldIrql);
 }
 
-void CSocketOhm::CopyAudio(UCHAR* aDestination, UCHAR* aSource, ULONG aBytes, ULONG aBitDepth)
+*/
+
+void CSocketOhm::Send(WSK_BUF* aBuffer, SOCKADDR* aAddress, PIRP aIrp)
 {
-	UCHAR* dst = aDestination;
-	UCHAR* src = aSource;
-	ULONG sb = aBitDepth / 8;
-
-	ULONG bytes = aBytes;
-
-	while (bytes > 0)
-	{
-		UCHAR* s = src + sb;
-
-		while (s > src)
-		{
-			*dst++ = *--s;
-		}
-
-		src += sb;
-		bytes -= sb;
-	}
-}
-
-NTSTATUS CSocketOhm::SendComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext)
-{
-    UNREFERENCED_PARAMETER(aDeviceObject);
-
-	CSocketOhm* socket = (CSocketOhm*) aContext;
-
-	// create timestamp for next message
-
-    socket->iPerformanceCounter = KeQueryInterruptTime();
-
-	IoFreeIrp(aIrp);
-	IoFreeMdl(socket->iSendBuf.Mdl);
-	ExFreePoolWithTag(socket->iSendMessage, '2ten');
-
-	KeSetEvent(&socket->iSendEvent, 0, false);
-
-	// Always return STATUS_MORE_PROCESSING_REQUIRED to
-	// terminate the completion processing of the IRP.
-
-	return STATUS_MORE_PROCESSING_REQUIRED;
+	((PWSK_PROVIDER_DATAGRAM_DISPATCH)(iSocket->Dispatch))->WskSendTo(iSocket, aBuffer, 0, aAddress, 0, NULL, aIrp);
 }
 
 void CSocketOhm::Close()

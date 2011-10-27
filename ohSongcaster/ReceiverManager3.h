@@ -60,6 +60,8 @@ private:
 
 	EStatus EvaluateStatus();
 
+	TBool IsAttachedTo(ReceiverManager2Receiver& aReceiver);
+
 	~ReceiverManager3Receiver();
 
 private:

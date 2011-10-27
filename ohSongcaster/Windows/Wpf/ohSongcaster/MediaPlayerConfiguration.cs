@@ -411,10 +411,20 @@ namespace OpenHome.Songcaster
             }
             else
             {
-                TextReader reader = new StreamReader(path);
-                configuration = (MediaPlayerConfiguration)xml.Deserialize(reader);
-                configuration.SetPath(path);
-                reader.Close();
+                try
+                {
+                    using (TextReader reader = new StreamReader(path))
+                    {
+                        configuration = (MediaPlayerConfiguration)xml.Deserialize(reader);
+                        configuration.SetPath(path);
+                    }
+                }
+                catch (Exception)
+                {
+                    configuration = new MediaPlayerConfiguration();
+                    configuration.SetPath(path);
+                    configuration.Save();
+                }
             }
 
             configuration.Initialise(aEnabled);
@@ -475,11 +485,10 @@ namespace OpenHome.Songcaster
         {
             XmlSerializer xml = new XmlSerializer(typeof(MediaPlayerConfiguration));
 
-            TextWriter writer = new StreamWriter(iPath);
-
-            xml.Serialize(writer, this);
-
-            writer.Close();
+            using (TextWriter writer = new StreamWriter(iPath))
+            {
+                xml.Serialize(writer, this);
+            }
         }
 
         public MediaPlayerConfiguration()
