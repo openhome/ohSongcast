@@ -34,6 +34,7 @@ UINT MpusPort;
 UINT MpusLatency;
 
 bool MpusSending;
+bool MpusStopped;
 
 PMDL MpusMdl;
 PMDL MpusMdlLast;
@@ -332,6 +333,7 @@ Return Value:
 	MpusMdl = NULL;
 
 	MpusSending = false;
+	MpusStopped = true;
 
 	MpusFrame = 0;
 
@@ -830,6 +832,8 @@ void MpusQueueAdd(PMDL* aMdl, ULONG* aBytes, SOCKADDR* aAddress)
 
 	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
+	MpusStopped = false;
+
 	if (++MpusQueueCount > 16)
 	{
 		--MpusQueueCount;
@@ -1068,29 +1072,15 @@ void MpusSendNewLocked()
 }
 
 //=============================================================================
-// MpusSendLocked
+// MpusCopyAudio
 //=============================================================================
 
-void MpusSendAdd(UCHAR* aBuffer, UINT aBytes)
+void MpusCopyAudio(UCHAR* aDestination, UCHAR* aSource, UINT aBytes, UINT aSampleBytes)
 {
-	void* buffer = ExAllocatePoolWithTag(NonPagedPool, aBytes, '2ten');
-
-	PMDL mdl = IoAllocateMdl(buffer, aBytes, FALSE, FALSE, NULL);
-
-	MmBuildMdlForNonPagedPool(mdl);
-
-	MpusMdlLast->Next = mdl;
-	MpusMdlLast = mdl;
-
-	MpusBytes += aBytes;
-
-	// copy audio
-
-	UCHAR* dst = (UCHAR*) buffer;
-	UCHAR* src = aBuffer;
-	ULONG sb = MpusHeader.iAudioBitDepth / 8;
-
+	UCHAR* dst = aDestination;
+	UCHAR* src = aSource;
 	UINT bytes = aBytes;
+	UINT sb = aSampleBytes;
 
 	while (bytes > 0)
 	{
@@ -1104,8 +1094,80 @@ void MpusSendAdd(UCHAR* aBuffer, UINT aBytes)
 		src += sb;
 		bytes -= sb;
 	}
+}
+
+//=============================================================================
+// MpusSendLocked
+//=============================================================================
+
+void MpusSendAdd(UCHAR* aBuffer, UINT aBytes)
+{
+	UINT added = MpusBytes + aBytes;
+
+	if (added < 1828)
+	{
+		UCHAR* buffer = (UCHAR*) ExAllocatePoolWithTag(NonPagedPool, aBytes, '2ten');
+
+		PMDL mdl = IoAllocateMdl(buffer, aBytes, FALSE, FALSE, NULL);
+
+		MmBuildMdlForNonPagedPool(mdl);
+
+		MpusMdlLast->Next = mdl;
+		MpusMdlLast = mdl;
+
+		MpusBytes += aBytes;
+
+		// copy audio
+
+		MpusCopyAudio(buffer, aBuffer, aBytes, MpusHeader.iAudioBitDepth / 8);
+
+		return;
+	}
+
+	UINT first = 1828 - MpusBytes;
+
+	UCHAR* buffer = (UCHAR*) ExAllocatePoolWithTag(NonPagedPool, first, '2ten');
+
+	PMDL mdl = IoAllocateMdl(buffer, first, FALSE, FALSE, NULL);
+
+	MmBuildMdlForNonPagedPool(mdl);
+
+	MpusMdlLast->Next = mdl;
+	MpusMdlLast = mdl;
+
+	MpusBytes = 1828;
+
+	MpusCopyAudio(buffer, aBuffer, first, MpusHeader.iAudioBitDepth / 8);
 
 	MpusQueueAdd(&MpusMdl, &MpusBytes, &MpusAddress);
+
+	added -= 1828;
+
+	if (added == 0)
+	{
+		return;
+	}
+
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
+
+	MpusSendNewLocked();
+
+	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+	buffer = (UCHAR*) ExAllocatePoolWithTag(NonPagedPool, added, '2ten');
+
+	mdl = IoAllocateMdl(buffer, added, FALSE, FALSE, NULL);
+
+	MmBuildMdlForNonPagedPool(mdl);
+
+	MpusMdlLast->Next = mdl;
+	MpusMdlLast = mdl;
+
+	MpusBytes += added;
+
+	MpusCopyAudio(buffer, aBuffer + first, added, MpusHeader.iAudioBitDepth / 8);
 }
 
 //=============================================================================
@@ -1123,17 +1185,11 @@ void MpusSend(UCHAR* aBuffer, UINT aBytes)
 		if (MpusMdl == NULL)
 		{
 			MpusSendNewLocked();
-
-			KeReleaseSpinLock(&MpusSpinLock, oldIrql);
-
-			MpusSendAdd(aBuffer, aBytes);
 		}
-		else
-		{
-			KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 
-			MpusSendAdd(aBuffer, aBytes);
-		}
+		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+		MpusSendAdd(aBuffer, aBytes);
 	}
 	else
 	{
@@ -1157,11 +1213,13 @@ bool MpusSendStopLocked()
 
 	ULONG bytes = MpusHeader.iAudioBitDepth * MpusHeader.iAudioChannels / 8;
 
-	void* header = ExAllocatePoolWithTag(NonPagedPool, sizeof(OHMHEADER) + bytes, '2ten');
+	OHMHEADER* header = (OHMHEADER*) ExAllocatePoolWithTag(NonPagedPool, sizeof(OHMHEADER) + bytes, '2ten');
 
 	RtlZeroMemory(header, sizeof(OHMHEADER) + bytes);
 	RtlCopyMemory(header, &MpusHeader, sizeof(OHMHEADER));
 	
+	header->iAudioFlags = 3; // lossless + halt
+
 	PMDL mdl = IoAllocateMdl(header, sizeof(OHMHEADER) + bytes, FALSE, FALSE, NULL);
 
 	MmBuildMdlForNonPagedPool(mdl);
@@ -1195,8 +1253,10 @@ void MpusStop()
 
 	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
-	if (MpusActive && MpusEnabled)
+	if (MpusActive && MpusEnabled && !MpusStopped)
 	{
+		MpusStopped = true;
+
 		if (MpusMdl == NULL)
 		{
 			if (MpusSendStopLocked())
@@ -1204,10 +1264,8 @@ void MpusStop()
 				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 
 				MpusOutput();
-			}
-			else
-			{
-				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+
+				return;
 			}
 		}
 		else
@@ -1215,14 +1273,10 @@ void MpusStop()
 			OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(MpusMdl);
 
 			header->iAudioFlags = 3; // lossless + halt
-
-			KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 		}
 	}
-	else
-	{
-		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
-	}
+
+	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 }
 
 //=============================================================================
@@ -1250,32 +1304,28 @@ void MpusUpdateEnabled(UINT aValue)
 		else {
 			MpusEnabled = 0;
 
-			if (MpusActive) {
-				// Issue stopped
-				/*
-				if (MpusIrp == NULL)
+			if (MpusActive && !MpusStopped) {
+				// issue stop
+
+				MpusStopped = true;
+
+				if (MpusMdl == NULL)
 				{
-					MpusSendNewLocked();
+					if (MpusSendStopLocked())
+					{
+						KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 
-					KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+						MpusOutput();
 
-					ULONG bytes = MpusHeader.iAudioBitDepth * MpusHeader.iAudioChannels / 8;
-
-					UCHAR silence[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-
-					MpusSendAdd(&silence, bytes);
+						return;
+					}
 				}
 				else
 				{
-					KeReleaseSpinLock(&MpusSpinLock, oldIrql);
-
-					PMDL mdl = MpusIrp->MdlAddress;
-
-					OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(mdl);
+					OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(MpusMdl);
 
 					header->iAudioFlags = 3; // lossless + halt
 				}
-				*/
 			}
 		}
 	}
@@ -1306,33 +1356,28 @@ void MpusUpdateActive(UINT aValue)
 		else {
 			MpusActive = 0;
 
-			if (MpusEnabled) {
-				// Issue stopped
+			if (MpusEnabled && !MpusStopped) {
+				// issue stop
 
-				/*
-				if (MpusIrp == NULL)
+				MpusStopped = true;
+
+				if (MpusMdl == NULL)
 				{
-					MpusSendNewLocked();
+					if (MpusSendStopLocked())
+					{
+						KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 
-					KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+						MpusOutput();
 
-					ULONG bytes = MpusHeader.iAudioBitDepth * MpusHeader.iAudioChannels / 8;
-
-					UCHAR silence[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-
-					MpusSendAdd(&silence, bytes);
+						return;
+					}
 				}
 				else
 				{
-					KeReleaseSpinLock(&MpusSpinLock, oldIrql);
-
-					PMDL mdl = MpusIrp->MdlAddress;
-
-					OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(mdl);
+					OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(MpusMdl);
 
 					header->iAudioFlags = 3; // lossless + halt
 				}
-				*/
 			}
 		}
 	}
@@ -1417,7 +1462,7 @@ void MpusSetFormat(UINT aSampleRate, UINT aBitRate, UINT aBitDepth, UINT aChanne
 
 		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 
-		MpusQueueAdd(&MpusMdl, &MpusBytes, &MpusAddress);
+		MpusQueueAdd(&MpusMdl, &MpusBytes, &MpusAddress); // queue audio in the old format so it doesn't get audio in the new format added to it
 	}
 	else
 	{

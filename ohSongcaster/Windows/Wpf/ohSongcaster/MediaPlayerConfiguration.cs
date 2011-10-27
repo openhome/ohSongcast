@@ -70,7 +70,7 @@ namespace OpenHome.Songcaster
                         }
                     }
                 }
-            {
+            }
 
             UpdateStatus();
         }
