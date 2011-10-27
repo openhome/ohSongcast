@@ -675,6 +675,10 @@ OhmSender::~OhmSender()
 
     LOG(kMedia, "OhmSender::~OhmSender deleted zone thread\n");
 
+    delete iServer;
+
+    LOG(kMedia, "OhmSender::~OhmSender deleted tcp server\n");
+
 
 	delete iThreadUnicast;
 

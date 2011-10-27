@@ -135,12 +135,18 @@
             case eRemoved:
                 if (subnet)
                 {
-                    [iList removeObject:subnet];
+                    // removing the subnet from the list could cause the retain count to go to 0, so
+                    // manually retain it here to keep it alive
+                    [subnet retain];
                     [subnet dispose];
-                    [subnet autorelease];
+
+                    [iList removeObject:subnet];
 
                     // send notification in the main thread
                     [iObserver performSelectorOnMainThread:@selector(subnetRemoved:) withObject:subnet waitUntilDone:FALSE];
+
+                    // the subnet is retained when added to the performSelector method - safe to release it now
+                    [subnet release];
                 }
                 break;
                 
