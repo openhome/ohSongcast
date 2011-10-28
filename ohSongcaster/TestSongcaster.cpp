@@ -10,6 +10,7 @@
 #include <vector>
 #include <stdio.h>
 
+#include "Icon.h"
 #include "Songcaster.h"
 
 #ifdef _WIN32
@@ -112,7 +113,7 @@ int CDECL main(int /* aArgc */, char** /* aArgv[] */)
     TBool disabled = false;
     TUint preset = 99;
 
-	THandle songcaster = SongcasterCreate("av.openhome.org", subnet, channel, ttl, latency, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0, loggerConfigurationChanged, 0, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+	THandle songcaster = SongcasterCreate("av.openhome.org", subnet, channel, ttl, latency, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0, loggerConfigurationChanged, 0, "OpenHome", "http://www.openhome.org", "http://www.openhome.org", icon_png, icon_png_len, "image/png");
 
 	if (songcaster == 0) {
 		printf("Songcaster error\n");

@@ -458,8 +458,9 @@ void OhmSender::SetInterface(TIpAddress aValue)
 		if (iStarted) {
 			Stop();
 			StopZone();
-			iInterface = aValue;
 			delete (iServer);
+			iInterface = aValue;
+			UpdateMetadata();
 			iServer = new SocketTcpServer("OHMS", 0, iInterface);
 			iServer->Add("OHMS", new OhmSenderSession(*this));
 			StartZone();
@@ -1128,13 +1129,14 @@ void OhmSender::UpdateMetadata()
 	iSenderMetadata.Append(iSenderUri);
     iSenderMetadata.Append("</res>");
     
-	iSenderMetadata.Append("<upnp:albumArtURI>");
-	iSenderMetadata.Append("http://");
-
-	Endpoint(iServer->Port(), iInterface).AppendEndpoint(iSenderMetadata);
-
-	iSenderMetadata.Append("/icon");
-	iSenderMetadata.Append("</upnp:albumArtURI>");
+	if (iImage.Bytes() > 0)
+	{
+		iSenderMetadata.Append("<upnp:albumArtURI>");
+		iSenderMetadata.Append("http://");
+		Endpoint(iServer->Port(), iInterface).AppendEndpoint(iSenderMetadata);
+		iSenderMetadata.Append("/icon");
+		iSenderMetadata.Append("</upnp:albumArtURI>");
+	}
 		
 	iSenderMetadata.Append("<upnp:class>object.item.audioItem</upnp:class>");
     iSenderMetadata.Append("</item>");

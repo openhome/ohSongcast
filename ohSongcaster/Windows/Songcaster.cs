@@ -238,7 +238,7 @@ namespace OpenHome.Songcaster
         private delegate void DelegateConfigurationChangedCallback(IntPtr aPtr, IntPtr aSongcaster);
 
         [DllImport("ohSongcaster.dll")]
-        static extern unsafe IntPtr SongcasterCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, uint aLatency, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, DelegateConfigurationChangedCallback aConfigurationChangedCallback, IntPtr aConfigurationChangedPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl);
+        static extern unsafe IntPtr SongcasterCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, uint aLatency, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, DelegateConfigurationChangedCallback aConfigurationChangedCallback, IntPtr aConfigurationChangedPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl, byte[] aImagePtr, int aImageBytes, string aMimeType);
 
         [DllImport("ohSongcaster.dll")]
         static extern uint SongcasterSubnet(IntPtr aHandle);
@@ -278,7 +278,7 @@ namespace OpenHome.Songcaster
         [DllImport("ohSongcaster.dll")]
         static extern void SongcasterDestroy(IntPtr aHandle);
 
-        public unsafe Songcaster(string aDomain, uint aSubnet, uint aChannel, uint aTtl, uint aLatency, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler, IConfigurationChangedHandler aConfigurationChangedHandler, string aManufacturer, string aManufacturerUrl, string aModelUrl)
+        public unsafe Songcaster(string aDomain, uint aSubnet, uint aChannel, uint aTtl, uint aLatency, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler, IConfigurationChangedHandler aConfigurationChangedHandler, string aManufacturer, string aManufacturerUrl, string aModelUrl, byte[] aImage, string aMimeType)
         {
             iReceiverHandler = aReceiverHandler;
             iSubnetHandler = aSubnetHandler;
@@ -288,7 +288,8 @@ namespace OpenHome.Songcaster
             iConfigurationChangedCallback = new DelegateConfigurationChangedCallback(ConfigurationChangedCallback);
             iReceiverList = new List<Receiver>();
             iSubnetList = new List<Subnet>();
-            iHandle = SongcasterCreate(aDomain, aSubnet, aChannel, aTtl, aLatency, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, iConfigurationChangedCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl);
+
+            iHandle = SongcasterCreate(aDomain, aSubnet, aChannel, aTtl, aLatency, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, iConfigurationChangedCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl, aImage, aImage.Length, aMimeType);
 
             if (iHandle == IntPtr.Zero)
             {

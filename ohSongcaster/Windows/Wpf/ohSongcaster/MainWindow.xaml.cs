@@ -21,6 +21,7 @@ using System.Collections.Specialized;
 using System.Xml;
 using System.Xml.Serialization;
 using System.IO;
+using System.Drawing;
 
 namespace OpenHome.Songcaster
 {
@@ -81,9 +82,15 @@ namespace OpenHome.Songcaster
 
             this.Closing += EventWindowClosing;
 
+            System.Drawing.Image image = OpenHome.Songcaster.Properties.Resources.Icon.ToBitmap();
+
+            MemoryStream stream = new MemoryStream();
+            image.Save(stream, System.Drawing.Imaging.ImageFormat.Bmp);
+            byte[] bytes = stream.ToArray();
+
             try
             {
-                iSongcaster = new Songcaster("av.openhome.org", iConfigurationWindow.Subnet, iConfigurationWindow.Channel, iConfigurationWindow.Ttl, iConfigurationWindow.Latency, iConfigurationWindow.Multicast, iConfigurationWindow.Enabled, iConfigurationWindow.Preset, iMediaPlayerWindow.ReceiverList, iConfigurationWindow.SubnetList, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org");
+                iSongcaster = new Songcaster("av.openhome.org", iConfigurationWindow.Subnet, iConfigurationWindow.Channel, iConfigurationWindow.Ttl, iConfigurationWindow.Latency, iConfigurationWindow.Multicast, iConfigurationWindow.Enabled, iConfigurationWindow.Preset, iMediaPlayerWindow.ReceiverList, iConfigurationWindow.SubnetList, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org", bytes, "image/bmp");
             }
             catch (SongcasterError e)
             {
