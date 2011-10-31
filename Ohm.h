@@ -44,8 +44,8 @@ public:
     virtual void ReadInterrupt();
 
 private:
-    SocketUdp* iRxSocket;
-	SocketUdp* iTxSocket;
+    SocketUdpBase* iRxSocket;
+	SocketUdpBase* iTxSocket;
     UdpReader* iReader;
     Endpoint iThis;
 };

@@ -55,7 +55,10 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     NSString* manufacturerUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterManufacturerUrl"];
     NSString* modelUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterModelUrl"];
 
-    iSongcaster = SongcasterCreate([domain UTF8String], subnet, aMulticastChannel, ttl, aLatencyMs, aMulticastEnabled ? 1: 0, enabled, preset, ReceiverListCallback, iReceivers, SubnetListCallback, iSubnets, ModelConfigurationChangedCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String]);
+    NSString* senderIconFile = [[NSBundle mainBundle] pathForResource:@"SenderIcon" ofType:@"png"];
+    NSData* senderIcon = [NSData dataWithContentsOfFile:senderIconFile];
+
+    iSongcaster = SongcasterCreate([domain UTF8String], subnet, aMulticastChannel, ttl, aLatencyMs, aMulticastEnabled ? 1: 0, enabled, preset, ReceiverListCallback, iReceivers, SubnetListCallback, iSubnets, ModelConfigurationChangedCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String], (void*)[senderIcon bytes], [senderIcon length], "image/png");
 
     return self;
 }
