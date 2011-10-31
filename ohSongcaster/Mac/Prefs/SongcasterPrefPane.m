@@ -221,8 +221,8 @@
     [iPreferences synchronize];
 
     // sort the list of receivers by room, group order
-    NSSortDescriptor* roomSorter = [NSSortDescriptor sortDescriptorWithKey:@"room" ascending:YES];
-    NSSortDescriptor* groupSorter = [NSSortDescriptor sortDescriptorWithKey:@"group" ascending:YES];
+    NSSortDescriptor* roomSorter = [NSSortDescriptor sortDescriptorWithKey:@"room" ascending:YES selector:@selector(caseInsensitiveCompare:)];
+    NSSortDescriptor* groupSorter = [NSSortDescriptor sortDescriptorWithKey:@"group" ascending:YES selector:@selector(caseInsensitiveCompare:)];
     NSArray* sorters = [NSArray arrayWithObjects:roomSorter, groupSorter, nil];
     NSArray* sorted = [[iPreferences receiverList] sortedArrayUsingDescriptors:sorters];
 
