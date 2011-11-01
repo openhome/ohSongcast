@@ -64,13 +64,13 @@ $(resourcedir)%.strings : %.strings
 $(resourcedir)%.nib : %.xib
 	$(ibtool) $(ibtool_flags) --compile $@ $<
 
-$(outputdir)$(product_name).app : $(outputdir)$(product_name) $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib Info.plist MenuIconOff.png MenuIconOn.png SenderIcon.png Icon.icns $(libohSongcaster)
+$(outputdir)$(product_name).app : $(outputdir)$(product_name) $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib Info.plist MenuIconOff.png MenuIconOn.png SenderIcon.png ../BundleIcon.icns $(libohSongcaster)
 	cp $< $(macosdir)
 	cp $(libohSongcaster) $(macosdir)
 	cp MenuIconOff.png $(resourcedir)
 	cp MenuIconOn.png $(resourcedir)
 	cp SenderIcon.png $(resourcedir)
-	cp Icon.icns $(resourcedir)
+	cp ../BundleIcon.icns $(resourcedir)Icon.icns
 	cp Info.plist $(contentsdir)
 
 
