@@ -21,7 +21,6 @@ using System.Collections.Specialized;
 using System.Xml;
 using System.Xml.Serialization;
 using System.IO;
-using System.Drawing;
 
 namespace OpenHome.Songcaster
 {
@@ -85,7 +84,9 @@ namespace OpenHome.Songcaster
             System.Drawing.Image image = OpenHome.Songcaster.Properties.Resources.Icon.ToBitmap();
 
             MemoryStream stream = new MemoryStream();
+
             image.Save(stream, System.Drawing.Imaging.ImageFormat.Bmp);
+
             byte[] bytes = stream.ToArray();
 
             try
