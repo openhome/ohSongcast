@@ -13,7 +13,7 @@ export product_name = ohSongcaster
 packagemaker=/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker 
 
 
-default : make_objdir_x86_64 make_objdir_i386 make_objdir_ppc make_objdir_universal $(objdir)Installer/$(product_name).dmg
+default : make_objdir_x86_64 make_objdir_i386 make_objdir_universal $(objdir)Installer/$(product_name).dmg
 
 
 .PHONY : clean
@@ -26,9 +26,6 @@ make_objdir_x86_64 :
 make_objdir_i386:
 	mkdir -p $(objdir)i386/
 
-make_objdir_ppc :
-	mkdir -p $(objdir)ppc/
-
 make_objdir_universal :
 	mkdir -p $(objdir)Universal/
 
@@ -36,7 +33,6 @@ make_objdir_universal :
 driver :
 	$(MAKE) -C Driver arch=x86_64
 	$(MAKE) -C Driver arch=i386
-	$(MAKE) -C Driver arch=ppc
 	$(MAKE) -C Driver arch=universal
 
 .PHONY : app

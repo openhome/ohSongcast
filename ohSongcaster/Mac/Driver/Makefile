@@ -17,16 +17,11 @@ arch_flags = -arch i386
 arch_linkflags = -arch i386
 outputdir = $(objdir)i386/Driver/
 
-else ifeq ($(arch), ppc)
-arch_flags = -arch ppc -mtune=G5
-arch_linkflags = -arch ppc -mtune=G5
-outputdir = $(objdir)ppc/Driver/
-
 else ifeq ($(arch), universal)
 outputdir = $(objdir)Universal/Driver/
 
 else
-$(error Unknown architecture $(arch) allowed values (x86_64, i386, ppc, universal))
+$(error Unknown architecture $(arch) allowed values (x86_64, i386, universal))
 endif
 
 
@@ -56,14 +51,14 @@ make_outputdir :
 
 ifeq ($(arch), universal)
 
-# Rule for building the universal binary from the x86_64, i386 and ppc binaries
+# Rule for building the universal binary from the x86_64 and i386 binaries
 
-$(outputdir)$(product_name) : $(objdir)x86_64/Driver/$(product_name) $(objdir)i386/Driver/$(product_name) $(objdir)ppc/Driver/$(product_name)
+$(outputdir)$(product_name) : $(objdir)x86_64/Driver/$(product_name) $(objdir)i386/Driver/$(product_name)
 	lipo -create $^ -output $@
 
 else
 
-# Rules for building the code files for x86_64, i386 and ppc architectures
+# Rules for building the code files for x86_64 and i386 architectures
 
 $(outputdir)%.o : %.cpp
 	$(compiler) $(arch_flags) $(kernel_cc_flags) $< -o $@

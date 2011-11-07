@@ -5,6 +5,7 @@ launchFile="/Library/LaunchAgents/org.openhome.av.songcaster.plist"
 driver="/System/Library/Extensions/ohSongcaster.kext"
 prefs="/Library/PreferencePanes/ohSongcaster.prefPane"
 app="/Library/OpenHome/ohSongcaster.app"
+pkgId="org.openhome.av.songcaster"
 
 
 # stop the agent application
@@ -45,6 +46,11 @@ sudo rm -rf "$launchFile"
 sudo rm -rf "$driver"
 sudo rm -rf "$prefs"
 sudo rm -rf "$app"
+
+
+# clean pkg install receipts
+
+sudo pkgutil --forget "$pkgId" > /dev/null 2>&1
 
 
 echo
