@@ -1,0 +1,30 @@
+#!/bin/sh
+
+
+launchFile="/Library/LaunchAgents/org.openhome.av.songcaster.plist"
+driver="/System/Library/Extensions/ohSongcaster.kext"
+
+
+# stop the agent application - this script is run by the installer as root
+# whereas the agent application is being run in the user context - uses
+# sudo -u $USER to ensure that the agent is successfully unloaded from launchd
+
+if [ -e "$launchFile" ]
+then
+  sudo -u "$USER" launchctl unload "$launchFile" > /dev/null 2>&1
+fi
+
+
+# unload the driver - need to try it twice since the first time 
+# usually gives errors due to a problem with the apple audio driver framework
+
+if [ -e "$driver" ]
+then
+  sudo kextunload "$driver" > /dev/null 2>&1
+  if [ $? != 0 ]
+  then
+    sudo kextunload "$driver" > /dev/null 2>&1
+  fi
+fi
+
+
