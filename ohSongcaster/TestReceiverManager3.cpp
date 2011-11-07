@@ -113,22 +113,15 @@ void ReceiverManager3Logger::ReceiverRemoved(ReceiverManager3Receiver& aReceiver
 
 int CDECL main(int aArgc, char* aArgv[])
 {
-	InitialisationParams* initParams = InitialisationParams::Create();
-
     OptionParser parser;
-    
     OptionUint optionDuration("-d", "--duration", 15, "Number of seconds to run the test");
-
     parser.AddOption(&optionDuration);
-    
     OptionString optionUri("-u", "--uri", Brx::Empty(), "Uri to monitor");
-
     parser.AddOption(&optionUri);
-
-	if (!parser.Parse(aArgc, aArgv)) {
-        return (1);
+    if (!parser.Parse(aArgc, aArgv)) {
+        return 1;
     }
-
+    InitialisationParams* initParams = InitialisationParams::Create();
     UpnpLibrary::Initialise(initParams);
     std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
     TIpAddress subnet = (*subnetList)[0]->Subnet();
@@ -137,16 +130,12 @@ int CDECL main(int aArgc, char* aArgv[])
 
     // Debug::SetLevel(Debug::kTopology);
 
-	while (true) {
-		ReceiverManager3Logger* logger = new ReceiverManager3Logger(optionUri.Value());
+	ReceiverManager3Logger* logger = new ReceiverManager3Logger(Brx::Empty());
 	
-		Blocker* blocker = new Blocker;
-		blocker->Wait(optionDuration.Value());
-
-		delete (blocker);
+    Blocker* blocker = new Blocker;
+    blocker->Wait(optionDuration.Value());
+	delete blocker;
 	
-		delete (logger);
-	}
-
+	delete logger;
 	UpnpLibrary::Close();
 }
