@@ -21,12 +21,12 @@ Abstract:
 #define MAX_TOTAL_STREAMS           MAX_OUTPUT_STREAMS + MAX_INPUT_STREAMS                      
 
 // PCM Info
-#define MIN_CHANNELS                1       // Min Channels.
+#define MIN_CHANNELS                2       // Min Channels.
 #define MAX_CHANNELS_PCM            2       // Max Channels.
 #define MIN_BITS_PER_SAMPLE_PCM     16      // Min Bits Per Sample
-#define MAX_BITS_PER_SAMPLE_PCM     24      // Max Bits Per Sample
-#define MIN_SAMPLE_RATE             8000    // Min Sample Rate
-#define MAX_SAMPLE_RATE             192000  // Max Sample Rate
+#define MAX_BITS_PER_SAMPLE_PCM     16      // Max Bits Per Sample
+#define MIN_SAMPLE_RATE             44100   // Min Sample Rate
+#define MAX_SAMPLE_RATE             48000   // Max Sample Rate
 
 // Wave pins
 enum 

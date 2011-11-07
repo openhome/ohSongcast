@@ -33,6 +33,7 @@ UINT MpusAddr;
 UINT MpusPort;
 UINT MpusLatency;
 
+UINT MpusPacketBytes;
 UINT MpusSampleBytes;
 UINT MpusSampleChannelBytes;
 
@@ -337,6 +338,8 @@ Return Value:
 
 	MpusSending = false;
 	MpusStopped = true;
+
+	MpusPacketBytes = 1828; // (441 * 2 channels * 2 bytes) + 50 Audio Header + 8 Mpus Header + 6 Codec Name ("PCM   ")
 
 	MpusFrame = 0;
 
@@ -1062,7 +1065,7 @@ void MpusSendNewLocked()
 // MpusCopyAudio
 //=============================================================================
 
-void MpusCopyAudio(UCHAR* aDestination, UCHAR* aSource, UINT aBytes, UINT aSampleBytes)
+void MpusCopyAudioLocked(UCHAR* aDestination, UCHAR* aSource, UINT aBytes, UINT aSampleBytes)
 {
 	UCHAR* dst = aDestination;
 	UCHAR* src = aSource;
@@ -1102,7 +1105,7 @@ void MpusSendAddFragmentLocked(UCHAR* aBuffer, UINT aBytes)
 
 	// copy audio
 
-	MpusCopyAudio(buffer, aBuffer, aBytes, MpusSampleChannelBytes);
+	MpusCopyAudioLocked(buffer, aBuffer, aBytes, MpusSampleChannelBytes);
 }
 
 //=============================================================================
@@ -1122,20 +1125,20 @@ bool MpusSendLocked(UCHAR* aBuffer, UINT aBytes)
 
 	UINT combined = MpusBytes + aBytes;
 
-	if (combined < 1828)
+	if (combined < MpusPacketBytes)
 	{
 		MpusSendAddFragmentLocked(aBuffer, aBytes);
 
 		return (false);
 	}
 
-	UINT first = 1828 - MpusBytes;
+	UINT first = MpusPacketBytes - MpusBytes;
 
 	MpusSendAddFragmentLocked(aBuffer, first);
 
 	bool result = MpusQueueAddLocked(&MpusMdl, &MpusBytes, &MpusAddress);
 
-	UINT remaining = combined - 1828;
+	UINT remaining = combined - MpusPacketBytes;
 
 	if (remaining == 0)
 	{
@@ -1389,6 +1392,12 @@ void MpusSetFormatLocked(UINT aSampleRate, UINT aBitRate, UINT aBitDepth, UINT a
 
 	MpusSampleChannelBytes = aBitDepth / 8;
 	MpusSampleBytes = MpusSampleChannelBytes * aChannels;
+
+	MpusPacketBytes = 1828; // (441 * 2 channels * 2 bytes) + 50 Audio Header + 8 Mpus Header + 6 Codec Name ("PCM   ")
+
+	if (aSampleRate == 48000) {
+		MpusPacketBytes = 1984; // (480 * 2 channels * 2 bytes) + 50 Audio Header + 8 Mpus Header + 6 Codec Name ("PCM   ")
+	}
 
 	MpusUpdateLatencyLocked();
 }
