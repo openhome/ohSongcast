@@ -25,7 +25,11 @@ then
   then
     kextunload "$driver"
   fi
+
+  # now delete the previous driver
+  rm -rf "$driver"
 fi
+
 
 # if errors occurred, it will be because the app or driver is not loaded and running - that's fine
 exit 0

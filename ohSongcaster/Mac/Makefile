@@ -44,11 +44,10 @@ prefs :
 	$(MAKE) -C Prefs
 
 $(objdir)Installer/$(product_name).pkg : driver app prefs
-	mkdir -p $(objdir)Installer/Dst/System/Library/Extensions/
 	mkdir -p $(objdir)Installer/Dst/Library/PreferencePanes/
 	mkdir -p $(objdir)Installer/Dst/Library/OpenHome/
 	mkdir -p $(objdir)Installer/Dst/Library/LaunchAgents/
-	cp -R $(objdir)Universal/Driver/$(product_name).kext $(objdir)Installer/Dst/System/Library/Extensions/
+	cp -R $(objdir)Universal/Driver/$(product_name).kext $(objdir)Installer/Dst/Library/OpenHome/
 	cp -R $(objdir)x86_64/Prefs/$(product_name).prefPane $(objdir)Installer/Dst/Library/PreferencePanes/
 	cp -R $(objdir)x86_64/App/$(product_name).app $(objdir)Installer/Dst/Library/OpenHome/
 	cp LaunchAgent.plist  $(objdir)Installer/Dst/Library/LaunchAgents/org.openhome.av.songcaster.plist
