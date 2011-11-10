@@ -51,6 +51,7 @@ private:
 
     TBool iEnabled;
     Endpoint iEndpoint;
+    TIpAddress iAdapter;
     TBool iActive;
     TUint iTtl;
     TUint iLatencyMs;
@@ -61,7 +62,7 @@ private:
         Driver(io_service_t aService);
         ~Driver();
 
-        void SetEndpoint(const Endpoint& aEndpoint);
+        void SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter);
         void SetActive(TBool aValue);
         void SetTtl(TUint aValue);
         void SetLatency(TUint aValue);
@@ -203,6 +204,7 @@ OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriver
     , iNotificationPort(0)
     , iEnabled(false)
     , iEndpoint()
+    , iAdapter()
     , iActive(false)
     , iTtl(4)
     , iLatencyMs(100)
@@ -341,7 +343,7 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
         iDriver = new Driver(iService);
 
         // set the current state of the driver
-        iDriver->SetEndpoint(iEndpoint);
+        iDriver->SetEndpoint(iEndpoint, iAdapter);
         iDriver->SetTtl(iTtl);
         iDriver->SetLatency(iLatencyMs);
         iDriver->SetActive(iActive);
@@ -399,9 +401,10 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
 void OhmSenderDriverMac::SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter)
 {
     iEndpoint = aEndpoint;
+    iAdapter = aAdapter;
 
     if (iDriver) {
-        iDriver->SetEndpoint(aEndpoint);
+        iDriver->SetEndpoint(aEndpoint, aAdapter);
     }
 }
 
@@ -460,12 +463,13 @@ OhmSenderDriverMac::Driver::~Driver()
     IOServiceClose(iHandle);
 }
 
-void OhmSenderDriverMac::Driver::SetEndpoint(const Endpoint& aEndpoint)
+void OhmSenderDriverMac::Driver::SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter)
 {
-    uint64_t args[2];
+    uint64_t args[3];
     args[0] = aEndpoint.Address();
     args[1] = aEndpoint.Port();
-    IOConnectCallScalarMethod(iHandle, eSetEndpoint, args, 2, 0, 0);
+    args[2] = aAdapter;
+    IOConnectCallScalarMethod(iHandle, eSetEndpoint, args, 3, 0, 0);
 }
 
 void OhmSenderDriverMac::Driver::SetActive(TBool aValue)

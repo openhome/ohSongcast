@@ -88,7 +88,7 @@ public:
     SongcastSocket();
     ~SongcastSocket();
     
-    void Open(uint32_t aIpAddress, uint16_t aPort);
+    void Open(uint32_t aIpAddress, uint16_t aPort, uint32_t aAdapter);
     void Close();
     void Send(SongcastAudioMessage& aMsg);
     

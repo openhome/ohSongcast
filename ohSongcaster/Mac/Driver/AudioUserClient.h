@@ -25,7 +25,7 @@ private:
     IOReturn Open();
     IOReturn Close();
     IOReturn SetActive(uint64_t aActive);
-    IOReturn SetEndpoint(uint64_t aIpAddress, uint64_t aPort);
+    IOReturn SetEndpoint(uint64_t aIpAddress, uint64_t aPort, uint64_t aAdapter);
     IOReturn SetTtl(uint64_t aTtl);
     IOReturn SetLatencyMs(uint64_t aLatencyMs);
 

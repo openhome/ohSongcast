@@ -38,7 +38,7 @@ const IOExternalMethodDispatch AudioUserClientDispatcher::iMethods[eNumDriverMet
     },
     // eSetEndpoint
     {
-        (IOExternalMethodAction)&AudioUserClientDispatcher::SetEndpoint, 2, 0, 0, 0
+        (IOExternalMethodAction)&AudioUserClientDispatcher::SetEndpoint, 3, 0, 0, 0
     },
     // eSetTtl
     {
@@ -70,7 +70,7 @@ IOReturn AudioUserClientDispatcher::SetActive(AudioUserClient* aTarget, void* aR
 
 IOReturn AudioUserClientDispatcher::SetEndpoint(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
 {
-    return aTarget->SetEndpoint(aArgs->scalarInput[0], aArgs->scalarInput[1]);
+    return aTarget->SetEndpoint(aArgs->scalarInput[0], aArgs->scalarInput[1], aArgs->scalarInput[2]);
 }
 
 IOReturn AudioUserClientDispatcher::SetTtl(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
@@ -223,15 +223,15 @@ IOReturn AudioUserClient::SetActive(uint64_t aActive)
 
 // eSetEndpoint
 
-IOReturn AudioUserClient::SetEndpoint(uint64_t aIpAddress, uint64_t aPort)
+IOReturn AudioUserClient::SetEndpoint(uint64_t aIpAddress, uint64_t aPort, uint64_t aAdapter)
 {
     IOReturn ret = DeviceOk();
     if (ret == kIOReturnSuccess) {
         iDevice->Socket().Close();
-        iDevice->Socket().Open(aIpAddress, aPort);
+        iDevice->Socket().Open(aIpAddress, aPort, aAdapter);
     }
     else {
-        IOLog("Songcaster AudioUserClient[%p]::SetEndpoint(%llu, %llu) returns %x\n", this, aIpAddress, aPort, ret);
+        IOLog("Songcaster AudioUserClient[%p]::SetEndpoint(%llu, %llu, %llu) returns %x\n", this, aIpAddress, aPort, aAdapter, ret);
     }
     return ret;
 }

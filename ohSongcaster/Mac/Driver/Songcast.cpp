@@ -33,7 +33,7 @@ SongcastSocket::~SongcastSocket()
 }
 
 
-void SongcastSocket::Open(uint32_t aIpAddress, uint16_t aPort)
+void SongcastSocket::Open(uint32_t aIpAddress, uint16_t aPort, uint32_t aAdapter)
 {
     // ensure socket is closed
     Close();
@@ -41,11 +41,22 @@ void SongcastSocket::Open(uint32_t aIpAddress, uint16_t aPort)
     // create the new socket
     errno_t err = sock_socket(PF_INET, SOCK_DGRAM, 0, NULL, NULL, &iSocket);
     if (err != 0) {
-        IOLog("Songcaster SongcastSocket[%p]::Open(0x%x, %u) sock_socket failed with %d\n", this, aIpAddress, aPort, err);
+        IOLog("Songcaster SongcastSocket[%p]::Open(0x%x, %u, 0x%x) sock_socket failed with %d\n", this, aIpAddress, aPort, aAdapter, err);
         iSocket = 0;
         return;
     }
     
+    // set the adapter for multicast sending
+    struct in_addr adapter;
+    adapter.s_addr = aAdapter;
+    err = sock_setsockopt(iSocket, IPPROTO_IP, IP_MULTICAST_IF, &adapter, sizeof(adapter));
+    if (err != 0) {
+        IOLog("Songcaster SongcastSocket[%p]::Open(0x%x, %u, 0x%x) sock_setsockopt failed with %d\n", this, aIpAddress, aPort, aAdapter, err);
+        sock_close(iSocket);
+        iSocket = 0;
+        return;
+    }
+
     // connect the socket to the endpoint
     SocketAddress addr;
     memset(&addr, 0, sizeof(SocketAddress));
@@ -56,7 +67,7 @@ void SongcastSocket::Open(uint32_t aIpAddress, uint16_t aPort)
     
     err = sock_connect(iSocket, (const sockaddr*)&addr, 0);
     if (err != 0) {
-        IOLog("Songcaster SongcastSocket[%p]::Open(0x%x, %u) sock_connect failed with %d\n", this, aIpAddress, aPort, err);
+        IOLog("Songcaster SongcastSocket[%p]::Open(0x%x, %u, 0x%x) sock_connect failed with %d\n", this, aIpAddress, aPort, aAdapter, err);
         sock_close(iSocket);
         iSocket = 0;
         return;
@@ -65,7 +76,7 @@ void SongcastSocket::Open(uint32_t aIpAddress, uint16_t aPort)
     // set the ttl
     SetSocketTtl();
 
-    IOLog("Songcaster SongcastSocket[%p]::Open(0x%x, %u) ok\n", this, aIpAddress, aPort);
+    IOLog("Songcaster SongcastSocket[%p]::Open(0x%x, %u, 0x%x) ok\n", this, aIpAddress, aPort, aAdapter);
 }
 
 
