@@ -119,7 +119,7 @@ public:
 	CSocketOhm();
 	NTSTATUS Initialise(CWinsock& aWsk, NETWORK_CALLBACK* aCallback, void*  aContext);
 	void SetTtl(ULONG aValue);
-	void SetLatency(ULONG aValue);
+	void SetMulticastIf(ULONG aValue);
 	void Send(WSK_BUF* aBuffer, SOCKADDR* aAddress, PIRP aIrp);
 	bool Initialised();
 	void Close();
@@ -131,6 +131,7 @@ private:
 	static IO_COMPLETION_ROUTINE SendComplete;
 	static IO_COMPLETION_ROUTINE CloseComplete;
 	static IO_COMPLETION_ROUTINE SetTtlComplete;
+	static IO_COMPLETION_ROUTINE SetMulticastIfComplete;
 
 private:
     KSPIN_LOCK iSpinLock;
