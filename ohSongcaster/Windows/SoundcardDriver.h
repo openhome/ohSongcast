@@ -30,7 +30,7 @@ private:
 
 	// IOhmSenderDriver
 	virtual void SetEnabled(TBool aValue);
-	virtual void SetEndpoint(const Endpoint& aEndpoint);
+	virtual void SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter);
 	virtual void SetActive(TBool aValue);
 	virtual void SetTtl(TUint aValue);
 	virtual void SetLatency(TUint aValue);

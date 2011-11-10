@@ -28,7 +28,7 @@ public:
 private:
     // IOhmSenderDriver
     virtual void SetEnabled(TBool aValue);
-    virtual void SetEndpoint(const Endpoint& aEndpoint);
+	virtual void SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter);
     virtual void SetActive(TBool aValue);
     virtual void SetTtl(TUint aValue);
     virtual void SetLatency(TUint aValue);
@@ -396,7 +396,7 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
     }
 }
 
-void OhmSenderDriverMac::SetEndpoint(const Endpoint& aEndpoint)
+void OhmSenderDriverMac::SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter)
 {
     iEndpoint = aEndpoint;
 
