@@ -918,9 +918,18 @@ void MpusUpdateEndpoint(UINT aAddress, UINT aPort, UINT aAdapter)
 
 	CWinsock::Initialise(&MpusAddress, aAddress, aPort);
 
-	MpusAdapter = aAdapter;
+	if (MpusAdapter != aAdapter)
+	{
+		MpusAdapter = aAdapter;
 
-	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+	
+		Socket->SetMulticastIf(aAdapter);
+	}
+	else
+	{
+		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
+	}
 }
 
 //=============================================================================

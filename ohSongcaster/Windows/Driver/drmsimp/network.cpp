@@ -343,6 +343,41 @@ NTSTATUS CSocketOhm::SetTtlComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVO
 }
 
 
+void CSocketOhm::SetMulticastIf(ULONG aValue)
+{
+    UNREFERENCED_PARAMETER(aValue);
+
+	PIRP irp;
+
+	// Allocate an IRP
+
+	irp = IoAllocateIrp(1, FALSE);
+
+	// Check result
+
+	if (irp == NULL)
+	{
+        return;
+    }
+
+	IoSetCompletionRoutine(irp,	SetTtlComplete, NULL, TRUE, TRUE, TRUE);
+
+	SIZE_T returned;
+
+	((PWSK_PROVIDER_BASIC_DISPATCH)(iSocket->Dispatch))->WskControlSocket(iSocket, WskSetOption, IP_MULTICAST_IF, IPPROTO_IP, 4, &aValue, 0, NULL, &returned, irp);
+}
+
+NTSTATUS CSocketOhm::SetMulticastIfComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext)
+{
+    UNREFERENCED_PARAMETER(aDeviceObject);
+    UNREFERENCED_PARAMETER(aContext);
+
+	IoFreeIrp(aIrp);
+
+	return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
+
 /*
 void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels)
 {
