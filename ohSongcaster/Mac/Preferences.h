@@ -52,6 +52,16 @@ typedef enum
 
 
 
+@interface PrefMulticastChannel : NSObject
+{
+}
+
++ (uint32_t) generate;
+
+@end
+
+
+
 @interface Preferences : NSObject
 {
     CFStringRef appId;

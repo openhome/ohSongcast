@@ -156,28 +156,7 @@
 {
     // generate a new random channel - the channel is the last 2 bytes of the
     // multicast IP address 239.253.x.x
-    srandom([iPreferences multicastChannel]);
-
-    // man page for random() state the function returns an integer in range [0, 2^31 - 1]
-    uint64_t maxRand = (((uint64_t)1)<<31) - 1;
-
-    // generating a random number between [0,N] is (random() * (N+1) / (maxRand+1)) - if
-    // we use (random() * N / maxRand), the random number will only generate N when
-    // random() returns maxRand which is a chance of 1 in (2^31 -1)
-
-    // byte1 in range [1,254]
-    uint64_t byte1 = random();
-    byte1 *= 254;
-    byte1 /= maxRand + 1;
-    byte1 += 1;
-    
-    // byte2 in range [1,254]
-    uint64_t byte2 = random();
-    byte2 *= 254;
-    byte2 /= maxRand + 1;
-    byte2 += 1;
-
-    uint32_t channel = (byte1 << 8) | byte2;
+    uint32_t channel = [PrefMulticastChannel generate];
 
     // set preference and update UI
     [iPreferences setMulticastChannel:channel];

@@ -69,6 +69,47 @@
 
 
 
+static bool gPrefMulticastChannelSeeded = false;
+
+@implementation PrefMulticastChannel
+
+
++ (uint32_t) generate
+{
+    // generate a new random channel - the channel is the last 2 bytes of the
+    // multicast IP address 239.253.x.x
+    if (!gPrefMulticastChannelSeeded)
+    {
+        srandom(time(NULL));
+        gPrefMulticastChannelSeeded = true;
+    }
+
+    // man page for random() state the function returns an integer in range [0, 2^31 - 1]
+    uint64_t maxRand = (((uint64_t)1)<<31) - 1;
+
+    // generating a random number between [0,N] is (random() * (N+1) / (maxRand+1)) - if
+    // we use (random() * N / maxRand), the random number will only generate N when
+    // random() returns maxRand which is a chance of 1 in (2^31 -1)
+
+    // byte1 in range [1,254]
+    uint64_t byte1 = random();
+    byte1 *= 254;
+    byte1 /= maxRand + 1;
+    byte1 += 1;
+
+    // byte2 in range [1,254]
+    uint64_t byte2 = random();
+    byte2 *= 254;
+    byte2 /= maxRand + 1;
+    byte2 += 1;
+
+    return (byte1 << 8) | byte2;
+}
+
+@end
+
+
+
 @implementation Preferences
 
 
@@ -269,7 +310,18 @@
 
 - (uint32_t) multicastChannel
 {
-    return (uint32_t)[self getIntegerPreference:@"MulticastChannel" default:26361];
+    uint32_t defaultChannel = [PrefMulticastChannel generate];
+    uint32_t channel = (uint32_t)[self getIntegerPreference:@"MulticastChannel" default:defaultChannel];
+
+    if (channel == defaultChannel)
+    {
+        // channel is not current stored - the default value was returned - so set the value in the
+        // preferences file - if the channel is stored and is coincidentally the same as the generated
+        // default, setting it again will do no harm
+        [self setMulticastChannel:channel];
+    }
+
+    return channel;
 }
 
 
