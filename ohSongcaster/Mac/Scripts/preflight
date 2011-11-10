@@ -11,7 +11,7 @@ driver="/System/Library/Extensions/ohSongcaster.kext"
 
 if [ -e "$launchFile" ]
 then
-  sudo -u "$USER" launchctl unload "$launchFile" > /dev/null 2>&1
+  sudo -u "$USER" launchctl unload "$launchFile"
 fi
 
 
@@ -20,11 +20,17 @@ fi
 
 if [ -e "$driver" ]
 then
-  sudo kextunload "$driver" > /dev/null 2>&1
+  kextunload "$driver"
   if [ $? != 0 ]
   then
-    sudo kextunload "$driver" > /dev/null 2>&1
+    kextunload "$driver"
   fi
+
+  # now delete the previous driver
+  rm -rf "$driver"
 fi
 
+
+# if errors occurred, it will be because the app or driver is not loaded and running - that's fine
+exit 0
 
