@@ -385,7 +385,7 @@ void OhmSenderDriverWindows::SetActive(TBool  aValue)
 	DeviceIoControl(iHandle, IOCTL_KS_PROPERTY, &prop, sizeof(KSPROPERTY), &value, sizeof(value), &bytes, 0);
 }
 
-void OhmSenderDriverWindows::SetEndpoint(const Endpoint& aEndpoint)
+void OhmSenderDriverWindows::SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter)
 {
 	KSPROPERTY prop;
 				
@@ -393,12 +393,13 @@ void OhmSenderDriverWindows::SetEndpoint(const Endpoint& aEndpoint)
     prop.Id = KSPROPERTY_OHSOUNDCARD_ENDPOINT;
     prop.Flags = KSPROPERTY_TYPE_SET;
 
-	TByte buffer[8];
+	TByte buffer[12];
 
 	ULONG* ptr = (ULONG*)buffer;
 	
 	*ptr++ = Arch::BigEndian4(aEndpoint.Address());
 	*ptr++ = aEndpoint.Port();
+	*ptr++ = Arch::BigEndian4(aAdapter);
 
     DWORD bytes;
 

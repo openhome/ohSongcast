@@ -219,10 +219,11 @@ void OhmSenderDriver::SetActive(TBool aValue)
 	iMutex.Signal();
 }
 
-void OhmSenderDriver::SetEndpoint(const Endpoint& aEndpoint)
+void OhmSenderDriver::SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter)
 {
     iMutex.Wait();
     iEndpoint.Replace(aEndpoint);
+	iAdapter = aAdapter;
     iMutex.Signal();
 }
 
@@ -572,10 +573,12 @@ void OhmSender::Start()
         if (iMulticast) {
             iSocketOhm.OpenMulticast(iInterface, iTtl, iMulticastEndpoint);
             iTargetEndpoint.Replace(iMulticastEndpoint);
+			iTargetInterface = iInterface;
             iThreadMulticast->Signal();
         }
         else {
             iSocketOhm.OpenUnicast(iInterface, iTtl);
+			iTargetInterface = iInterface;
             iThreadUnicast->Signal();
         }
         iStarted = true;
@@ -709,7 +712,7 @@ void OhmSender::RunMulticast()
 
         LOG(kMedia, "OhmSender::RunMulticast go\n");
         
-		iDriver.SetEndpoint(iTargetEndpoint);
+		iDriver.SetEndpoint(iTargetEndpoint, iTargetInterface);
 
 		LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x:%d\n", iTargetEndpoint.Address(), iTargetEndpoint.Port());
 
@@ -847,7 +850,7 @@ void OhmSender::RunUnicast()
 
                 iTargetEndpoint.Replace(iSocketOhm.Sender());
 
-				iDriver.SetEndpoint(iTargetEndpoint);
+				iDriver.SetEndpoint(iTargetEndpoint, iTargetInterface);
 
 				LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x:%d\n", iTargetEndpoint.Address(), iTargetEndpoint.Port());
         
@@ -966,7 +969,7 @@ void OhmSender::RunUnicast()
                                         SendSlaveList();
                                     }
                                     
-									iDriver.SetEndpoint(iTargetEndpoint);
+									iDriver.SetEndpoint(iTargetEndpoint, iTargetInterface);
 
 									LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x:%d\n", iTargetEndpoint.Address(), iTargetEndpoint.Port());
                                     

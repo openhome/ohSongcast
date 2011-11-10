@@ -21,7 +21,7 @@ public:
 private:
     // IOhmSenderDriver
     virtual void SetEnabled(TBool aValue);
-    virtual void SetEndpoint(const Endpoint& aEndpoint);
+	virtual void SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter);
     virtual void SetActive(TBool aValue);
     virtual void SetTtl(TUint aValue);
     virtual void SetLatency(TUint aValue);
@@ -47,9 +47,9 @@ void OhmSenderDriverPosix::SetEnabled(TBool aValue)
     printf(aValue ? "OhmSenderDriverPosix: Enabled\n" : "OhmSenderDriverPosix: Disabled\n");
 }
 
-void OhmSenderDriverPosix::SetEndpoint(const Endpoint& aEndpoint)
+void OhmSenderDriverPosix::SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter)
 {
-    printf("OhmSenderDriverPosix: Endpoint %8x:%d\n", aEndpoint.Address(), aEndpoint.Port());
+    printf("OhmSenderDriverPosix: Endpoint %8x:%d, Adapter %8x\n", aEndpoint.Address(), aEndpoint.Port(), aAdapter);
 }
 
 void OhmSenderDriverPosix::SetActive(TBool aValue)

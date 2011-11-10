@@ -19,7 +19,7 @@ class IOhmSenderDriver
 {
 public:
     virtual void SetEnabled(TBool aValue) = 0;
-    virtual void SetEndpoint(const Endpoint& aEndpoint) = 0;
+    virtual void SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter) = 0;
     virtual void SetActive(TBool aValue) = 0;
     virtual void SetTtl(TUint aValue) = 0;
     virtual void SetLatency(TUint aValue) = 0;
@@ -40,7 +40,7 @@ private:
     // IOhmSenderDriver
     virtual void SetEnabled(TBool aValue);
     virtual void SetActive(TBool aValue);
-    virtual void SetEndpoint(const Endpoint& aEndpoint);
+    virtual void SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter);
     virtual void SetTtl(TUint aValue);
     virtual void SetLatency(TUint aValue);
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
@@ -51,6 +51,7 @@ private:
     TBool iActive;
 	TBool iSend;
     Endpoint iEndpoint;
+	TIpAddress iAdapter;
     Bws<kMaxAudioFrameBytes> iBuffer;
     TUint iFrame;
     TUint iSampleRate;
@@ -175,6 +176,7 @@ private:
     TBool iAliveBlocked;
     Endpoint iMulticastEndpoint;
     Endpoint iTargetEndpoint;
+	TIpAddress iTargetInterface;
     ThreadFunctor* iThreadMulticast;
     ThreadFunctor* iThreadUnicast;
     ThreadFunctor* iThreadZone;

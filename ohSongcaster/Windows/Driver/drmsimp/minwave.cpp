@@ -43,6 +43,7 @@ bool MpusStopped;
 PMDL MpusMdl;
 PMDL MpusMdlLast;
 
+UINT MpusAdapter;
 SOCKADDR MpusAddress;
 SOCKADDR MpusOutputAddress;
 
@@ -909,13 +910,15 @@ bool MpusQueueRemove(PMDL* aMdl, ULONG* aBytes, SOCKADDR* aAddress)
 // MpusUpdateEndpoint
 //=============================================================================
 
-void MpusUpdateEndpoint(UINT aAddress, UINT aPort)
+void MpusUpdateEndpoint(UINT aAddress, UINT aPort, UINT aAdapter)
 {
 	KIRQL oldIrql;
 
 	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
 
 	CWinsock::Initialise(&MpusAddress, aAddress, aPort);
+
+	MpusAdapter = aAdapter;
 
 	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
 }
