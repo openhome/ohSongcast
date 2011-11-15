@@ -260,7 +260,7 @@
 
     if (info != NULL)
     {
-        if ([iCurrentVersion compare:[info version]] == NSOrderedDescending) {
+        if ([iCurrentVersion compare:[info version]] != NSOrderedAscending) {
             // no new version available
             info = NULL;
         }
