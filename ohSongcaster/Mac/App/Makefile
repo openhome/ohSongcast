@@ -53,7 +53,7 @@ $(outputdir)%.o : %.mm
 $(outputdir)Preferences.o : ../Preferences.m
 	$(compiler) $(arch_flags) $(objc_flags) $< -o $@
 
-objects = $(outputdir)main.o $(outputdir)SongcasterAppDelegate.o $(outputdir)Model.o $(outputdir)ModelSongcaster.o $(outputdir)Preferences.o $(outputdir)ReceiverList.o $(outputdir)Receiver.o $(outputdir)SubnetList.o $(outputdir)CrashLogging.o
+objects = $(outputdir)main.o $(outputdir)SongcasterAppDelegate.o $(outputdir)Model.o $(outputdir)ModelSongcaster.o $(outputdir)Preferences.o $(outputdir)ReceiverList.o $(outputdir)Receiver.o $(outputdir)SubnetList.o $(outputdir)CrashLogging.o $(outputdir)AutoUpdate.o
 
 $(outputdir)$(product_name) : $(objects)
 	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(libohSongcaster) $(linkflags2) -o $@
