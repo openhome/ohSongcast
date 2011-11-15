@@ -35,6 +35,8 @@
 @synthesize textLatencyMs;
 @synthesize sliderLatencyMs;
 @synthesize buttonNetworkAdapter;
+@synthesize buttonAutoUpdates;
+@synthesize buttonBeta;
 
 
 
@@ -78,6 +80,8 @@
     [textMulticastChannel setIntegerValue:[iPreferences multicastChannel]];
     [textLatencyMs setIntegerValue:[iPreferences latencyMs]];
     [sliderLatencyMs setIntegerValue:[iPreferences latencyMs]];
+    [buttonAutoUpdates setState:([iPreferences autoUpdatesEnabled] ? NSOnState : NSOffState)];
+    [buttonBeta setState:([iPreferences betaUpdatesEnabled] ? NSOnState : NSOffState)];
 
     // show/hide the getting started view
     if ([iPreferences hasRunWizard])
@@ -184,6 +188,24 @@
     {
         [iPreferences setSelectedSubnet:[iSubnetList objectAtIndex:selected]];
     }
+}
+
+
+- (IBAction) buttonAutoUpdatesClicked:(id)aSender
+{
+    [iPreferences setAutoUpdatesEnabled:([buttonAutoUpdates state] == NSOnState)];
+}
+
+
+- (IBAction) buttonBetaClicked:(id)aSender
+{
+    [iPreferences setBetaUpdatesEnabled:([buttonBeta state] == NSOnState)];
+}
+
+
+- (IBAction) buttonCheckForUpdatesClicked:(id)aSender
+{
+    [iPreferences checkForUpdates];
 }
 
 

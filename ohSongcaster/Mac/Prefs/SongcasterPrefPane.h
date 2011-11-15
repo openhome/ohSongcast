@@ -38,6 +38,8 @@
     IBOutlet NSTextField* textLatencyMs;
     IBOutlet NSSlider* sliderLatencyMs;
     IBOutlet NSPopUpButton* buttonNetworkAdapter;
+    IBOutlet NSButton* buttonAutoUpdates;
+    IBOutlet NSButton* buttonBeta;
 
     Preferences* iPreferences;
     NSArray* iReceiverList;
@@ -57,6 +59,8 @@
 @property (assign) NSTextField* textLatencyMs;
 @property (assign) NSSlider* sliderLatencyMs;
 @property (assign) NSPopUpButton* buttonNetworkAdapter;
+@property (assign) NSButton* buttonAutoUpdates;
+@property (assign) NSButton* buttonBeta;
 
 - (void) mainViewDidLoad;
 - (void) updateButtonOnOff;
@@ -70,6 +74,9 @@
 - (IBAction) buttonMulticastChannelClicked:(id)aSender;
 - (IBAction) sliderLatencyMsChanged:(id)aSender;
 - (IBAction) buttonNetworkAdapterClicked:(id)aSender;
+- (IBAction) buttonAutoUpdatesClicked:(id)aSender;
+- (IBAction) buttonBetaClicked:(id)aSender;
+- (IBAction) buttonCheckForUpdatesClicked:(id)aSender;
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;
 - (void) preferenceReceiverListChanged:(NSNotification*)aNotification;
 - (void) preferenceSubnetListChanged:(NSNotification*)aNotification;

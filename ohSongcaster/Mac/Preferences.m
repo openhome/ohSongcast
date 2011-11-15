@@ -357,6 +357,44 @@ static bool gPrefMulticastChannelSeeded = false;
 }
 
 
+- (bool) autoUpdatesEnabled
+{
+    return [self getBoolPreference:@"AutoUpdatesEnabled" default:true];
+}
+
+
+- (void) setAutoUpdatesEnabled:(bool)aEnabled
+{
+    [self setBoolPreference:@"AutoUpdatesEnabled" value:aEnabled notification:@"PreferenceAutoUpdatesEnabledChanged"];
+}
+
+
+- (void) addObserverAutoUpdatesEnabled:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"PreferenceAutoUpdatesEnabledChanged" object:(NSString*)appId];
+}
+
+
+- (bool) betaUpdatesEnabled
+{
+    return [self getBoolPreference:@"BetaUpdatesEnabled" default:false];
+}
+
+
+- (void) setBetaUpdatesEnabled:(bool)aEnabled
+{
+    [self setBoolPreference:@"BetaUpdatesEnabled" value:aEnabled notification:@"PreferenceBetaUpdatesEnabledChanged"];
+}
+
+
+- (void) addObserverBetaUpdatesEnabled:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"PreferenceBetaUpdatesEnabledChanged" object:(NSString*)appId];
+}
+
+
 - (NSArray*) receiverList
 {
     NSMutableArray* receiverList = [NSMutableArray arrayWithCapacity:0];
@@ -535,6 +573,20 @@ static bool gPrefMulticastChannelSeeded = false;
 {
     NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
     [centre addObserver:aObserver selector:aSelector name:@"ReconnectReceivers" object:(NSString*)appId];
+}
+
+
+- (void) checkForUpdates
+{
+    CFNotificationCenterRef centre = CFNotificationCenterGetDistributedCenter();
+    CFNotificationCenterPostNotification(centre, CFSTR("CheckForUpdates"), appId, NULL, TRUE);
+}
+
+
+- (void) addObserverCheckForUpdates:(id)aObserver selector:(SEL)aSelector
+{
+    NSDistributedNotificationCenter* centre = [NSDistributedNotificationCenter defaultCenter];
+    [centre addObserver:aObserver selector:aSelector name:@"CheckForUpdates" object:(NSString*)appId];
 }
 
 
