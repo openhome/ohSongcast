@@ -279,6 +279,11 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 }
 
 
+- (void) checkForUpdates
+{
+}
+
+
 @end
 
 

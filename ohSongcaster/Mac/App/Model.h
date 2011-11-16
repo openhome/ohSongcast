@@ -8,6 +8,7 @@
 
 - (void) enabledChanged;
 - (void) iconVisibleChanged;
+- (void) checkForUpdates;
 
 @end
 
@@ -27,6 +28,8 @@
 - (bool) enabled;
 - (void) setEnabled:(bool)aValue;
 - (bool) hasRunWizard;
+- (bool) autoUpdatesEnabled;
+- (bool) betaUpdatesEnabled;
 - (void) reconnectReceivers;
 
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;
@@ -38,5 +41,8 @@
 - (void) preferenceMulticastChannelChanged:(NSNotification*)aNotification;
 - (void) preferenceLatencyMsChanged:(NSNotification*)aNotification;
 - (void) preferenceSelectedSubnetChanged:(NSNotification*)aNotification;
+- (void) preferenceAutoUpdatesEnabledChanged:(NSNotification*)aNotification;
+- (void) preferenceBetaUpdatesEnabledChanged:(NSNotification*)aNotification;
+- (void) preferenceCheckForUpdates:(NSNotification*)aNotification;
 
 @end
