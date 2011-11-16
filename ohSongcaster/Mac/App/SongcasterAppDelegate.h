@@ -13,8 +13,8 @@
     IBOutlet NSMenuItem* menuItemReconnect;
     IBOutlet NSMenuItem* menuItemPrefs;
 
-    NSStatusItem* statusItem;
-    Model* model;
+    NSStatusItem* iStatusItem;
+    Model* iModel;
     bool iSessionResigned;
     bool iSleeping;
     SCNetworkReachabilityRef iReachability;
