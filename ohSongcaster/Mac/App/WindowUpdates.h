@@ -3,6 +3,18 @@
 #import "AutoUpdate.h"
 
 
+@interface UpdateCheck : NSObject
+{
+    bool isManual;
+    AutoUpdateInfo* updateInfo;
+}
+
+@property (assign) bool isManual;
+@property (retain) AutoUpdateInfo* updateInfo;
+
+@end
+
+
 @interface WindowUpdates : NSWindowController
 {
     IBOutlet NSProgressIndicator* progressChecking;
@@ -13,7 +25,7 @@
     IBOutlet NSView* viewUnavailable;
     IBOutlet NSView* viewDownloading;
     AutoUpdate* iAutoUpdate;
-    AutoUpdateInfo* iUpdateFound;
+    UpdateCheck* iUpdateCheck;
 }
 
 @property (assign) NSProgressIndicator* progressChecking;
@@ -28,6 +40,7 @@
 - (IBAction) buttonInstallClicked:(id)aSender;
 - (IBAction) buttonNotNowClicked:(id)aSender;
 - (void) setAutoUpdate:(AutoUpdate*)aAutoUpdate;
-- (void) startChecking;
+- (void) startAutomaticCheck;
+- (void) startManualCheck;
 
 @end

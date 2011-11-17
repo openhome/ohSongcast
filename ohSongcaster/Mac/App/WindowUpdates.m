@@ -37,16 +37,34 @@
 }
 
 
-- (void) checkForUpdatesFinished
+- (void) checkForUpdatesFinished:(AutoUpdateInfo*)aUpdateInfo
 {
-    // back in the main thread - show the next state of the window
-    [self hideAll];
-    if (iUpdateFound == NULL) {
-        [viewUnavailable setHidden:NO];
-    }
-    else {
-        [textAvailable setStringValue:[NSString stringWithFormat:NSLocalizedString(@"UpdateAvailableText", @""), [iUpdateFound appName], [iUpdateFound version]]];
+    // back running in main thread - store the found update info
+    [iUpdateCheck setUpdateInfo:aUpdateInfo];
+
+    if (aUpdateInfo != NULL)
+    {
+        // update found - show the available view
+        [self hideAll];
+        [textAvailable setStringValue:[NSString stringWithFormat:NSLocalizedString(@"UpdateAvailableText", @""), [aUpdateInfo appName], [aUpdateInfo version]]];
         [viewAvailable setHidden:NO];
+
+        // if this is an automatic update check, the window is not visible yet
+        if ([iUpdateCheck isManual] == false)
+        {
+            // this will request that this app becomes the activated app, meaning that the
+            // update window will appear in the foreground
+            [NSApp activateIgnoringOtherApps:YES];
+            [[self window] center];
+            [[self window] makeKeyAndOrderFront:self];
+        }
+    }
+    else
+    {
+        // no update found - changing the view does not matter when doing an automatic check
+        // because the window is not visible
+        [self hideAll];
+        [viewUnavailable setHidden:NO];
     }
 }
 
@@ -57,9 +75,9 @@
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
     // check for updates
-    iUpdateFound = [[iAutoUpdate checkForUpdates] retain];
+    AutoUpdateInfo* updateInfo = [iAutoUpdate checkForUpdates];
     // post back to main thread
-    [self performSelectorOnMainThread:@selector(checkForUpdatesFinished) withObject:nil waitUntilDone:FALSE];
+    [self performSelectorOnMainThread:@selector(checkForUpdatesFinished:) withObject:updateInfo waitUntilDone:FALSE];
 
     // clean up autoreleased objects
     [pool drain];
@@ -73,13 +91,13 @@
 }
 
 
-- (void) performDownload
+- (void) performDownload:(AutoUpdateInfo*)aUpdateInfo
 {
     // running in a background thread - must create an autorelease pool
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
     // download the update and run the installer
-    [iAutoUpdate installUpdate:iUpdateFound];
+    [iAutoUpdate installUpdate:aUpdateInfo];
     // post back to main thread
     [self performSelectorOnMainThread:@selector(downloadFinished) withObject:nil waitUntilDone:FALSE];
 
@@ -88,11 +106,32 @@
 }
 
 
-- (void) startChecking
+- (void) startAutomaticCheck
 {
     if (iAutoUpdate == NULL) {
         return;
     }
+
+    // start checking on a background thread - don't show any UI just yet
+    if (iUpdateCheck != NULL) {
+        [iUpdateCheck release];
+    }
+    iUpdateCheck = [[UpdateCheck alloc] init];
+    [iUpdateCheck setIsManual:false];
+
+    [self performSelectorInBackground:@selector(performCheckForUpdates) withObject:nil];
+}
+
+
+- (void) startManualCheck
+{
+    if (iAutoUpdate == NULL) {
+        return;
+    }
+
+    // this will request that this app becomes the activated app, meaning that the
+    // update window will appear in the foreground
+    [NSApp activateIgnoringOtherApps:YES];
 
     // show the update window in checking mode
     [self hideAll];
@@ -102,19 +141,21 @@
     [[self window] makeKeyAndOrderFront:self];
 
     // start checking on a background thread
-    if (iUpdateFound != NULL) {
-        [iUpdateFound release];
-        iUpdateFound = NULL;
+    if (iUpdateCheck != NULL) {
+        [iUpdateCheck release];
     }
+    iUpdateCheck = [[UpdateCheck alloc] init];
+    [iUpdateCheck setIsManual:true];
+
     [self performSelectorInBackground:@selector(performCheckForUpdates) withObject:nil];
 }
 
 
 - (IBAction)buttonDetailsClicked:(id)aSender
 {
-    if (iUpdateFound != NULL)
+    if (iUpdateCheck != NULL && [iUpdateCheck updateInfo] != NULL)
     {
-        NSURL* url = [NSURL URLWithString:[iUpdateFound historyUri]];
+        NSURL* url = [NSURL URLWithString:[[iUpdateCheck updateInfo] historyUri]];
         [[NSWorkspace sharedWorkspace] openURL:url];
     }
 }
@@ -127,8 +168,9 @@
     [viewDownloading setHidden:NO];
     [progressDownloading startAnimation:self];
 
-    // start downloading on a background thread
-    [self performSelectorInBackground:@selector(performDownload) withObject:nil];
+    // start downloading on a background thread - pass in the update object so the other thread does
+    // not have to directly access members
+    [self performSelectorInBackground:@selector(performDownload:) withObject:[iUpdateCheck updateInfo]];
 }
 
 
@@ -142,6 +184,12 @@
 @end
 
 
+@implementation UpdateCheck
+
+@synthesize isManual;
+@synthesize updateInfo;
+
+@end
 
 
 

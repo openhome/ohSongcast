@@ -141,6 +141,12 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
         [iWindowUpdates release];
         iWindowUpdates = nil;
     }
+
+    // do the automatic update check
+    if ([iModel autoUpdatesEnabled])
+    {
+        [iWindowUpdates startAutomaticCheck];
+    }
 }
 
 
@@ -258,11 +264,8 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 
 - (void) checkForUpdates
 {
-    // this will request that this app becomes the activated app, meaning that the
-    // update window will appear in the foreground
-    [NSApp activateIgnoringOtherApps:YES];
     // start checking for updates
-    [iWindowUpdates startChecking];
+    [iWindowUpdates startManualCheck];
 }
 
 
