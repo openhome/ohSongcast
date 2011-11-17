@@ -164,6 +164,12 @@
         return NULL;
     }
 
+    // look for the history node
+    CFXMLTreeRef historyNode = [self findTreeNode:aNode name:CFSTR("history")];
+    if (historyNode == NULL) {
+        return NULL;
+    }
+
     // get the version
     CFXMLNodeRef xmlNode = CFXMLTreeGetNode(typeNode);
     CFXMLElementInfo* nodeInfo = (CFXMLElementInfo*)CFXMLNodeGetInfoPtr(xmlNode);
@@ -193,11 +199,33 @@
         return NULL;
     }
 
+    // get the history text node
+    CFStringRef history = NULL;
+    childCount = CFTreeGetChildCount(historyNode);
+
+    for (int i=0 ; i<childCount ; i++)
+    {
+        CFXMLTreeRef child = CFTreeGetChildAtIndex(historyNode, i);
+        CFXMLNodeRef xmlNode = CFXMLTreeGetNode(child);
+        CFXMLNodeTypeCode type = CFXMLNodeGetTypeCode(xmlNode);
+
+        if (type == kCFXMLNodeTypeText)
+        {
+            history = CFXMLNodeGetString(xmlNode);
+            break;
+        }
+    }
+
+    if (history == NULL) {
+        return NULL;
+    }
+
     // create the info object
     AutoUpdateInfo* info = [[[AutoUpdateInfo alloc] init] autorelease];
     [info setAppName:iAppName];
     [info setVersion:[NSString stringWithString:(NSString*)version]];
     [info setUri:[NSString stringWithString:(NSString*)url]];
+    [info setHistoryUri:[NSString stringWithString:(NSString*)history]];
     return info;
 }
 
@@ -337,6 +365,7 @@
 @synthesize appName;
 @synthesize version;
 @synthesize uri;
+@synthesize historyUri;
 
 @end
 

@@ -110,6 +110,16 @@
 }
 
 
+- (IBAction)buttonDetailsClicked:(id)aSender
+{
+    if (iUpdateFound != NULL)
+    {
+        NSURL* url = [NSURL URLWithString:[iUpdateFound historyUri]];
+        [[NSWorkspace sharedWorkspace] openURL:url];
+    }
+}
+
+
 - (IBAction)buttonInstallClicked:(id)aSender
 {
     // show the downloading view

@@ -24,6 +24,7 @@
 @property (assign) NSView* viewUnavailable;
 @property (assign) NSView* viewDownloading;
 
+- (IBAction) buttonDetailsClicked:(id)aSender;
 - (IBAction) buttonInstallClicked:(id)aSender;
 - (IBAction) buttonNotNowClicked:(id)aSender;
 - (void) setAutoUpdate:(AutoUpdate*)aAutoUpdate;

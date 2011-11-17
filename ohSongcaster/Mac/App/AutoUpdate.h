@@ -8,11 +8,13 @@
     NSString* appName;
     NSString* version;
     NSString* uri;
+    NSString* historyUri;
 }
 
 @property (retain) NSString* appName;
 @property (retain) NSString* version;
 @property (retain) NSString* uri;
+@property (retain) NSString* historyUri;
 
 @end
 
