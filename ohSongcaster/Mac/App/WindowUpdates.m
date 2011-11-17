@@ -16,6 +16,8 @@
 - (void) awakeFromNib
 {
     [[self window] orderOut:self];
+    [[self window] center];
+    [[self window] setLevel:NSFloatingWindowLevel];
 }
 
 
@@ -52,9 +54,6 @@
         // if this is an automatic update check, the window is not visible yet
         if ([iUpdateCheck isManual] == false)
         {
-            // this will request that this app becomes the activated app, meaning that the
-            // update window will appear in the foreground
-            [NSApp activateIgnoringOtherApps:YES];
             [[self window] center];
             [[self window] makeKeyAndOrderFront:self];
         }
@@ -128,10 +127,6 @@
     if (iAutoUpdate == NULL) {
         return;
     }
-
-    // this will request that this app becomes the activated app, meaning that the
-    // update window will appear in the foreground
-    [NSApp activateIgnoringOtherApps:YES];
 
     // show the update window in checking mode
     [self hideAll];
