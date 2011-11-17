@@ -29,3 +29,6 @@
 /* Crash log text - %@ is the SongcasterManufacturerName */
 "CrashLogText" = "Mac OS X and other applications are not affected.\n\nClick Report to send a report to %@.";
 
+/* Auto update text - First %@ is the SongcasterProductId, second %@ is the CFBundleShortVersionNumber */
+"UpdateAvailableText" = "A new version of %@ (%@) is available.";
+

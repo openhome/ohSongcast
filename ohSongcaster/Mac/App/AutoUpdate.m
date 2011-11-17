@@ -195,8 +195,7 @@
 
     // create the info object
     AutoUpdateInfo* info = [[[AutoUpdateInfo alloc] init] autorelease];
-    //[info setVersion:(NSString*)version];
-    //[info setUri:(NSString*)url];
+    [info setAppName:iAppName];
     [info setVersion:[NSString stringWithString:(NSString*)version]];
     [info setUri:[NSString stringWithString:(NSString*)url]];
     return info;
@@ -335,6 +334,7 @@
 
 @implementation AutoUpdateInfo
 
+@synthesize appName;
 @synthesize version;
 @synthesize uri;
 

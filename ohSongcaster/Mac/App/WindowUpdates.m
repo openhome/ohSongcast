@@ -6,6 +6,7 @@
 
 @synthesize progressChecking;
 @synthesize progressDownloading;
+@synthesize textAvailable;
 @synthesize viewChecking;
 @synthesize viewAvailable;
 @synthesize viewUnavailable;
@@ -44,7 +45,7 @@
         [viewUnavailable setHidden:NO];
     }
     else {
-        //[alert setInformativeText:[NSString stringWithFormat:@"Songcaster version %@ is available.", [info version]]];
+        [textAvailable setStringValue:[NSString stringWithFormat:NSLocalizedString(@"UpdateAvailableText", @""), [iUpdateFound appName], [iUpdateFound version]]];
         [viewAvailable setHidden:NO];
     }
 }

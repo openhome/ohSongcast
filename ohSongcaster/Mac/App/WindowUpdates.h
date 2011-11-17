@@ -7,6 +7,7 @@
 {
     IBOutlet NSProgressIndicator* progressChecking;
     IBOutlet NSProgressIndicator* progressDownloading;
+    IBOutlet NSTextField* textAvailable;
     IBOutlet NSView* viewChecking;
     IBOutlet NSView* viewAvailable;
     IBOutlet NSView* viewUnavailable;
@@ -17,6 +18,7 @@
 
 @property (assign) NSProgressIndicator* progressChecking;
 @property (assign) NSProgressIndicator* progressDownloading;
+@property (assign) NSTextField* textAvailable;
 @property (assign) NSView* viewChecking;
 @property (assign) NSView* viewAvailable;
 @property (assign) NSView* viewUnavailable;

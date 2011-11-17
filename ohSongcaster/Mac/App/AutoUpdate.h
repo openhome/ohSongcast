@@ -5,10 +5,12 @@
 
 @interface AutoUpdateInfo : NSObject
 {
+    NSString* appName;
     NSString* version;
     NSString* uri;
 }
 
+@property (retain) NSString* appName;
 @property (retain) NSString* version;
 @property (retain) NSString* uri;
 
