@@ -33,6 +33,20 @@
     [iPreferences addObserverBetaUpdatesEnabled:self selector:@selector(preferenceBetaUpdatesEnabledChanged:)];
     [iPreferences addObserverCheckForUpdates:self selector:@selector(preferenceCheckForUpdates:)];
 
+    // create the auto updater object
+    NSString* productId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterProductId"];
+    NSString* version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+    NSString* autoUpdateUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterAutoUpdateUrl"];
+
+    if ([autoUpdateUrl length] != 0)
+    {
+        iAutoUpdate = [[AutoUpdate alloc] initWithFeedUri:autoUpdateUrl
+                                          appName:productId
+                                          currentVersion:version
+                                          relativeDataPath:productId];
+        [iAutoUpdate setCheckForBeta:[iPreferences betaUpdatesEnabled]];
+    }
+
     return self;
 }
 
@@ -120,9 +134,9 @@
 }
 
 
-- (bool) betaUpdatesEnabled
+- (AutoUpdate*) autoUpdate
 {
-    return [iPreferences betaUpdatesEnabled];
+    return iAutoUpdate;
 }
 
 
@@ -245,6 +259,9 @@
 {
     // refresh cached preferences
     [iPreferences synchronize];
+
+    // set the parameter in the auto update object
+    [iAutoUpdate setCheckForBeta:[iPreferences betaUpdatesEnabled]];
 
     // trigger a check for updates if they have become enabled
     if ([iPreferences autoUpdatesEnabled] && [iPreferences betaUpdatesEnabled]) {

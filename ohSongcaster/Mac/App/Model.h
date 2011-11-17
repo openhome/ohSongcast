@@ -2,6 +2,7 @@
 #import <Cocoa/Cocoa.h>
 #import "Preferences.h"
 #import "ModelSongcaster.h"
+#import "AutoUpdate.h"
 
 
 @protocol IModelObserver
@@ -18,6 +19,7 @@
     Preferences* iPreferences;
     id<IModelObserver> iObserver;
     ModelSongcaster* iModelSongcaster;
+    AutoUpdate* iAutoUpdate;
 }
 
 - (void) start;
@@ -29,7 +31,7 @@
 - (void) setEnabled:(bool)aValue;
 - (bool) hasRunWizard;
 - (bool) autoUpdatesEnabled;
-- (bool) betaUpdatesEnabled;
+- (AutoUpdate*) autoUpdate;
 - (void) reconnectReceivers;
 
 - (void) preferenceEnabledChanged:(NSNotification*)aNotification;

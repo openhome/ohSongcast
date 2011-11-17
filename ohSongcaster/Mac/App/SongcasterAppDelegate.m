@@ -134,35 +134,12 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
     SCNetworkReachabilitySetCallback(iReachability, NetworkReachabilityChanged, &context);
     SCNetworkReachabilityScheduleWithRunLoop(iReachability, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 
-    // setup the auto updater
-    NSString* version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
-    NSString* autoUpdateUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterAutoUpdateUrl"];
-
-    if ([autoUpdateUrl length] != 0)
-    {
-        iAutoUpdate = [[AutoUpdate alloc] initWithFeedUri:autoUpdateUrl
-                                          appName:productId
-                                          currentVersion:version
-                                          relativeDataPath:productId];
-        [iAutoUpdate setCheckForBeta:true];
-
-        AutoUpdateInfo* info = [iAutoUpdate checkForUpdates];
-        if (info != NULL)
-        {
-            NSAlert* alert = [[NSAlert alloc] init];
-            [alert addButtonWithTitle:@"OK"];
-            [alert addButtonWithTitle:@"Cancel"];
-            [alert setMessageText:@"A software update is available"];
-            [alert setInformativeText:[NSString stringWithFormat:@"Songcaster version %@ is available.", [info version]]];
-            [alert setAlertStyle:NSCriticalAlertStyle];
-
-            bool install = ([alert runModal] == NSAlertFirstButtonReturn);
-            [alert release];
-
-            if (install) {
-                [iAutoUpdate installUpdate:info];
-            }
-        }
+    // create the update window
+    iWindowUpdates = [[WindowUpdates alloc] init];
+    [iWindowUpdates setAutoUpdate:[iModel autoUpdate]];
+    if ([NSBundle loadNibNamed:@"WindowUpdates.nib" owner:iWindowUpdates] == NO) {
+        [iWindowUpdates release];
+        iWindowUpdates = nil;
     }
 }
 
@@ -281,15 +258,15 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 
 - (void) checkForUpdates
 {
+    // this will request that this app becomes the activated app, meaning that the
+    // update window will appear in the foreground
+    [NSApp activateIgnoringOtherApps:YES];
+    // start checking for updates
+    [iWindowUpdates startChecking];
 }
 
 
 @end
-
-
-
-
-
 
 
 

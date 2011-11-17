@@ -2,7 +2,7 @@
 #import <Cocoa/Cocoa.h>
 #import <SystemConfiguration/SCNetworkReachability.h>
 #import "Model.h"
-#import "AutoUpdate.h"
+#import "WindowUpdates.h"
 
 
 @interface SongcasterAppDelegate : NSObject <NSApplicationDelegate, IModelObserver>
@@ -18,7 +18,7 @@
     bool iSessionResigned;
     bool iSleeping;
     SCNetworkReachabilityRef iReachability;
-    AutoUpdate* iAutoUpdate;
+    WindowUpdates* iWindowUpdates;
 }
 
 @property (assign) IBOutlet NSMenu* menu;

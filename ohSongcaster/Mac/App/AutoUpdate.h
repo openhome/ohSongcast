@@ -9,8 +9,8 @@
     NSString* uri;
 }
 
-@property (assign) NSString* version;
-@property (assign) NSString* uri;
+@property (retain) NSString* version;
+@property (retain) NSString* uri;
 
 @end
 
