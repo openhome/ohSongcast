@@ -359,21 +359,17 @@ Songcaster::Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLa
 
 	InitialisationParams* initParams = InitialisationParams::Create();
 
+	/*
+	FunctorMsg fatal = MakeFunctorMsg(*this, &Songcaster::FatalErrorHandler);
+
+	initParams->SetFatalErrorHandler(fatal);
+	*/
+
 	Functor callback = MakeFunctor(*this, &Songcaster::SubnetListChanged);
 
 	initParams->SetSubnetListChangedListener(callback);
 
 	UpnpLibrary::Initialise(initParams);
-
-	// Fixes bug in stack
-	/* Removing this because I think stack is now fixed
-	if (iSubnet == 0) {
-		SubnetListChanged();
-		iSubnet = iSubnetList[0]->Address();
-		iAdapter = iSubnetList[0]->AdapterAddress();
-	}
-	*/
-	/////////////////////
 
 	UpnpLibrary::StartCombined(iSubnet);
 
@@ -400,6 +396,44 @@ Songcaster::Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLa
 
 	iReceiverManager = new ReceiverManager3(*this, iSender->SenderUri(), iSender->SenderMetadata());
 }
+
+
+void Songcaster::FatalErrorHandler(const char* /*aMessage*/)
+{
+}
+
+
+/*
+#include <Objbase.h>
+
+struct MySEHExceptionStruct
+{
+  char* m_lpszMessage1;
+  char m_szMessage2[256];
+};
+
+void Songcaster::FatalErrorHandler(const char* aMessage)
+{
+ // First allocate space for a MySEHExceptionStruct instance.
+  MySEHExceptionStruct* pMySEHExceptionStruct=(MySEHExceptionStruct*)::CoTaskMemAlloc(sizeof(MySEHExceptionStruct));
+  // Zero out all bytes inside pMySEHExceptionStruct.
+  memset (pMySEHExceptionStruct, 0, sizeof(MySEHExceptionStruct));
+
+  // Assign value to the m_lpszMessage member.
+  const char* lpszMessage1 = "SEH Exception Message 1.";
+  const char* lpszMessage2 = "SEH Exception Message 2.";
+
+  pMySEHExceptionStruct -> m_lpszMessage1 = (char*)::CoTaskMemAlloc(strlen(lpszMessage1) + 1);
+  strcpy(pMySEHExceptionStruct -> m_lpszMessage1, lpszMessage1);
+  strcpy(pMySEHExceptionStruct -> m_szMessage2, lpszMessage2);
+
+  // Raise the SEH exception, passing along a ptr to the MySEHExceptionStruct
+  // structure. Note that the onus is on the recipient of the exception to free
+  // the memory of pMySEHExceptionStruct as well as its contents.
+  RaiseException(100, 0, 1, (const ULONG_PTR*)(pMySEHExceptionStruct));
+}
+*/
+
 
 // Don't bother removing old subnets - they might come back anyway, and there is not exactly
 // a huge traffic in added and removed network interfaces

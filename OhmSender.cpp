@@ -683,7 +683,6 @@ OhmSender::~OhmSender()
 
     LOG(kMedia, "OhmSender::~OhmSender deleted tcp server\n");
 
-
 	delete iThreadUnicast;
 
     LOG(kMedia, "OhmSender::~OhmSender deleted unicast thread\n");

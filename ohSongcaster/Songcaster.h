@@ -177,6 +177,7 @@ public:
 
 private:
 	void SubnetListChanged();
+	void FatalErrorHandler(const char* aMessage);
 	TBool UpdateAdapter();
 
 	// IReceiverManager3Handler

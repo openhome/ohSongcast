@@ -45,7 +45,6 @@ namespace OpenHome.Songcaster
             {
                 return (New(path));
             }
-
         }
 
         private static Configuration New(string aPath)

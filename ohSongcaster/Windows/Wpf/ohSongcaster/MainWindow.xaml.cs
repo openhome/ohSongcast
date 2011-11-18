@@ -21,6 +21,7 @@ using System.Collections.Specialized;
 using System.Xml;
 using System.Xml.Serialization;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace OpenHome.Songcaster
 {
@@ -44,6 +45,8 @@ namespace OpenHome.Songcaster
         public MainWindow()
         {
             InitializeComponent();
+
+            AppDomain.CurrentDomain.UnhandledException += new UnhandledExceptionEventHandler(EventCurrentDomainUnhandledException);
 
             this.DataContext = this;
 
@@ -116,6 +119,105 @@ namespace OpenHome.Songcaster
             this.Topmost = true;
             iConfigurationWindow.Topmost = true;
             iMediaPlayerWindow.Topmost = true;
+        }
+
+        const Int32 EXCEPTION_MAXIMUM_PARAMETERS = 15; // maximum number of exception parameters
+
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1, CharSet = CharSet.Ansi)]
+        struct MySEHExceptionStruct
+        {
+            [MarshalAs(UnmanagedType.LPStr)]
+            public string m_strMessage1;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst=256)]
+            public string m_strMessage2;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        struct EXCEPTION_POINTERS
+        {
+            public IntPtr pExceptionRecord; // Points to a EXCEPTION_RECORD record.
+            public IntPtr pContext; // Points to a CONTEXT record. This structure contains processor-specific register data.
+        }
+        
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        struct EXCEPTION_RECORD
+        {
+            public UInt32 ExceptionCode;
+            public UInt32 ExceptionFlags;
+            public IntPtr pExceptionRecord; // Points to another EXCEPTION_RECORD structure.
+            public IntPtr ExceptionAddress;
+            public UInt32 NumberParameters;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = EXCEPTION_MAXIMUM_PARAMETERS)]
+            public UInt32[] ExceptionInformation;
+        }
+
+        void EventCurrentDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            try
+            {
+                throw (e.ExceptionObject as Exception);
+            }
+            catch (SEHException x)
+            
+            {
+               // Marshal.GetExceptionCode() returns the exception code which was passed
+                // by as the first parameter to RaiseException().
+                int iExceptionCode = Marshal.GetExceptionCode();
+                // Get a pointer to the unmanaged EXCEPTION_POINTERS structure.
+                IntPtr pExceptionPointers = Marshal.GetExceptionPointers();
+
+                // Convert the unmanaged EXCEPTION_POINTERS structure into its managed version
+                // using Marshal.PtrToStructure().
+                EXCEPTION_POINTERS exception_pointers
+                  = (EXCEPTION_POINTERS)Marshal.PtrToStructure(pExceptionPointers, typeof(EXCEPTION_POINTERS));
+                // Convert the unmanaged EXCEPTION_RECORD structure into its managed version
+                // using Marshal.PtrToStructure().
+                EXCEPTION_RECORD exception_record
+                  = (EXCEPTION_RECORD)Marshal.PtrToStructure
+                    (
+                      exception_pointers.pExceptionRecord,
+                      typeof(EXCEPTION_RECORD)
+                    );
+
+                // Check the exception code. If it is one we recognize, we proceed
+                // to extract our customized exception information, e.i. a pointer
+                // to an MyException structure.
+                if (((UInt32)iExceptionCode == 100) && (exception_record.NumberParameters > 0))
+                {
+                    // The exception_record.ExceptionInformation[] array contains user-defined
+                    // data. The first item is a pointer to the unmanaged MySEHExceptionStruct
+                    // C++ structure.
+                    // We must convert it into a managed version of the MySEHExceptionStruct
+                    // structure.
+                    MySEHExceptionStruct my_seh_exception_structure
+                      = (MySEHExceptionStruct)Marshal.PtrToStructure
+                        (
+                          (IntPtr)(exception_record.ExceptionInformation[0]),
+                          typeof(MySEHExceptionStruct)
+                        );
+                    // Display info on exception.
+                    Console.WriteLine("Exception code : {0:D}.", iExceptionCode);
+                    Console.WriteLine("Exception Message 1 : {0:S}", my_seh_exception_structure.m_strMessage1);
+                    Console.WriteLine("Exception Message 2 : {0:S}", my_seh_exception_structure.m_strMessage2);
+                    // It is the responsibility of the recipient of the exception to free
+                    // the memory occupied by the unmanaged MySEHExceptionStruct as well
+                    // as members of the unmanaged MySEHExceptionStruct which are references
+                    // to other memory. We do this by calling Marshal.DestroyStructure().
+                    //
+                    // Marshal.DestroyStructure() requires adequate information for the fields
+                    // of the target structure to destroy (in the form of MarshalAsAttributes).
+                    Marshal.DestroyStructure((IntPtr)(exception_record.ExceptionInformation[0]), typeof(MySEHExceptionStruct));
+                    // Finally, free the unmanaged MySEHExceptionStruct structure itself.
+                    Marshal.FreeCoTaskMem((IntPtr)(exception_record.ExceptionInformation[0]));
+                }
+                MessageBox.Show(x.ToString());
+            }
+            catch (Exception x)
+            {
+                MessageBox.Show(x.ToString());
+            }
+
         }
 
         public bool Enabled

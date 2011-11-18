@@ -166,6 +166,21 @@ namespace OpenHome.Songcaster
             UpdateStatus();
         }
 
+        public void StopAndDetach()
+        {
+            if (iReceiver != null)
+            {
+                if (iEnabled && iAttached)
+                {
+                    Stop();
+                }
+
+                iReceiver = null;
+
+                UpdateStatus();
+            }
+        }
+
         void Play()
         {
             iReceiver.Play();
@@ -434,7 +449,7 @@ namespace OpenHome.Songcaster
 
         public void SubnetChanged()
         {
-            iMediaPlayerList.DetachAll();
+            iMediaPlayerList.StopAndDetachAll();
         }
 
         private void SetPath(string aPath)
@@ -574,11 +589,11 @@ namespace OpenHome.Songcaster
             iList = new List<MediaPlayer>();
         }
 
-        public void DetachAll()
+        public void StopAndDetachAll()
         {
             foreach (MediaPlayer player in iList)
             {
-                player.Detach();
+                player.StopAndDetach();
             }
         }
 
