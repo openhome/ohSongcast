@@ -29,6 +29,23 @@
     [iPreferences addObserverMulticastChannel:self selector:@selector(preferenceMulticastChannelChanged:)];
     [iPreferences addObserverLatencyMs:self selector:@selector(preferenceLatencyMsChanged:)];
     [iPreferences addObserverSelectedSubnet:self selector:@selector(preferenceSelectedSubnetChanged:)];
+    [iPreferences addObserverAutoUpdatesEnabled:self selector:@selector(preferenceAutoUpdatesEnabledChanged:)];
+    [iPreferences addObserverBetaUpdatesEnabled:self selector:@selector(preferenceBetaUpdatesEnabledChanged:)];
+    [iPreferences addObserverCheckForUpdates:self selector:@selector(preferenceCheckForUpdates:)];
+
+    // create the auto updater object
+    NSString* productId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterProductId"];
+    NSString* version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+    NSString* autoUpdateUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterAutoUpdateUrl"];
+
+    if ([autoUpdateUrl length] != 0)
+    {
+        iAutoUpdate = [[AutoUpdate alloc] initWithFeedUri:autoUpdateUrl
+                                          appName:productId
+                                          currentVersion:version
+                                          relativeDataPath:productId];
+        [iAutoUpdate setCheckForBeta:[iPreferences betaUpdatesEnabled]];
+    }
 
     return self;
 }
@@ -108,6 +125,18 @@
 - (bool) hasRunWizard
 {
     return [iPreferences hasRunWizard];
+}
+
+
+- (bool) autoUpdatesEnabled
+{
+    return [iPreferences autoUpdatesEnabled];
+}
+
+
+- (AutoUpdate*) autoUpdate
+{
+    return iAutoUpdate;
 }
 
 
@@ -211,6 +240,40 @@
     if (iModelSongcaster) {
         [iModelSongcaster setSubnet:[[iPreferences selectedSubnet] address]];
     }
+}
+
+
+- (void) preferenceAutoUpdatesEnabledChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences
+    [iPreferences synchronize];
+
+    // trigger a check for updates if they have become enabled
+    if ([iPreferences autoUpdatesEnabled]) {
+        [iObserver checkForUpdates];
+    }
+}
+
+
+- (void) preferenceBetaUpdatesEnabledChanged:(NSNotification*)aNotification
+{
+    // refresh cached preferences
+    [iPreferences synchronize];
+
+    // set the parameter in the auto update object
+    [iAutoUpdate setCheckForBeta:[iPreferences betaUpdatesEnabled]];
+
+    // trigger a check for updates if they have become enabled
+    if ([iPreferences autoUpdatesEnabled] && [iPreferences betaUpdatesEnabled]) {
+        [iObserver checkForUpdates];
+    }
+}
+
+
+- (void) preferenceCheckForUpdates:(NSNotification*)aNotification
+{
+    // notify the UI to trigger the check for updates
+    [iObserver checkForUpdates];
 }
 
 

@@ -92,6 +92,14 @@ typedef enum
 - (void) setLatencyMs:(uint32_t)aLatencyMs;
 - (void) addObserverLatencyMs:(id)aObserver selector:(SEL)aSelector;
 
+- (bool) autoUpdatesEnabled;
+- (void) setAutoUpdatesEnabled:(bool)aEnabled;
+- (void) addObserverAutoUpdatesEnabled:(id)aObserver selector:(SEL)aSelector;
+
+- (bool) betaUpdatesEnabled;
+- (void) setBetaUpdatesEnabled:(bool)aEnabled;
+- (void) addObserverBetaUpdatesEnabled:(id)aObserver selector:(SEL)aSelector;
+
 - (NSArray*) receiverList;
 - (void) setReceiverList:(NSArray*)aReceiverList;
 - (void) addObserverReceiverList:(id)aObserver selector:(SEL)aSelector;
@@ -113,6 +121,9 @@ typedef enum
 
 - (void) reconnectReceivers;
 - (void) addObserverReconnectReceivers:(id)aObserver selector:(SEL)aSelector;
+
+- (void) checkForUpdates;
+- (void) addObserverCheckForUpdates:(id)aObserver selector:(SEL)aSelector;
 
 - (void) synchronize;
 

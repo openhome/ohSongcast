@@ -20,7 +20,7 @@
     // user session has been resigned - stop the songcaster - this will do nothing
     // if the model has not been started i.e. this notification has occurred on
     // startup of the application
-    [model stop];
+    [iModel stop];
 }
 
 
@@ -30,7 +30,7 @@
     iSessionResigned = false;
 
     // user session has just become active again - restart the songcaster
-    [model start];
+    [iModel start];
 }
 
 
@@ -43,11 +43,11 @@
 
     if (aFlags == kSCNetworkReachabilityFlagsReachable)
     {
-        [model start];
+        [iModel start];
     }
     else
     {
-        [model stop];
+        [iModel stop];
     }
 }
 
@@ -67,7 +67,7 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
     iSleeping = true;
 
     // stop the songcaster
-    [model stop];
+    [iModel stop];
 }
 
 
@@ -81,7 +81,7 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 
 - (void) awakeFromNib
 {
-    NSString* productId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterCrashLogProductId"];
+    NSString* productId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterProductId"];
     NSString* crashLogUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterCrashLogUrl"];
 
     // check for any new crash logs
@@ -105,8 +105,8 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
     [menuItemPrefs setTitle:[NSString stringWithFormat:NSLocalizedString(@"MenuPreferences", @""), appName]];
 
     // create and initialise the model
-    model = [[Model alloc] init];
-    [model setObserver:self];
+    iModel = [[Model alloc] init];
+    [iModel setObserver:self];
 
     // initialise system state
     iSessionResigned = false;
@@ -133,19 +133,33 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
     iReachability = SCNetworkReachabilityCreateWithName(NULL, "www.google.com");
     SCNetworkReachabilitySetCallback(iReachability, NetworkReachabilityChanged, &context);
     SCNetworkReachabilityScheduleWithRunLoop(iReachability, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+
+    // create the update window
+    iWindowUpdates = [[WindowUpdates alloc] init];
+    [iWindowUpdates setAutoUpdate:[iModel autoUpdate]];
+    if ([NSBundle loadNibNamed:@"WindowUpdates.nib" owner:iWindowUpdates] == NO) {
+        [iWindowUpdates release];
+        iWindowUpdates = nil;
+    }
+
+    // do the automatic update check
+    if ([iModel autoUpdatesEnabled])
+    {
+        [iWindowUpdates startAutomaticCheck];
+    }
 }
 
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     // fire open the preferences if the wizard has not been run
-    if (![model hasRunWizard]) {
+    if (![iModel hasRunWizard]) {
         [self menuItemPrefsClicked:self];
     }
 
     // start the songcaster if the user session is active and the system is not asleep
     if (!iSessionResigned && !iSleeping) {
-        [model start];
+        [iModel start];
     }
 }
 
@@ -153,13 +167,13 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 - (void)applicationWillTerminate:(NSNotification *)notification
 {
     // stop and clean up the model
-    [model stop];
-    [model release];
+    [iModel stop];
+    [iModel release];
 
-    if (statusItem)
+    if (iStatusItem)
     {
-        [statusItem release];
-        statusItem = nil;
+        [iStatusItem release];
+        iStatusItem = nil;
     }
 }
 
@@ -168,13 +182,13 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 {
     // toggle the state of the songcaster - allow the eventing to come back
     // up through enabledChanged to update the UI
-    [model setEnabled:![model enabled]];
+    [iModel setEnabled:![iModel enabled]];
 }
 
 
 - (IBAction)menuItemReconnectClicked:(id)aSender
 {
-    [model reconnectReceivers];
+    [iModel reconnectReceivers];
 }
 
 
@@ -188,7 +202,7 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 - (void) enabledChanged
 {
     // do nothing if the status item is not visible
-    if (![model iconVisible])
+    if (![iModel iconVisible])
     {
         return;
     }
@@ -201,7 +215,7 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
     NSString* menuItemStatusText;
     NSString* menuItemOnOffText;
     
-    if ([model enabled])
+    if ([iModel enabled])
     {
         imageFile = [[NSBundle mainBundle] pathForResource:@"MenuIconOn" ofType:@"png"];
         menuItemStatusText = NSLocalizedString(@"MenuStatusOn", @"");
@@ -216,7 +230,7 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
     
     // set the images and text into the menu
     NSImage* image = [[NSImage alloc] initWithContentsOfFile:imageFile];
-    [statusItem setImage:image];
+    [iStatusItem setImage:image];
     [image release];
     
     [menuItemStatus setTitle:[NSString stringWithFormat:menuItemStatusText, appName]];
@@ -226,34 +240,36 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 
 - (void) iconVisibleChanged
 {
-    bool visible = [model iconVisible];
+    bool visible = [iModel iconVisible];
     
-    if (visible && statusItem == nil)
+    if (visible && iStatusItem == nil)
     {
         // create the status bar item
-        statusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
-        [statusItem setHighlightMode:YES];
-        [statusItem setMenu:menu];
+        iStatusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
+        [iStatusItem setHighlightMode:YES];
+        [iStatusItem setMenu:menu];
         
         // make sure icon/menus are correctly configured
         [self enabledChanged];
     }
-    else if (!visible && statusItem)
+    else if (!visible && iStatusItem)
     {
         // remove the status item
-        [[NSStatusBar systemStatusBar] removeStatusItem:statusItem];
-        [statusItem release];
-        statusItem = nil;
+        [[NSStatusBar systemStatusBar] removeStatusItem:iStatusItem];
+        [iStatusItem release];
+        iStatusItem = nil;
     }
 }
 
 
+- (void) checkForUpdates
+{
+    // start checking for updates
+    [iWindowUpdates startManualCheck];
+}
+
+
 @end
-
-
-
-
-
 
 
 

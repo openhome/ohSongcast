@@ -55,7 +55,7 @@ $(objdir)Installer/$(product_name).pkg : driver app prefs
 
 $(objdir)Installer/$(product_name).dmg : $(objdir)Installer/$(product_name).pkg Scripts/uninstall.tool
 	mkdir -p $(objdir)Installer/DmgContents/
-	cp -R $(objdir)Installer/$(product_name).pkg $(objdir)Installer/DmgContents/
+	cp -R $(objdir)Installer/$(product_name).pkg $(objdir)Installer/DmgContents/Installer.pkg
 	cp Scripts/uninstall.tool $(objdir)Installer/DmgContents/
 	hdiutil create -ov $@ -volname $(product_name) -fs HFS+ -srcfolder $(objdir)Installer/DmgContents/
 
