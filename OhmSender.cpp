@@ -461,9 +461,10 @@ void OhmSender::SetInterface(TIpAddress aValue)
 			StopZone();
 			delete (iServer);
 			iInterface = aValue;
-			UpdateMetadata();
 			iServer = new SocketTcpServer("OHMS", 0, iInterface);
 			iServer->Add("OHMS", new OhmSenderSession(*this));
+            // recreate server before UpdateMetadata() as that function requires the server port
+			UpdateMetadata();
 			StartZone();
 			Start();
 		}
@@ -1422,6 +1423,10 @@ void OhmSender::SendZoneUri()
     catch (WriterError&)
     {
         LOG(kMedia, "OhmSender::SendZoneUri WriterError\n");
+    }
+    catch (NetworkError&)
+    {
+        LOG(kMedia, "OhmSender::SendZoneUri NetworkError\n");
     }
 
     if (iSendZoneUriCount > 0) {
