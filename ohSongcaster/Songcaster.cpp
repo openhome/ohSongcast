@@ -2,6 +2,7 @@
 #include "Icon.h"
 
 #include <OpenHome/Private/Debug.h>
+#include <algorithm>
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
@@ -245,6 +246,7 @@ Receiver::~Receiver()
 
 Subnet::Subnet(NetworkAdapter& aAdapter)
 	: iAdapter(&aAdapter)
+    , iSubnet(aAdapter.Subnet())
 {
 	AddRef();
 }
@@ -268,6 +270,13 @@ void Subnet::Attach(NetworkAdapter& aAdapter)
 	RemoveRef();
 	iAdapter = &aAdapter;
 	AddRef();
+    ASSERT(iAdapter->Subnet() == iSubnet);
+}
+
+void Subnet::Detach()
+{
+	RemoveRef();
+    iAdapter = 0;
 }
 
 TIpAddress Subnet::Address() const
@@ -401,6 +410,27 @@ Songcaster::Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLa
 	iReceiverManager = new ReceiverManager3(*this, iSender->SenderUri(), iSender->SenderMetadata());
 }
 
+
+// Simple predicate class for finding NetworkAdapter and Subnet objects with a given
+// subnet TIpAddress in a list - simplfies the code in the SubnetListChanged method
+class SubnetFinder
+{
+public:
+    SubnetFinder(TIpAddress aSubnet) : iSubnet(aSubnet) {}
+
+    bool operator()(NetworkAdapter* aAdapter) const {
+        return (aAdapter->Subnet() == iSubnet);
+    }
+
+    bool operator()(Subnet* aSubnet) const {
+        return (aSubnet->Address() == iSubnet);
+    }
+
+private:
+    TIpAddress iSubnet;
+};
+
+
 // Don't bother removing old subnets - they might come back anyway, and there is not exactly
 // a huge traffic in added and removed network interfaces
 
@@ -416,51 +446,55 @@ void Songcaster::SubnetListChanged()
 		return;
 	}
 
-	// First, handle changes to the subnet list
+    // get the new subnet list from ohnet
+    std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
 
-	std::vector<NetworkAdapter*>*  subnetList = UpnpLibrary::CreateSubnetList();
+    std::vector<NetworkAdapter*>::iterator newSubnetListIt;
+    std::vector<Subnet*>::iterator oldSubnetListIt;
 
-	std::vector<NetworkAdapter*>::iterator it = subnetList->begin();
+    // look for new subnets that already exist in or need to be added to the current list 
+    for (newSubnetListIt = subnetList->begin() ; newSubnetListIt != subnetList->end() ; newSubnetListIt++)
+    {
+        // iterator is the adapter to use for this new subnet
+        NetworkAdapter* adapter = *newSubnetListIt;
 
-	while (it != subnetList->end()) {
-		NetworkAdapter* adapter = *it;
+        // look for this new subnet in the current subnet list
+        oldSubnetListIt = std::find_if(iSubnetList.begin(), iSubnetList.end(), SubnetFinder(adapter->Subnet()));
 
-		TBool found = false;
+        if (oldSubnetListIt != iSubnetList.end())
+        {
+            // the new subnet already exists in the current subnet list
+            Subnet* subnet = *oldSubnetListIt;
 
-		// find new subnet in current subnet list
+            if (!subnet->IsAttachedTo(*adapter))
+            {
+                // the corresponding subnet in the current list is attached to a different adapter, so attach this new one
+                subnet->Attach(*adapter);
+                (*iSubnetCallback)(iSubnetPtr, eChanged, (THandle)subnet);
+            }
+        }
+        else
+        {
+            // the new subnet is not in the current list - add it
+            Subnet* subnet = new Subnet(*adapter);
+            iSubnetList.push_back(subnet);
+            (*iSubnetCallback)(iSubnetPtr, eAdded, (THandle)subnet);
+        }
+    }
 
-		std::vector<Subnet*>::iterator it2 = iSubnetList.begin();
+    // now look for subnets in the current list that are absent from the new list
+    for (oldSubnetListIt = iSubnetList.begin() ; oldSubnetListIt != iSubnetList.end() ; oldSubnetListIt++)
+    {
+        Subnet* subnet = *oldSubnetListIt;
 
-		while (it2 != iSubnetList.end()) {
-			Subnet* subnet = *it2;
-
-			if (subnet->Address() == adapter->Subnet()) {
-				// new subnet existed in the old subnet list, so check if the subnet is still using the same adapter
-
-				if (!subnet->IsAttachedTo(*adapter))
-				{
-					subnet->Attach(*adapter);
-					(*iSubnetCallback)(iSubnetPtr, eChanged, (THandle)subnet);
-				}
-
-				found = true;
-
-				break;
-			}
-
-			it2++;
-		}
-
-		// if not found, this is a new subnet
-
-		if (!found) {
-			Subnet* subnet = new Subnet(*adapter);
-			iSubnetList.push_back(subnet);
-			(*iSubnetCallback)(iSubnetPtr, eAdded, (THandle)subnet);
-		}
-
-		it++;
-	}
+        // look for this subnet in the new list
+        if (std::find_if(subnetList->begin(), subnetList->end(), SubnetFinder(subnet->Address())) == subnetList->end())
+        {
+            // this subnet is not in the new list so detach it from its current adapter
+            subnet->Detach();
+            (*iSubnetCallback)(iSubnetPtr, eChanged, (THandle)subnet);
+        }
+    }
 
 	UpnpLibrary::DestroySubnetList(subnetList);
 
@@ -483,30 +517,24 @@ void Songcaster::SubnetListChanged()
 
 TBool Songcaster::UpdateAdapter()
 {
-	std::vector<Subnet*>::iterator it = iSubnetList.begin();
+	std::vector<Subnet*>::iterator it = std::find_if(iSubnetList.begin(), iSubnetList.end(), SubnetFinder(iSubnet));
 
-	while (it != iSubnetList.end()) {
-		Subnet* subnet = *it;
-	
-		if (iSubnet == subnet->Address())
-		{
-			TIpAddress adapter = subnet->AdapterAddress();
+    if (it != iSubnetList.end())
+    {
+        // the subnet exists in the subnet list - update the adapter interface if necessary
+        Subnet* subnet = *it;
+        TIpAddress adapter = subnet->AdapterAddress();
 
-			if (iAdapter != adapter) {
-				iAdapter = adapter;
+        if (iAdapter != adapter) {
+            iAdapter = adapter;
 
-				if (iSender != 0) {
-					iSender->SetInterface(iAdapter);
-				}
-			}
+            if (iSender != 0) {
+                iSender->SetInterface(iAdapter);
+            }
+        }
+    }
 
-			return (true);
-		}
-
-		it++;
-	}
-
-	return (false);
+    return (it != iSubnetList.end());
 }
 
 TIpAddress Songcaster::GetSubnet()

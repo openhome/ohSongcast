@@ -138,6 +138,7 @@ private:
 	Subnet(NetworkAdapter& aAdapter);
 	Subnet(TIpAddress aSubnet);
 	void Attach(NetworkAdapter& aAdapter);
+	void Detach();
 	TBool IsAttachedTo(NetworkAdapter& aAdapter);
 	~Subnet();
 
