@@ -31,7 +31,8 @@ endif
 
 ar = ${CROSS_COMPILE}ar rc $(objdir)
 cflags = -fexceptions -Wall -Werror -pipe -D_GNU_SOURCE -D_REENTRANT -DDEFINE_LITTLE_ENDIAN -DDEFINE_TRACE $(debug_specific_flags) -fvisibility=hidden -DDllImport="__attribute__ ((visibility(\"default\")))" -DDllExport="__attribute__ ((visibility(\"default\")))" -DDllExportClass="__attribute__ ((visibility(\"default\")))" $(platform_cflags)
-ohnetdir = ../ohnet/Build/Obj/$(osdir)/$(build_dir)/
+ohnetdir = ../ohNet/Build/Obj/$(osdir)/$(build_dir)/
+ohnetmondir = ../ohNetmon/Build/Obj/$(osdir)/$(build_dir)/
 objdir = Build/Obj/$(osdir)/$(build_dir)/
 inc_build = Build/Include/
 includes = -I../ohnet/Build/Include/ $(platform_includes)
@@ -77,8 +78,8 @@ $(objdir)SoundcardDriver.$(objext) : ohSongcaster/Posix/SoundcardDriver.cpp
 endif
 
 
-$(objdir)$(dllprefix)ohSongcaster.$(dllext) : $(objects_songcast) $(objects_songcaster) $(objects_songcaster_os)
-	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcaster.$(dllext) $(objects_topology) $(objects_songcast) $(objects_songcaster) $(objects_songcaster_os) $(ohnetdir)$(libprefix)ohNetCore.$(libext)
+$(objdir)$(dllprefix)ohSongcaster.$(dllext) : $(objects_songcast) $(objects_netmon) $(objects_songcaster) $(objects_songcaster_os)
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcaster.$(dllext) $(objects_topology) $(objects_songcast)  $(objects_netmon) $(objects_songcaster) $(objects_songcaster_os) $(ohnetdir)$(libprefix)ohNetCore.$(libext)
 
 
 $(objdir)TestSongcaster.$(exeext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster/TestSongcaster.cpp

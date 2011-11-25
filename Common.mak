@@ -12,6 +12,9 @@ objects_songcast = $(objdir)Ohm.$(objext) \
                    $(ohnetdir)CpAvOpenhomeOrgReceiver1.$(objext) \
                    $(ohnetdir)DvAvOpenhomeOrgSender1.$(objext)
 
+objects_netmon   = $(ohnetmondir)NetworkMonitor.$(objext) \
+                   $(ohnetdir)DvAvOpenhomeOrgNetworkMonitor1.$(objext)
+
 headers_songcast = Ohm.h \
                    OhmSender.h
 

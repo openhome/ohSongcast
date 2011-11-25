@@ -391,6 +391,8 @@ Songcaster::Songcaster(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLa
 	SubnetListChanged();
 
 	iSender = new OhmSender(*iDevice, *iDriver, name, iChannel, iAdapter, iTtl, iLatency, iMulticast, iEnabled, aImage, aMimeType, iPreset);
+
+	iNetworkMonitor = new NetworkMonitor(*iDevice, name);
 	
 	iDevice->SetEnabled();
 

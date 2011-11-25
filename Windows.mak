@@ -16,6 +16,7 @@ build_dir = Debug
 ar = lib /nologo /out:$(objdir)
 cflags = $(debug_specific_cflags) /W4 /WX /EHsc /FR$(objdir) -DDEFINE_LITTLE_ENDIAN -DDEFINE_TRACE -D_CRT_SECURE_NO_WARNINGS 
 ohnetdir = ..\ohNet\Build\Obj\Windows\$(build_dir)^\
+ohnetmondir = ..\ohNetmon\Build\Obj\Windows\$(build_dir)^\
 objdirbare = Build\Obj\Windows\$(build_dir)
 objdir = $(objdirbare)^\
 inc_build = Build\Include
@@ -62,9 +63,9 @@ clean:
 	del /S /Q $(objdirbare)
 
 
-$(objdir)$(dllprefix)ohSongcaster.$(dllext) : $(objects_songcast) $(objects_songcaster) ohSongcaster\Windows\SoundcardDriver.cpp
+$(objdir)$(dllprefix)ohSongcaster.$(dllext) : $(objects_songcast) $(objects_netmon) $(objects_songcaster) ohSongcaster\Windows\SoundcardDriver.cpp
 	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcaster\Windows\SoundcardDriver.cpp
-	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcaster.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_songcast) $(objects_songcaster) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcaster.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_songcast) $(objects_netmon) $(objects_songcaster) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
 
 $(objdir)$(dllprefix)ohSongcaster.net.$(dllext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster\Windows\Songcaster.cs
 	$(csharp) /unsafe /t:library \

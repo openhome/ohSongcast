@@ -6,6 +6,7 @@
 
 #include "../Ohm.h"
 #include "../OhmSender.h"
+#include "../../ohNetmon/NetworkMonitor.h"
 #include "ReceiverManager3.h"
 
 ////////////////////////////////////////////
@@ -204,6 +205,7 @@ private:
 	TIpAddress iAdapter;
 	std::vector<Subnet*> iSubnetList;
 	OhmSender* iSender;
+	NetworkMonitor* iNetworkMonitor;
 	IOhmSenderDriver* iDriver;
 	DvDeviceStandard* iDevice;
 	ReceiverManager3* iReceiverManager;
