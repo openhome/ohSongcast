@@ -1,6 +1,5 @@
 
 #import <Cocoa/Cocoa.h>
-#import <SystemConfiguration/SCNetworkReachability.h>
 #import "Model.h"
 #import "WindowUpdates.h"
 
@@ -16,8 +15,6 @@
     NSStatusItem* iStatusItem;
     Model* iModel;
     bool iSessionResigned;
-    bool iSleeping;
-    SCNetworkReachabilityRef iReachability;
     WindowUpdates* iWindowUpdates;
 }
 

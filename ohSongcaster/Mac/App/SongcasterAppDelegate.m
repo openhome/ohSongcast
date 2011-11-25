@@ -34,48 +34,15 @@
 }
 
 
-- (void) networkReachabilityChanged:(SCNetworkReachabilityFlags)aFlags
-{
-    // ignore any changes when sleeping or when this user session is resigned
-    if (iSleeping || iSessionResigned) {
-        return;
-    }
-
-    if (aFlags == kSCNetworkReachabilityFlagsReachable)
-    {
-        [iModel start];
-    }
-    else
-    {
-        [iModel stop];
-    }
-}
-
-
-void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
-                                SCNetworkReachabilityFlags aFlags,
-                                void* aInfo)
-{
-    SongcasterAppDelegate* app = (SongcasterAppDelegate*)aInfo;
-    [app networkReachabilityChanged:aFlags];
-}
-
-
 - (void) willSleep:(NSNotification*)aNotification
 {
-    // set the system state
-    iSleeping = true;
-
-    // stop the songcaster
-    [iModel stop];
+    // going into hibernation - switch off songcaster
+    [iModel setEnabled:false];
 }
 
 
 - (void) didWake:(NSNotification*)aNotification
 {
-    // set the system state - do not restart the songcaster here since the network
-    // may be unavailable
-    iSleeping = false;
 }
 
 
@@ -110,7 +77,6 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
 
     // initialise system state
     iSessionResigned = false;
-    iSleeping = false;
 
     // setup system event notifications
     NSNotificationCenter* center = [[NSWorkspace sharedWorkspace] notificationCenter];
@@ -122,17 +88,6 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
                              name:NSWorkspaceSessionDidResignActiveNotification object:NULL];
     [center addObserver:self selector:@selector(sessionDidBecomeActive:)
                              name:NSWorkspaceSessionDidBecomeActiveNotification object:NULL];
-
-    SCNetworkReachabilityContext context;
-    context.version = 0;
-    context.retain = NULL;
-    context.release = NULL;
-    context.copyDescription = NULL;
-    context.info = self;
-
-    iReachability = SCNetworkReachabilityCreateWithName(NULL, "www.google.com");
-    SCNetworkReachabilitySetCallback(iReachability, NetworkReachabilityChanged, &context);
-    SCNetworkReachabilityScheduleWithRunLoop(iReachability, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
 
     // create the update window
     iWindowUpdates = [[WindowUpdates alloc] init];
@@ -157,8 +112,8 @@ void NetworkReachabilityChanged(SCNetworkReachabilityRef aReachability,
         [self menuItemPrefsClicked:self];
     }
 
-    // start the songcaster if the user session is active and the system is not asleep
-    if (!iSessionResigned && !iSleeping) {
+    // start the songcaster if the user session is active
+    if (!iSessionResigned) {
         [iModel start];
     }
 }
