@@ -46,7 +46,7 @@ rmdir = Scripts\rmdir.bat
 uset4 = no
 
 
-all: $(objdir)$(dllprefix)ohSongcaster.$(dllext) $(objdir)$(dllprefix)ohSongcaster.net.$(dllext) $(objdir)TestSongcaster.$(exeext) $(objdir)TestSongcasterCs.$(exeext) all_common
+all: $(objdir)$(dllprefix)ohSongcast.$(dllext) $(objdir)$(dllprefix)ohSongcast.net.$(dllext) $(objdir)TestSongcast.$(exeext) $(objdir)TestSongcastCs.$(exeext) all_common
 
 
 # Include rules to build platform independent code
@@ -63,23 +63,23 @@ clean:
 	del /S /Q $(objdirbare)
 
 
-$(objdir)$(dllprefix)ohSongcaster.$(dllext) : $(objects_songcast) $(objects_netmon) $(objects_songcaster) ohSongcaster\Windows\SoundcardDriver.cpp
-	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcaster\Windows\SoundcardDriver.cpp
-	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcaster.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_songcast) $(objects_netmon) $(objects_songcaster) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
+$(objdir)$(dllprefix)ohSongcast.$(dllext) : $(objects_songcast) $(objects_netmon) $(objects_Songcast) ohSongcast\Windows\SoundcardDriver.cpp
+	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcast\Windows\SoundcardDriver.cpp
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcast.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_songcast) $(objects_netmon) $(objects_Songcast) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
 
-$(objdir)$(dllprefix)ohSongcaster.net.$(dllext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster\Windows\Songcaster.cs
+$(objdir)$(dllprefix)ohSongcast.net.$(dllext) : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast\Windows\Songcast.cs
 	$(csharp) /unsafe /t:library \
-		/out:$(objdir)$(dllprefix)ohSongcaster.net.$(dllext) \
-		ohSongcaster\Windows\Songcaster.cs
+		/out:$(objdir)$(dllprefix)ohSongcast.net.$(dllext) \
+		ohSongcast\Windows\Songcast.cs
 
-$(objdir)TestSongcaster.$(exeext) : $(objdir)$(dllprefix)ohSongcaster.$(dllext) ohSongcaster\TestSongcaster.cpp
-	$(compiler)TestSongcaster.$(objext) -c $(cflags) $(includes) ohSongcaster\TestSongcaster.cpp
-	$(link) $(linkoutput)$(objdir)TestSongcaster.$(exeext) $(objdir)ohSongcaster.$(libext) $(objdir)TestSongcaster.$(objext) 
+$(objdir)TestSongcast.$(exeext) : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast\TestSongcast.cpp
+	$(compiler)TestSongcast.$(objext) -c $(cflags) $(includes) ohSongcast\TestSongcast.cpp
+	$(link) $(linkoutput)$(objdir)TestSongcast.$(exeext) $(objdir)ohSongcast.$(libext) $(objdir)TestSongcast.$(objext) 
 
-$(objdir)TestSongcasterCs.$(exeext) : $(objdir)$(dllprefix)ohSongcaster.net.$(dllext) ohSongcaster\Windows\TestSongcasterCs.cs
+$(objdir)TestSongcastCs.$(exeext) : $(objdir)$(dllprefix)ohSongcast.net.$(dllext) ohSongcast\Windows\TestSongcastCs.cs
 	$(csharp) /target:exe /debug+ \
-		/out:$(objdir)TestSongcasterCs.$(exeext) \
+		/out:$(objdir)TestSongcastCs.$(exeext) \
 		/reference:System.dll \
 		/reference:System.Net.dll \
-		/reference:$(objdir)$(dllprefix)ohSongcaster.net.$(dllext)  \
-		ohSongcaster\Windows\TestSongcasterCs.cs
+		/reference:$(objdir)$(dllprefix)ohSongcast.net.$(dllext)  \
+		ohSongcast\Windows\TestSongcastCs.cs

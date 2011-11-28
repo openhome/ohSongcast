@@ -1,0 +1,30 @@
+/*++
+
+Copyright (c) 1997-2000  Microsoft Corporation All Rights Reserved
+
+Module Name:
+
+    msvad.rc
+
+Abstract:
+
+
+--*/
+
+#include <windows.h>
+
+#include <ntverp.h>
+
+#define VER_FILETYPE                VFT_DRV
+#define VER_FILESUBTYPE             VFT2_DRV_SOUND
+#define VER_FILEDESCRIPTION_STR     "Songcast"
+#define VER_INTERNALNAME_STR        "ohSongcast.sys"
+#define VER_ORIGINALFILENAME_STR    "ohSongcast.sys"
+
+#define VER_LEGALCOPYRIGHT_YEARS    ""
+#define VER_LEGALCOPYRIGHT_STR	    ""
+
+#include "common.ver"
+
+
+

@@ -28,44 +28,44 @@ objects_recvrmgrs = $(objdir)ReceiverManager1.$(objext) \
                     $(objdir)ReceiverManager2.$(objext) \
                     $(objdir)ReceiverManager3.$(objext)
 
-objects_songcaster = $(objdir)ReceiverManager1.$(objext) \
+objects_Songcast = $(objdir)ReceiverManager1.$(objext) \
                     $(objdir)ReceiverManager2.$(objext) \
                     $(objdir)ReceiverManager3.$(objext) \
-                    $(objdir)Songcaster.$(objext)
+                    $(objdir)Songcast.$(objext)
 
-headers_songcaster = ohSongcaster$(dirsep)ReceiverManager1.h \
-                    ohSongcaster$(dirsep)ReceiverManager2.h \
-                    ohSongcaster$(dirsep)ReceiverManager3.h \
-                    ohSongcaster$(dirsep)Songcaster.h
+headers_Songcast = ohSongcast$(dirsep)ReceiverManager1.h \
+                    ohSongcast$(dirsep)ReceiverManager2.h \
+                    ohSongcast$(dirsep)ReceiverManager3.h \
+                    ohSongcast$(dirsep)Songcast.h
 
-$(objdir)ReceiverManager1.$(objext) : ohSongcaster$(dirsep)ReceiverManager1.cpp $(headers_songcaster)
-	$(compiler)ReceiverManager1.$(objext) -c $(cflags) $(includes) ohSongcaster$(dirsep)ReceiverManager1.cpp
-$(objdir)ReceiverManager2.$(objext) : ohSongcaster$(dirsep)ReceiverManager2.cpp $(headers_songcaster)
-	$(compiler)ReceiverManager2.$(objext) -c $(cflags) $(includes) ohSongcaster$(dirsep)ReceiverManager2.cpp
-$(objdir)ReceiverManager3.$(objext) : ohSongcaster$(dirsep)ReceiverManager3.cpp $(headers_songcaster)
-	$(compiler)ReceiverManager3.$(objext) -c $(cflags) $(includes) ohSongcaster$(dirsep)ReceiverManager3.cpp
-$(objdir)Songcaster.$(objext) : ohSongcaster$(dirsep)Songcaster.cpp $(headers_songcaster)
-	$(compiler)Songcaster.$(objext) -c $(cflags) $(includes) ohSongcaster$(dirsep)Songcaster.cpp
+$(objdir)ReceiverManager1.$(objext) : ohSongcast$(dirsep)ReceiverManager1.cpp $(headers_Songcast)
+	$(compiler)ReceiverManager1.$(objext) -c $(cflags) $(includes) ohSongcast$(dirsep)ReceiverManager1.cpp
+$(objdir)ReceiverManager2.$(objext) : ohSongcast$(dirsep)ReceiverManager2.cpp $(headers_Songcast)
+	$(compiler)ReceiverManager2.$(objext) -c $(cflags) $(includes) ohSongcast$(dirsep)ReceiverManager2.cpp
+$(objdir)ReceiverManager3.$(objext) : ohSongcast$(dirsep)ReceiverManager3.cpp $(headers_Songcast)
+	$(compiler)ReceiverManager3.$(objext) -c $(cflags) $(includes) ohSongcast$(dirsep)ReceiverManager3.cpp
+$(objdir)Songcast.$(objext) : ohSongcast$(dirsep)Songcast.cpp $(headers_Songcast)
+	$(compiler)Songcast.$(objext) -c $(cflags) $(includes) ohSongcast$(dirsep)Songcast.cpp
 
 
 all_common : TestReceiverManager1 TestReceiverManager2 TestReceiverManager3 ZoneWatcher WavSender
 
 
 TestReceiverManager1 : $(objdir)TestReceiverManager1.$(exeext)
-$(objdir)TestReceiverManager1.$(exeext) : ohSongcaster$(dirsep)TestReceiverManager1.cpp $(objects_songcast) $(objects_songcaster)
-	$(compiler)TestReceiverManager1.$(objext) -c $(cflags) $(includes) ohSongcaster$(dirsep)TestReceiverManager1.cpp
+$(objdir)TestReceiverManager1.$(exeext) : ohSongcast$(dirsep)TestReceiverManager1.cpp $(objects_songcast) $(objects_Songcast)
+	$(compiler)TestReceiverManager1.$(objext) -c $(cflags) $(includes) ohSongcast$(dirsep)TestReceiverManager1.cpp
 	$(link) $(linkoutput)$(objdir)TestReceiverManager1.$(exeext) $(objdir)TestReceiverManager1.$(objext) $(objects_recvrmgrs) $(objects_songcast) $(objects_topology) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
 
 TestReceiverManager2 : $(objdir)TestReceiverManager2.$(exeext)
-$(objdir)TestReceiverManager2.$(exeext) : ohSongcaster$(dirsep)TestReceiverManager2.cpp $(objects_songcast) $(objects_songcaster)
-	$(compiler)TestReceiverManager2.$(objext) -c $(cflags) $(includes) ohSongcaster$(dirsep)TestReceiverManager2.cpp
+$(objdir)TestReceiverManager2.$(exeext) : ohSongcast$(dirsep)TestReceiverManager2.cpp $(objects_songcast) $(objects_Songcast)
+	$(compiler)TestReceiverManager2.$(objext) -c $(cflags) $(includes) ohSongcast$(dirsep)TestReceiverManager2.cpp
 	$(link) $(linkoutput)$(objdir)TestReceiverManager2.$(exeext) $(objdir)TestReceiverManager2.$(objext) $(objects_recvrmgrs) $(objects_songcast) $(objects_topology) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
 
 TestReceiverManager3 : $(objdir)TestReceiverManager3.$(exeext)
-$(objdir)TestReceiverManager3.$(exeext) : ohSongcaster$(dirsep)TestReceiverManager3.cpp $(objects_songcast) $(objects_songcaster)
-	$(compiler)TestReceiverManager3.$(objext) -c $(cflags) $(includes) ohSongcaster$(dirsep)TestReceiverManager3.cpp
+$(objdir)TestReceiverManager3.$(exeext) : ohSongcast$(dirsep)TestReceiverManager3.cpp $(objects_songcast) $(objects_Songcast)
+	$(compiler)TestReceiverManager3.$(objext) -c $(cflags) $(includes) ohSongcast$(dirsep)TestReceiverManager3.cpp
 	$(link) $(linkoutput)$(objdir)TestReceiverManager3.$(exeext) $(objdir)TestReceiverManager3.$(objext) $(objects_recvrmgrs) $(objects_songcast) $(objects_topology) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
 

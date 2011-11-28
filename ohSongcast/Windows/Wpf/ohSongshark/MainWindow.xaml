@@ -1,0 +1,21 @@
+﻿<Window x:Class="ohSongshark.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ohSongshark" Height="350" Width="525">
+    <DockPanel>
+        <DockPanel DockPanel.Dock="Top">
+            <ComboBox Name="comboAdapter" DockPanel.Dock="Left" Width="200"></ComboBox>
+            <TextBox Name="textEndpoint" DockPanel.Dock="Left" Width="100"></TextBox>
+            <ComboBox Name="comboPlugin" DockPanel.Dock="Left" Width="140"></ComboBox>
+            <Button Name="buttonStart" DockPanel.Dock="Left">Start</Button>
+            <Button Name="buttonStop" DockPanel.Dock="Right">Stop</Button>
+        </DockPanel>
+        <Label>Count</Label>
+        <TextBlock Name="textCount" Width="100"/>
+        <Label>Min</Label>
+        <TextBlock Name="textMin" Width="100"/>
+        <Label>Max</Label>
+        <TextBlock Name="textMax" Width="100"/>
+        <TextBox Name="textOutput" IsReadOnly="True"></TextBox>
+    </DockPanel>
+</Window>
