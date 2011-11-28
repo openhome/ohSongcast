@@ -1,4 +1,4 @@
-#include "../Songcaster.h"
+#include "../Songcast.h"
 #include "Driver/AudioDeviceInterface.h"
 
 #include <OpenHome/OhNetTypes.h>
@@ -23,7 +23,7 @@ public:
     OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriverName);
     virtual ~OhmSenderDriverMac();
 
-    void SetSongcaster(Songcaster& aSongcaster);
+    void SetSongcast(Songcast& aSongcast);
 
 private:
     // IOhmSenderDriver
@@ -40,10 +40,10 @@ private:
     static OSStatus DefaultDeviceChanged(AudioHardwarePropertyID aId, void* aPtr);
     void DefaultDeviceChanged();
 
-    AudioDeviceID iDeviceSongcaster;
+    AudioDeviceID iDeviceSongcast;
     AudioDeviceID iDevicePrevious;
 
-    Songcaster* iSongcaster;
+    Songcast* iSongcast;
 
     io_service_t iService;
     io_iterator_t iNotification;
@@ -81,7 +81,7 @@ private:
 } // namespace OpenHome
 
 
-EXCEPTION(SongcasterError);
+EXCEPTION(SongcastError);
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
@@ -146,7 +146,7 @@ public:
     }
 
 
-    static AudioDeviceID FirstNonSongcasterDevice(AudioDeviceID aSongcaster)
+    static AudioDeviceID FirstNonSongcastDevice(AudioDeviceID aSongcast)
     {
         // get list of all devices
         AudioDeviceID deviceIds[MAX_AUDIO_DEVICES];
@@ -157,10 +157,10 @@ public:
             return kAudioDeviceUnknown;
         }
 
-        // look for the first output device that is not the songcaster
+        // look for the first output device that is not the songcast device
         for (UInt32 i=0 ; i<deviceCount ; i++)
         {
-            if (deviceIds[i] != aSongcaster)
+            if (deviceIds[i] != aSongcast)
             {
                 UInt32 propBytes = 0;
                 OSStatus err = AudioDeviceGetPropertyInfo(deviceIds[i], 0, false, kAudioDevicePropertyStreams, &propBytes, 0);
@@ -196,9 +196,9 @@ private:
 // OhmSenderDriverMac implementation
 
 OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriverName)
-    : iDeviceSongcaster(kAudioDeviceUnknown)
+    : iDeviceSongcast(kAudioDeviceUnknown)
     , iDevicePrevious(kAudioDeviceUnknown)
-    , iSongcaster(0)
+    , iSongcast(0)
     , iService(0)
     , iNotification(0)
     , iNotificationPort(0)
@@ -236,9 +236,9 @@ OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriver
     iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(iDriverClassName.CString()));
     if (iService != 0)
     {
-        iDeviceSongcaster = AudioHardware::Device(iDriverName);
+        iDeviceSongcast = AudioHardware::Device(iDriverName);
 
-        if (iDeviceSongcaster != kAudioDeviceUnknown)
+        if (iDeviceSongcast != kAudioDeviceUnknown)
         {
             // notification not required
             IONotificationPortDestroy(iNotificationPort);
@@ -264,9 +264,9 @@ OhmSenderDriverMac::~OhmSenderDriverMac()
     }
 }
 
-void OhmSenderDriverMac::SetSongcaster(Songcaster& aSongcaster)
+void OhmSenderDriverMac::SetSongcast(Songcast& aSongcast)
 {
-    iSongcaster = &aSongcaster;
+    iSongcast = &aSongcast;
 }
 
 void OhmSenderDriverMac::DriverFound(void* aPtr, io_iterator_t aIterator)
@@ -282,10 +282,10 @@ void OhmSenderDriverMac::DriverFound()
     // get the IOService for the driver
     iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(iDriverClassName.CString()));
 
-    // get the audio device for the songcaster
-    iDeviceSongcaster = AudioHardware::Device(iDriverName);
+    // get the audio device for songcast
+    iDeviceSongcast = AudioHardware::Device(iDriverName);
 
-    if (iDeviceSongcaster != kAudioDeviceUnknown)
+    if (iDeviceSongcast != kAudioDeviceUnknown)
     {
         // set the state of the driver
         SetEnabled(iEnabled);
@@ -312,11 +312,11 @@ OSStatus OhmSenderDriverMac::DefaultDeviceChanged(AudioHardwarePropertyID aId, v
 
 void OhmSenderDriverMac::DefaultDeviceChanged()
 {
-    if (iDeviceSongcaster != kAudioDeviceUnknown)
+    if (iDeviceSongcast != kAudioDeviceUnknown)
     {
         AudioDeviceID current = AudioHardware::CurrentDevice();
 
-        iSongcaster->SetEnabled(current == iDeviceSongcaster);
+        iSongcast->SetEnabled(current == iDeviceSongcast);
     }
 }
 
@@ -349,15 +349,15 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
         iDriver->SetActive(iActive);
 
 
-        // change the current audio output device to be the songcaster device
+        // change the current audio output device to be the songcast device
         AudioDeviceID current = AudioHardware::CurrentDevice();
 
         // change the current audio device only if it is not already set
-        if (current != iDeviceSongcaster)
+        if (current != iDeviceSongcast)
         {
             iDevicePrevious = current;
 
-            AudioHardware::SetCurrentDevice(iDeviceSongcaster);
+            AudioHardware::SetCurrentDevice(iDeviceSongcast);
         }
     }
     else
@@ -365,7 +365,7 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
         // change the current audio output device to be what it was previously
         AudioDeviceID current = AudioHardware::CurrentDevice();
 
-        if (current == iDeviceSongcaster)
+        if (current == iDeviceSongcast)
         {
             if (iDevicePrevious != kAudioDeviceUnknown)
             {
@@ -375,7 +375,7 @@ void OhmSenderDriverMac::SetEnabled(TBool aValue)
             else
             {
                 // the previous audio device was not stored
-                AudioDeviceID device = AudioHardware::FirstNonSongcasterDevice(iDeviceSongcaster);
+                AudioDeviceID device = AudioHardware::FirstNonSongcastDevice(iDeviceSongcast);
 
                 if (device != kAudioDeviceUnknown)
                 {
@@ -449,7 +449,7 @@ OhmSenderDriverMac::Driver::Driver(io_service_t aService)
     // open a connection to communicate with the service
     kern_return_t res = IOServiceOpen(aService, mach_task_self(), 0, &iHandle);
     if (res != KERN_SUCCESS) {
-        THROW(SongcasterError);
+        THROW(SongcastError);
     }
 
     // open the "hardware" device
@@ -494,7 +494,7 @@ void OhmSenderDriverMac::Driver::SetLatency(TUint aValue)
 
 // Platform specific parts of the C interface
 
-THandle SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aLatency, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, void* aImagePtr, uint32_t aImageBytes, const char* aMimeType)
+THandle SongcastCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aLatency, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, void* aImagePtr, uint32_t aImageBytes, const char* aMimeType)
 {
     // get the computer name
     struct utsname name;
@@ -516,10 +516,10 @@ THandle SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChanne
     // build the audio device driver name
     Bws<64> driverName;
     driverName.Append(aManufacturer);
-    driverName.Append(" Songcaster");
+    driverName.Append(" Songcast");
 
     // build the audio device class name for the driver
-    Bws<64> className("songcaster");
+    Bws<64> className("songcast");
     Brn domain(aDomain);
     Parser parser(domain);
     while (!parser.Finished())
@@ -537,15 +537,15 @@ THandle SongcasterCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChanne
     try {
         driver = new OhmSenderDriverMac(className, driverName);
     }
-    catch (SongcasterError) {
+    catch (SongcastError) {
         return 0;
     }
 
-    Songcaster* songcaster = new Songcaster(aSubnet, aChannel, aTtl, aLatency, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl, Brn((TByte*) aImagePtr, aImageBytes), Brn(aMimeType));
+    Songcast* songcast = new Songcast(aSubnet, aChannel, aTtl, aLatency, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl, Brn((TByte*) aImagePtr, aImageBytes), Brn(aMimeType));
 
-    driver->SetSongcaster(*songcaster);
+    driver->SetSongcast(*songcast);
 
-	return songcaster;
+	return songcast;
 }
 
 

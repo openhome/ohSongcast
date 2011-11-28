@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>ohSongcaster</string>
+	<string>ohSongcast</string>
 	<key>CFBundleIconFile</key>
 	<string>Icon.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.openhome.av.songcaster</string>
+	<string>org.openhome.av.songcast</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>ohSongcaster</string>
+	<string>ohSongcast</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -30,23 +30,23 @@
 	<string>NSApplication</string>
 	<key>LSUIElement</key>
 	<string>1</string>
-	<key>SongcasterPreferencesId</key>
-	<string>org.openhome.av.songcaster</string>
-	<key>SongcasterPreferencePane</key>
-	<string>/Library/PreferencePanes/ohSongcaster.prefPane</string>
-	<key>SongcasterDomain</key>
+	<key>SongcastPreferencesId</key>
+	<string>org.openhome.av.songcast</string>
+	<key>SongcastPreferencePane</key>
+	<string>/Library/PreferencePanes/ohSongcast.prefPane</string>
+	<key>SongcastDomain</key>
 	<string>av.openhome.org</string>
-	<key>SongcasterManufacturerName</key>
+	<key>SongcastManufacturerName</key>
 	<string>OpenHome</string>
-	<key>SongcasterManufacturerUrl</key>
+	<key>SongcastManufacturerUrl</key>
 	<string>http://www.openhome.org</string>
-	<key>SongcasterModelUrl</key>
+	<key>SongcastModelUrl</key>
 	<string>http://www.openhome.org</string>
-	<key>SongcasterProductId</key>
-	<string>ohSongcaster</string>
-	<key>SongcasterCrashLogUrl</key>
+	<key>SongcastProductId</key>
+	<string>ohSongcast</string>
+	<key>SongcastCrashLogUrl</key>
 	<string></string>
-	<key>SongcasterAutoUpdateUrl</key>
+	<key>SongcastAutoUpdateUrl</key>
 	<string></string>
 </dict>
 </plist>

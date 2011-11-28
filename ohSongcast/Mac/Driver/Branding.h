@@ -2,16 +2,16 @@
 #define HEADER_BRANDING
 
 
-#define BRANDING_AUDIODEVICE_CLASSNAME org_openhome_av_songcaster
-#define BRANDING_AUDIODEVICE_NAME "OpenHome Songcaster"
-#define BRANDING_AUDIODEVICE_SHORTNAME "ohSongcaster"
+#define BRANDING_AUDIODEVICE_CLASSNAME org_openhome_av_songcast
+#define BRANDING_AUDIODEVICE_NAME "OpenHome Songcast"
+#define BRANDING_AUDIODEVICE_SHORTNAME "ohSongcast"
 #define BRANDING_AUDIODEVICE_MANUFACTURERNAME "www.openhome.org"
 
-#define BRANDING_AUDIOENGINE_CLASSNAME org_openhome_av_songcaster_audioengine
+#define BRANDING_AUDIOENGINE_CLASSNAME org_openhome_av_songcast_audioengine
 
-#define BRANDING_AUDIOUSERCLIENT_CLASSNAME org_openhome_av_songcaster_userclient
+#define BRANDING_AUDIOUSERCLIENT_CLASSNAME org_openhome_av_songcast_userclient
 
-#define BRANDING_KEXTINFO_KMODNAME org.openhome.av.songcaster
+#define BRANDING_KEXTINFO_KMODNAME org.openhome.av.songcast
 #define BRANDING_KEXTINFO_KMODVERSION "1.0"
 
 // To rebrand, the Info.plist file is required to change. The following

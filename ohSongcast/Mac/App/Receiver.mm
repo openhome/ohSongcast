@@ -1,6 +1,6 @@
 
 #import "Receiver.h"
-#include "../../Songcaster.h"
+#include "../../Songcast.h"
 
 
 @implementation Receiver

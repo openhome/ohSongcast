@@ -17,7 +17,7 @@
 /* Menu item 4 - Open preferences - %@ is the CFBundleName */
 "MenuPreferences" = "Open %@ Preferences...";
 
-/* Crash log report button - %@ is the SongcasterManufacturerName */
+/* Crash log report button - %@ is the SongcastManufacturerName */
 "CrashLogReport" = "Report to %@";
 
 /* Crash log ignore button */
@@ -26,9 +26,9 @@
 /* Crash log title - %@ is the CFBundleName */
 "CrashLogTitle" = "A problem occurred with %@";
 
-/* Crash log text - %@ is the SongcasterManufacturerName */
+/* Crash log text - %@ is the SongcastManufacturerName */
 "CrashLogText" = "Mac OS X and other applications are not affected.\n\nClick Report to send a report to %@.";
 
-/* Auto update text - First %@ is the SongcasterProductId, second %@ is the CFBundleShortVersionNumber */
+/* Auto update text - First %@ is the SongcastProductId, second %@ is the CFBundleShortVersionNumber */
 "UpdateAvailableText" = "A new version of %@ (%@) is available.";
 

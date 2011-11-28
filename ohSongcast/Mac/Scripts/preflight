@@ -1,8 +1,13 @@
 #!/bin/sh
 
 
-launchFile="/Library/LaunchAgents/org.openhome.av.songcaster.plist"
-driver="/System/Library/Extensions/ohSongcaster.kext"
+launchFile="/Library/LaunchAgents/org.openhome.av.songcast.plist"
+driver="/System/Library/Extensions/ohSongcast.kext"
+
+launchFileOld="/Library/LaunchAgents/org.openhome.av.songcaster.plist"
+driverOld="/System/Library/Extensions/ohSongcaster.kext"
+prefPaneOld="/Library/PreferencePanes/ohSongcaster.prefPane"
+appOld="/Library/OpenHome/ohSongcaster.app"
 
 
 # stop the agent application - this script is run by the installer as root
@@ -13,6 +18,18 @@ if [ -e "$launchFile" ]
 then
   sudo -u "$USER" launchctl unload "$launchFile"
 fi
+
+
+# Do the above but for older versions that used the old name
+
+if [ -e "$launchFileOld" ]
+then
+  sudo -u "$USER" launchctl unload "$launchFileOld"
+
+  # remove the old file as this will not be overwritten
+  rm -rf "$launchFileOld"
+fi
+
 
 
 # unload the driver - need to try it twice since the first time 
@@ -29,6 +46,27 @@ then
   # now delete the previous driver
   rm -rf "$driver"
 fi
+
+
+# Do the above but for older versions that used the old name
+
+if [ -e "$driverOld" ]
+then
+  kextunload "$driverOld"
+  if [ $? != 0 ]
+  then
+    kextunload "$driverOld"
+  fi
+
+  # now delete the old driver - this will not get overwritten
+  rm -rf "$driverOld"
+fi
+
+
+# completely delete other old components that used the old name
+
+rm -rf "$prefPaneOld"
+rm -rf "$appOld"
 
 
 # if errors occurred, it will be because the app or driver is not loaded and running - that's fine

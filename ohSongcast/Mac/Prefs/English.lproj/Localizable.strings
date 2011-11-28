@@ -12,6 +12,6 @@
 /* Text in the table cell for the unavailable status of a receiver */
 "TableCellStatusUnavailable" = "Unavailable";
 
-/* Text in the table cell for the songcaster off status of a receiver */
-"TableCellStatusSongcasterOff" = "Songcaster Off";
+/* Text in the table cell for the songcast off status of a receiver */
+"TableCellStatusSongcastOff" = "Songcast Off";
 

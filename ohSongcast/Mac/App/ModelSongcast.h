@@ -4,9 +4,9 @@
 #import "SubnetList.h"
 
 
-@interface ModelSongcaster : NSObject<IReceiverListObserver, ISubnetListObserver>
+@interface ModelSongcast : NSObject<IReceiverListObserver, ISubnetListObserver>
 {
-    void* iSongcaster;
+    void* iSongcast;
     ReceiverList* iReceivers;
     NSArray* iSelectedUdns;
     SubnetList* iSubnets;

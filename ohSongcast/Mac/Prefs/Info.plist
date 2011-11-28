@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>ohSongcaster</string>
+	<string>ohSongcast</string>
 	<key>CFBundleIconFile</key>
 	<string>Icon.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.openhome.av.songcaster</string>
+	<string>org.openhome.av.songcast</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>ohSongcaster</string>
+	<string>ohSongcast</string>
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
@@ -25,18 +25,18 @@
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2011 OpenHome</string>
 	<key>NSMainNibFile</key>
-	<string>SongcasterPrefPane</string>
+	<string>SongcastPrefPane</string>
 	<key>NSPrefPaneIconFile</key>
 	<string>Icon.png</string>
 	<key>NSPrefPaneIconLabel</key>
-	<string>ohSongcaster</string>
+	<string>ohSongcast</string>
 	<key>NSPrincipalClass</key>
-	<string>SongcasterPrefPane</string>
-	<key>SongcasterPreferencesId</key>
-	<string>org.openhome.av.songcaster</string>
-	<key>SongcasterManualUrl</key>
+	<string>SongcastPrefPane</string>
+	<key>SongcastPreferencesId</key>
+	<string>org.openhome.av.songcast</string>
+	<key>SongcastManualUrl</key>
 	<string></string>
-	<key>SongcasterAboutText</key>
+	<key>SongcastAboutText</key>
 	<string>%@
 Version %@
 %@</string>

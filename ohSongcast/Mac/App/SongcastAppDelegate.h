@@ -4,7 +4,7 @@
 #import "WindowUpdates.h"
 
 
-@interface SongcasterAppDelegate : NSObject <NSApplicationDelegate, IModelObserver>
+@interface SongcastAppDelegate : NSObject <NSApplicationDelegate, IModelObserver>
 {
     IBOutlet NSMenu* menu;
     IBOutlet NSMenuItem* menuItemStatus;

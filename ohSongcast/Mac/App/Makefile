@@ -2,10 +2,10 @@
 
 ifeq ($(release), 1)
 debug_specific_flags = -Os -mdynamic-no-pic -fvisibility=hidden
-libohSongcaster = ../../../Build/Obj/Mac/Release/libohSongcaster.so
+libohSongcast = ../../../Build/Obj/Mac/Release/libohSongcast.so
 else
 debug_specific_flags = -O0 -mfix-and-continue
-libohSongcaster = ../../../Build/Obj/Mac/Debug/libohSongcaster.so
+libohSongcast = ../../../Build/Obj/Mac/Debug/libohSongcast.so
 endif
 
 
@@ -53,10 +53,10 @@ $(outputdir)%.o : %.mm
 $(outputdir)Preferences.o : ../Preferences.m
 	$(compiler) $(arch_flags) $(objc_flags) $< -o $@
 
-objects = $(outputdir)main.o $(outputdir)SongcasterAppDelegate.o $(outputdir)WindowUpdates.o $(outputdir)Model.o $(outputdir)ModelSongcaster.o $(outputdir)Preferences.o $(outputdir)ReceiverList.o $(outputdir)Receiver.o $(outputdir)SubnetList.o $(outputdir)CrashLogging.o $(outputdir)AutoUpdate.o
+objects = $(outputdir)main.o $(outputdir)SongcastAppDelegate.o $(outputdir)WindowUpdates.o $(outputdir)Model.o $(outputdir)ModelSongcast.o $(outputdir)Preferences.o $(outputdir)ReceiverList.o $(outputdir)Receiver.o $(outputdir)SubnetList.o $(outputdir)CrashLogging.o $(outputdir)AutoUpdate.o
 
 $(outputdir)$(product_name) : $(objects)
-	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(libohSongcaster) $(linkflags2) -o $@
+	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(libohSongcast) $(linkflags2) -o $@
 
 $(resourcedir)%.strings : %.strings
 	$(copystrings) $(copystrings_flags) $< --outdir $(@D)
@@ -64,9 +64,9 @@ $(resourcedir)%.strings : %.strings
 $(resourcedir)%.nib : %.xib
 	$(ibtool) $(ibtool_flags) --compile $@ $<
 
-$(outputdir)$(product_name).app : $(outputdir)$(product_name) $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib $(resourcedir)English.lproj/WindowUpdates.nib Info.plist MenuIconOff.png MenuIconOn.png SenderIcon.png ../BundleIcon.icns $(libohSongcaster)
+$(outputdir)$(product_name).app : $(outputdir)$(product_name) $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/MainMenu.nib $(resourcedir)English.lproj/WindowUpdates.nib Info.plist MenuIconOff.png MenuIconOn.png SenderIcon.png ../BundleIcon.icns $(libohSongcast)
 	cp $< $(macosdir)
-	cp $(libohSongcaster) $(macosdir)
+	cp $(libohSongcast) $(macosdir)
 	cp MenuIconOff.png $(resourcedir)
 	cp MenuIconOn.png $(resourcedir)
 	cp SenderIcon.png $(resourcedir)

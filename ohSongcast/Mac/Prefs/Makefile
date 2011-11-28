@@ -47,7 +47,7 @@ $(outputdir)%.o : %.m
 $(outputdir)Preferences.o : ../Preferences.m
 	$(compiler) $(arch_flags) $(objc_flags) $< -o $@
 
-objects = $(outputdir)SongcasterPrefPane.o $(outputdir)Preferences.o
+objects = $(outputdir)SongcastPrefPane.o $(outputdir)Preferences.o
 
 $(outputdir)$(product_name) : $(objects)
 	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(linkflags2) -o $@
@@ -58,7 +58,7 @@ $(resourcedir)%.strings : %.strings
 $(resourcedir)%.nib : %.xib
 	$(ibtool) $(ibtool_flags) --compile $@ $<
 
-$(outputdir)$(product_name).prefPane : $(outputdir)$(product_name) $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/SongcasterPrefPane.nib Info.plist Icon.png IconLarge.png green.tiff red.tiff ../BundleIcon.icns
+$(outputdir)$(product_name).prefPane : $(outputdir)$(product_name) $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/SongcastPrefPane.nib Info.plist Icon.png IconLarge.png green.tiff red.tiff ../BundleIcon.icns
 	cp $< $(macosdir)
 	cp Icon.png $(resourcedir)
 	cp IconLarge.png $(resourcedir)

@@ -1,7 +1,7 @@
 
-#import "ModelSongcaster.h"
+#import "ModelSongcast.h"
 #import "Preferences.h"
-#include "../../Songcaster.h"
+#include "../../Songcast.h"
 
 
 // Declaration for receiver callback - defined in ReceiverList.mm
@@ -11,11 +11,11 @@ extern void ReceiverListCallback(void* aPtr, ECallbackType aType, THandle aRecei
 extern void SubnetListCallback(void* aPtr, ECallbackType aType, THandle aSubnet);
 
 // Forward declarations of callback functions defined below
-void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
+void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcast);
 
 
 
-@implementation ModelSongcaster
+@implementation ModelSongcast
 
 
 - (id) initWithReceivers:(NSArray*)aReceivers andSelectedUdns:(NSArray*)aSelectedUdns multicastEnabled:(bool)aMulticastEnabled multicastChannel:(uint32_t)aMulticastChannel latencyMs:(uint32_t)aLatencyMs
@@ -45,20 +45,20 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     [iReceivers setObserver:self];
     [iSubnets setObserver:self];
 
-    // create the songcaster object - always create disabled
+    // create the songcast object - always create disabled
     uint32_t subnet = 0;
     uint32_t ttl = 4;
     uint32_t enabled = 0;
     uint32_t preset = 0;
-    NSString* domain = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterDomain"];
-    NSString* manufacturerName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterManufacturerName"];
-    NSString* manufacturerUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterManufacturerUrl"];
-    NSString* modelUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterModelUrl"];
+    NSString* domain = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcastDomain"];
+    NSString* manufacturerName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcastManufacturerName"];
+    NSString* manufacturerUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcastManufacturerUrl"];
+    NSString* modelUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcastModelUrl"];
 
     NSString* senderIconFile = [[NSBundle mainBundle] pathForResource:@"SenderIcon" ofType:@"png"];
     NSData* senderIcon = [NSData dataWithContentsOfFile:senderIconFile];
 
-    iSongcaster = SongcasterCreate([domain UTF8String], subnet, aMulticastChannel, ttl, aLatencyMs, aMulticastEnabled ? 1: 0, enabled, preset, ReceiverListCallback, iReceivers, SubnetListCallback, iSubnets, ModelConfigurationChangedCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String], (void*)[senderIcon bytes], [senderIcon length], "image/png");
+    iSongcast = SongcastCreate([domain UTF8String], subnet, aMulticastChannel, ttl, aLatencyMs, aMulticastEnabled ? 1: 0, enabled, preset, ReceiverListCallback, iReceivers, SubnetListCallback, iSubnets, ModelConfigurationChangedCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String], (void*)[senderIcon bytes], [senderIcon length], "image/png");
 
     return self;
 }
@@ -66,9 +66,9 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) dispose
 {
-    // destroy the songcaster
-    SongcasterDestroy(iSongcaster);
-    iSongcaster = 0;
+    // destroy the songcast object
+    SongcastDestroy(iSongcast);
+    iSongcast = 0;
 
     // update all receivers to be unavailable
     for (Receiver* receiver in [iReceivers receivers])
@@ -123,24 +123,24 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (bool) enabled
 {
-    return (SongcasterEnabled(iSongcaster) != 0);
+    return (SongcastEnabled(iSongcast) != 0);
 }
 
 
 - (void) setEnabled:(bool)aValue
 {
-    // stop receivers before disabling songcaster
+    // stop receivers before disabling songcast
     if (!aValue)
     {
         [self stopReceivers];
     }
 
-    SongcasterSetEnabled(iSongcaster, aValue ? 1 : 0);
+    SongcastSetEnabled(iSongcast, aValue ? 1 : 0);
 
-    // start receivers after songcaster is enabled
+    // start receivers after songcast is enabled
     if (aValue)
     {
-        // On switching on the songcaster, play receivers that are in the group
+        // On switching on songcast, play receivers that are in the group
         [self playReceivers];
     }
 }
@@ -148,19 +148,19 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) setMulticastEnabled:(bool)aValue
 {
-    SongcasterSetMulticast(iSongcaster, aValue ? 1 : 0);
+    SongcastSetMulticast(iSongcast, aValue ? 1 : 0);
 }
 
 
 - (void) setMulticastChannel:(uint32_t)aValue
 {
-    SongcasterSetChannel(iSongcaster, aValue);
+    SongcastSetChannel(iSongcast, aValue);
 }
 
 
 - (void) setLatencyMs:(uint32_t)aValue
 {
-    SongcasterSetLatency(iSongcaster, aValue);
+    SongcastSetLatency(iSongcast, aValue);
 }
 
 
@@ -172,7 +172,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) setSelectedUdns:(NSArray*)aSelectedUdns
 {
-    // if the songcaster is enabled, need to play/stop receivers that have been
+    // if songcast is enabled, need to play/stop receivers that have been
     // selected/deselected
     if ([self enabled])
     {
@@ -228,8 +228,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
     // notify the upper layers
     [iReceiversChangedObject performSelector:iReceiversChangedSelector withObject:nil];
 
-    // signal the songcaster to refresh
-    SongcasterRefreshReceivers(iSongcaster);
+    // signal songcast to refresh
+    SongcastRefreshReceivers(iSongcast);
 }
 
 
@@ -247,7 +247,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
         case eReceiverStateConnecting:
         case eReceiverStateConnected:
             // These states imply the receiver is still connected to this songcast
-            // sender for this songcaster, so stop them and put them into standby
+            // sender, so stop them and put them into standby
             [aReceiver stop];
             [aReceiver standby];
             break;
@@ -301,24 +301,24 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (uint32_t) subnet
 {
-    return SongcasterSubnet(iSongcaster);
+    return SongcastSubnet(iSongcast);
 }
 
 
 - (void) setSubnet:(uint32_t)aAddress
 {
-    SongcasterSetSubnet(iSongcaster, aAddress);
+    SongcastSetSubnet(iSongcast, aAddress);
 }
 
 
 - (void) receiverAdded:(Receiver*)aReceiver
 {
-    // do nothing if the songcaster has been disposed
-    if (!iSongcaster)
+    // do nothing if songcast has been disposed
+    if (!iSongcast)
         return;
 
     // the receiver has just appeared on the network - start playing if required i.e.
-    //  - songcaster is switched on
+    //  - songcast is switched on
     //  - receiver is selected
     if ([self enabled] && [iSelectedUdns containsObject:[aReceiver udn]])
     {
@@ -332,8 +332,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) receiverRemoved:(Receiver*)aReceiver
 {
-    // do nothing if the songcaster has been disposed
-    if (!iSongcaster)
+    // do nothing if songcast has been disposed
+    if (!iSongcast)
         return;
 
     // notify upper layers
@@ -343,8 +343,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) receiverChanged:(Receiver*)aReceiver
 {
-    // do nothing if the songcaster has been disposed
-    if (!iSongcaster)
+    // do nothing if songcast has been disposed
+    if (!iSongcast)
         return;
 
     // notify upper layers
@@ -354,8 +354,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) subnetAdded:(Subnet*)aSubnet
 {
-    // do nothing if the songcaster has been disposed
-    if (!iSongcaster)
+    // do nothing if songcast has been disposed
+    if (!iSongcast)
         return;
 
     // notify upper layers
@@ -365,8 +365,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) subnetRemoved:(Subnet*)aSubnet
 {
-    // do nothing if the songcaster has been disposed
-    if (!iSongcaster)
+    // do nothing if songcast has been disposed
+    if (!iSongcast)
         return;
 
     // notify upper layers
@@ -376,8 +376,8 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 - (void) subnetChanged:(Subnet*)aSubnet
 {
-    // do nothing if the songcaster has been disposed
-    if (!iSongcaster)
+    // do nothing if songcast has been disposed
+    if (!iSongcast)
         return;
 
     // notify upper layers
@@ -396,9 +396,9 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster);
 
 
 
-void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcaster)
+void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcast)
 {
-    ModelSongcaster* model = (ModelSongcaster*)aPtr;
+    ModelSongcast* model = (ModelSongcast*)aPtr;
     [model configurationChanged];
 }
 

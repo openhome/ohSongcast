@@ -1,5 +1,5 @@
 
-#import "SongcasterPrefPane.h"
+#import "SongcastPrefPane.h"
 
 
 // Class for storing static resources used by table cell
@@ -13,14 +13,14 @@
 + (NSString*) textConnected;
 + (NSString*) textDisconnected;
 + (NSString*) textUnavailable;
-+ (NSString*) textSongcasterOff;
++ (NSString*) textSongcastOff;
 
 @end
 
 
 
 // Implementation of preference pane
-@implementation SongcasterPrefPane
+@implementation SongcastPrefPane
 
 @synthesize buttonOnOff;
 @synthesize textAbout;
@@ -55,7 +55,7 @@
     [textStep1Text setStringValue:[NSString stringWithFormat:[textStep1Text stringValue], appName]];
 
     // initialise the about text
-    NSString* aboutFormat = [[[self bundle] infoDictionary] objectForKey:@"SongcasterAboutText"];
+    NSString* aboutFormat = [[[self bundle] infoDictionary] objectForKey:@"SongcastAboutText"];
     NSString* version = [[[self bundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
     NSString* copyright = [[[self bundle] infoDictionary] objectForKey:@"NSHumanReadableCopyright"];
     [textAbout setStringValue:[NSString stringWithFormat:aboutFormat, appName, version, copyright]];
@@ -131,7 +131,7 @@
 
 - (IBAction) buttonHelpClicked:(id)aSender
 {
-    NSURL* manualUrl = [NSURL URLWithString:[[[self bundle] infoDictionary] objectForKey:@"SongcasterManualUrl"]];
+    NSURL* manualUrl = [NSURL URLWithString:[[[self bundle] infoDictionary] objectForKey:@"SongcastManualUrl"]];
     [[NSWorkspace sharedWorkspace] openURL:manualUrl];
 }
 
@@ -429,7 +429,7 @@ static NSString* textConnected;
 static NSString* textConnecting;
 static NSString* textDisconnected;
 static NSString* textUnavailable;
-static NSString* textSongcasterOff;
+static NSString* textSongcastOff;
 
 + (void) loadResources:(NSBundle*)aBundle
 {
@@ -440,7 +440,7 @@ static NSString* textSongcasterOff;
     textConnecting = NSLocalizedStringFromTableInBundle(@"TableCellStatusConnecting", nil, aBundle, @"");
     textDisconnected = NSLocalizedStringFromTableInBundle(@"TableCellStatusDisconnected", nil, aBundle, @"");
     textUnavailable = NSLocalizedStringFromTableInBundle(@"TableCellStatusUnavailable", nil, aBundle, @"");
-    textSongcasterOff = NSLocalizedStringFromTableInBundle(@"TableCellStatusSongcasterOff", nil, aBundle, @"");
+    textSongcastOff = NSLocalizedStringFromTableInBundle(@"TableCellStatusSongcastOff", nil, aBundle, @"");
 }
 
 + (NSImage*) imageConnected
@@ -473,9 +473,9 @@ static NSString* textSongcasterOff;
     return textUnavailable;
 }
 
-+ (NSString*) textSongcasterOff
++ (NSString*) textSongcastOff
 {
-    return textSongcasterOff;
+    return textSongcastOff;
 }
 
 @end
@@ -523,7 +523,7 @@ static NSString* textSongcasterOff;
 
     if (![[[self objectValue] objectAtIndex:1] boolValue])
     {
-        statusText = [CellResources textSongcasterOff];
+        statusText = [CellResources textSongcastOff];
         statusImage = [CellResources imageDisconnected];
     }
 

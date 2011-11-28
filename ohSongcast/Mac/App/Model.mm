@@ -1,7 +1,7 @@
 
 #import "Model.h"
 #import "Receiver.h"
-#include "../../Songcaster.h"
+#include "../../Songcast.h"
 
 
 // Implementation of the model class
@@ -13,7 +13,7 @@
     [super init];
     
     iObserver = nil;
-    iModelSongcaster = nil;
+    iModelSongcast = nil;
 
     // create the preferences object
     iPreferences = [[Preferences alloc] initWithBundle:[NSBundle mainBundle]];
@@ -34,9 +34,9 @@
     [iPreferences addObserverCheckForUpdates:self selector:@selector(preferenceCheckForUpdates:)];
 
     // create the auto updater object
-    NSString* productId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterProductId"];
+    NSString* productId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcastProductId"];
     NSString* version = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
-    NSString* autoUpdateUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterAutoUpdateUrl"];
+    NSString* autoUpdateUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcastAutoUpdateUrl"];
 
     if ([autoUpdateUrl length] != 0)
     {
@@ -53,42 +53,42 @@
 
 - (void) start
 {
-    if (iModelSongcaster)
+    if (iModelSongcast)
         return;
 
-    // make sure preferences are synchronised so the songcaster is correctly initialised
+    // make sure preferences are synchronised so songcast is correctly initialised
     [iPreferences synchronize];
 
-    // the songcaster is always started disabled - ensure that the preferences reflect this
+    // songcast is always started disabled - ensure that the preferences reflect this
     [iPreferences setEnabled:false];
 
-    // create the songcaster model
-    iModelSongcaster = [[ModelSongcaster alloc] initWithReceivers:[iPreferences receiverList] andSelectedUdns:[iPreferences selectedUdnList] multicastEnabled:[iPreferences multicastEnabled] multicastChannel:[iPreferences multicastChannel] latencyMs:[iPreferences latencyMs]];
-    [iModelSongcaster setReceiversChangedObserver:self selector:@selector(receiversChanged)];
-    [iModelSongcaster setSubnetsChangedObserver:self selector:@selector(subnetsChanged)];
-    [iModelSongcaster setConfigurationChangedObserver:self selector:@selector(configurationChanged)];
+    // create the songcast model
+    iModelSongcast = [[ModelSongcast alloc] initWithReceivers:[iPreferences receiverList] andSelectedUdns:[iPreferences selectedUdnList] multicastEnabled:[iPreferences multicastEnabled] multicastChannel:[iPreferences multicastChannel] latencyMs:[iPreferences latencyMs]];
+    [iModelSongcast setReceiversChangedObserver:self selector:@selector(receiversChanged)];
+    [iModelSongcast setSubnetsChangedObserver:self selector:@selector(subnetsChanged)];
+    [iModelSongcast setConfigurationChangedObserver:self selector:@selector(configurationChanged)];
 }
 
 
 - (void) stop
 {
-    if (!iModelSongcaster)
+    if (!iModelSongcast)
         return;
 
-    // disable the songcaster before destroying the songcaster - make sure the preferences reflect this and
-    // the songcaster is disabled synchronously - if [self setEnabled:false] was called, the songcaster
+    // disable songcast before destroying songcast - make sure the preferences reflect this and
+    // songcast is disabled synchronously - if [self setEnabled:false] was called, songcast
     // would get disabled asynchronously, by which time it would have been destroyed and, therefore, the
     // receivers will not be put into standby
-    [iModelSongcaster setEnabled:false];
+    [iModelSongcast setEnabled:false];
     [iPreferences setEnabled:false];
 
-    // dispose of the songcaster model before releasing - this will shutdown the
-    // songcaster
-    [iModelSongcaster dispose];
+    // dispose of the songcast model before releasing - this will shutdown
+    // songcast
+    [iModelSongcast dispose];
 
-    // shutdown the songcaster
-    [iModelSongcaster release];
-    iModelSongcaster = 0;
+    // shutdown songcast
+    [iModelSongcast release];
+    iModelSongcast = 0;
 }
 
 
@@ -117,7 +117,7 @@
 - (void) setEnabled:(bool)aValue
 {
     // just set the preference - eventing by the preference change will
-    // then cause the state of the songcaster to be updated
+    // then cause the state of songcast to be updated
     [iPreferences setEnabled:aValue];
 }
 
@@ -142,8 +142,8 @@
 
 - (void) reconnectReceivers
 {
-    if (iModelSongcaster) {
-        [iModelSongcaster playReceivers];
+    if (iModelSongcast) {
+        [iModelSongcast playReceivers];
     }
 }
 
@@ -153,9 +153,9 @@
     // refresh cached preferences
     [iPreferences synchronize];
 
-    // enable/disable the songcaster
-    if (iModelSongcaster) {
-        [iModelSongcaster setEnabled:[iPreferences enabled]];
+    // enable/disable songcast
+    if (iModelSongcast) {
+        [iModelSongcast setEnabled:[iPreferences enabled]];
     }
 
     // notify UI
@@ -178,17 +178,17 @@
     // refresh cached preferences
     [iPreferences synchronize];
 
-    // set the selected list in the songcaster
-    if (iModelSongcaster) {
-        [iModelSongcaster setSelectedUdns:[iPreferences selectedUdnList]];
+    // set the selected list in songcast
+    if (iModelSongcast) {
+        [iModelSongcast setSelectedUdns:[iPreferences selectedUdnList]];
     }
 }
 
 
 - (void) preferenceRefreshReceiverList:(NSNotification*)aNotification
 {
-    if (iModelSongcaster) {
-        [iModelSongcaster refreshReceivers];
+    if (iModelSongcast) {
+        [iModelSongcast refreshReceivers];
     }
 }
 
@@ -204,8 +204,8 @@
     // refresh cached preferences
     [iPreferences synchronize];
 
-    if (iModelSongcaster) {
-        [iModelSongcaster setMulticastEnabled:[iPreferences multicastEnabled]];
+    if (iModelSongcast) {
+        [iModelSongcast setMulticastEnabled:[iPreferences multicastEnabled]];
     }
 }
 
@@ -215,8 +215,8 @@
     // refresh cached preferences
     [iPreferences synchronize];
 
-    if (iModelSongcaster) {
-        [iModelSongcaster setMulticastChannel:[iPreferences multicastChannel]];
+    if (iModelSongcast) {
+        [iModelSongcast setMulticastChannel:[iPreferences multicastChannel]];
     }
 }
 
@@ -226,8 +226,8 @@
     // refresh cached preferences
     [iPreferences synchronize];
 
-    if (iModelSongcaster) {
-        [iModelSongcaster setLatencyMs:[iPreferences latencyMs]];
+    if (iModelSongcast) {
+        [iModelSongcast setLatencyMs:[iPreferences latencyMs]];
     }
 }
 
@@ -237,8 +237,8 @@
     // refresh cached preferences
     [iPreferences synchronize];
 
-    if (iModelSongcaster) {
-        [iModelSongcaster setSubnet:[[iPreferences selectedSubnet] address]];
+    if (iModelSongcast) {
+        [iModelSongcast setSubnet:[[iPreferences selectedSubnet] address]];
     }
 }
 
@@ -279,13 +279,13 @@
 
 - (void) receiversChanged
 {
-    if (!iModelSongcaster)
+    if (!iModelSongcast)
         return;
 
     // build a new list of receivers to store in the preferences
     NSMutableArray* list = [NSMutableArray arrayWithCapacity:0];
     
-    for (Receiver* receiver in [iModelSongcaster receivers])
+    for (Receiver* receiver in [iModelSongcast receivers])
     {
         [list addObject:[receiver convertToPref]];
     }
@@ -297,13 +297,13 @@
 
 - (void) subnetsChanged
 {
-    if (!iModelSongcaster)
+    if (!iModelSongcast)
         return;
 
     // build a new list of subnets to store in the preferences
     NSMutableArray* list = [NSMutableArray arrayWithCapacity:0];
     
-    for (Subnet* subnet in [iModelSongcaster subnets])
+    for (Subnet* subnet in [iModelSongcast subnets])
     {
         [list addObject:[subnet convertToPref]];
     }
@@ -316,14 +316,14 @@
 
     if (selected)
     {
-        if ([selected address] != [iModelSongcaster subnet])
+        if ([selected address] != [iModelSongcast subnet])
         {
             // set the subnet to the selected subnet if it is available
-            for (Subnet* subnet in [iModelSongcaster subnets])
+            for (Subnet* subnet in [iModelSongcast subnets])
             {
                 if ([subnet address] == [selected address])
                 {
-                    [iModelSongcaster setSubnet:[subnet address]];
+                    [iModelSongcast setSubnet:[subnet address]];
                 }
             }
         }
@@ -331,14 +331,14 @@
     else
     {
         // no selected subnet in the preferences
-        if ([iModelSongcaster subnet] == 0)
+        if ([iModelSongcast subnet] == 0)
         {
-            // songcaster currently has no subnet
-            if ([[iModelSongcaster subnets] count] != 0)
+            // songcast currently has no subnet
+            if ([[iModelSongcast subnets] count] != 0)
             {
                 // set the subnet to the first in list
-                Subnet* subnet = [[iModelSongcaster subnets] objectAtIndex:0];
-                [iModelSongcaster setSubnet:[subnet address]];
+                Subnet* subnet = [[iModelSongcast subnets] objectAtIndex:0];
+                [iModelSongcast setSubnet:[subnet address]];
 
                 // update the preference
                 [iPreferences setSelectedSubnet:[subnet convertToPref]];
@@ -350,10 +350,10 @@
 
 - (void) configurationChanged
 {
-    if (!iModelSongcaster)
+    if (!iModelSongcast)
         return;
 
-    [self setEnabled:[iModelSongcaster enabled]];
+    [self setEnabled:[iModelSongcast enabled]];
 }
 
 

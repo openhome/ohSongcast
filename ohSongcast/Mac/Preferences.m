@@ -117,7 +117,7 @@ static bool gPrefMulticastChannelSeeded = false;
 {
     self = [super init];
 
-    appId = (CFStringRef)[[[aBundle infoDictionary] objectForKey:@"SongcasterPreferencesId"] retain];
+    appId = (CFStringRef)[[[aBundle infoDictionary] objectForKey:@"SongcastPreferencesId"] retain];
 
     return self;
 }

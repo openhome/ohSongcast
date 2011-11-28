@@ -3,17 +3,17 @@
 
 # define paths for setting permissions
 
-driver="/Library/OpenHome/ohSongcaster.kext"
+driver="/Library/OpenHome/ohSongcast.kext"
 
-folders=("/Library/OpenHome/ohSongcaster.kext"
-         "/Library/OpenHome/ohSongcaster.app"
-         "/Library/PreferencePanes/ohSongcaster.prefPane")
+folders=("/Library/OpenHome/ohSongcast.kext"
+         "/Library/OpenHome/ohSongcast.app"
+         "/Library/PreferencePanes/ohSongcast.prefPane")
 
-exefiles=("/Library/OpenHome/ohSongcaster.app/Contents/MacOS/ohSongcaster"
-          "/Library/OpenHome/ohSongcaster.app/Contents/MacOS/libohSongcaster.so"
-          "/Library/PreferencePanes/ohSongcaster.prefPane/Contents/MacOS/ohSongcaster")
+exefiles=("/Library/OpenHome/ohSongcast.app/Contents/MacOS/ohSongcast"
+          "/Library/OpenHome/ohSongcast.app/Contents/MacOS/libohSongcast.so"
+          "/Library/PreferencePanes/ohSongcast.prefPane/Contents/MacOS/ohSongcast")
 
-agent_path="/Library/LaunchAgents/org.openhome.av.songcaster.plist"
+agent_path="/Library/LaunchAgents/org.openhome.av.songcast.plist"
 
 
 

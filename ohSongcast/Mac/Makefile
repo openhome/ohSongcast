@@ -8,7 +8,7 @@ endif
 
 
 export objdir = $(CURDIR)/Build/Obj/Mac/$(build_dir)/
-export product_name = ohSongcaster
+export product_name = ohSongcast
 
 packagemaker=/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker 
 
@@ -50,8 +50,8 @@ $(objdir)Installer/$(product_name).pkg : driver app prefs
 	cp -R $(objdir)Universal/Driver/$(product_name).kext $(objdir)Installer/Dst/Library/OpenHome/
 	cp -R $(objdir)x86_64/Prefs/$(product_name).prefPane $(objdir)Installer/Dst/Library/PreferencePanes/
 	cp -R $(objdir)x86_64/App/$(product_name).app $(objdir)Installer/Dst/Library/OpenHome/
-	cp LaunchAgent.plist  $(objdir)Installer/Dst/Library/LaunchAgents/org.openhome.av.songcaster.plist
-	$(packagemaker) --root $(objdir)Installer/Dst --out $@ --scripts Scripts --info PkgInfo.plist --title ohSongcaster --version 1.1.1 --no-relocate
+	cp LaunchAgent.plist  $(objdir)Installer/Dst/Library/LaunchAgents/org.openhome.av.songcast.plist
+	$(packagemaker) --root $(objdir)Installer/Dst --out $@ --scripts Scripts --info PkgInfo.plist --title ohSongcast --version 1.1.1 --no-relocate
 
 $(objdir)Installer/$(product_name).dmg : $(objdir)Installer/$(product_name).pkg Scripts/uninstall.tool
 	mkdir -p $(objdir)Installer/DmgContents/

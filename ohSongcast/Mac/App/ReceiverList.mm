@@ -1,7 +1,7 @@
 
 #import "ReceiverList.h"
 #import "Receiver.h"
-#include "../../Songcaster.h"
+#include "../../Songcast.h"
 
 
 // Implementation of receiver list class
@@ -74,7 +74,7 @@
 
 - (void) receiverChangedCallback:(THandle)aPtr type:(ECallbackType)aType
 {
-    // This is called from the ohSongcaster receiver manager thread
+    // This is called from the ohSongcast receiver manager thread
     NSString* udn = [NSString stringWithUTF8String:ReceiverUdn(aPtr)];
 
     // lock access to the receiver list
@@ -137,7 +137,7 @@
 
 
 
-// Callback from the ohSongcaster code for a receiver event
+// Callback from the ohSongcast code for a receiver event
 void ReceiverListCallback(void* aPtr, ECallbackType aType, THandle aReceiver)
 {
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];

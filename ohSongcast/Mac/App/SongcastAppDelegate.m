@@ -1,9 +1,9 @@
 
-#import "SongcasterAppDelegate.h"
+#import "SongcastAppDelegate.h"
 #import "CrashLogging.h"
 
 
-@implementation SongcasterAppDelegate
+@implementation SongcastAppDelegate
 
 @synthesize menu;
 @synthesize menuItemStatus;
@@ -17,7 +17,7 @@
     // set the system state
     iSessionResigned = true;
 
-    // user session has been resigned - stop the songcaster - this will do nothing
+    // user session has been resigned - stop songcast - this will do nothing
     // if the model has not been started i.e. this notification has occurred on
     // startup of the application
     [iModel stop];
@@ -29,14 +29,14 @@
     // set the system state
     iSessionResigned = false;
 
-    // user session has just become active again - restart the songcaster
+    // user session has just become active again - restart songcast
     [iModel start];
 }
 
 
 - (void) willSleep:(NSNotification*)aNotification
 {
-    // going into hibernation - switch off songcaster
+    // going into hibernation - switch off songcast
     [iModel setEnabled:false];
 }
 
@@ -48,8 +48,8 @@
 
 - (void) awakeFromNib
 {
-    NSString* productId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterProductId"];
-    NSString* crashLogUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterCrashLogUrl"];
+    NSString* productId = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcastProductId"];
+    NSString* crashLogUrl = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcastCrashLogUrl"];
 
     // check for any new crash logs
     if ([crashLogUrl length] != 0)
@@ -112,7 +112,7 @@
         [self menuItemPrefsClicked:self];
     }
 
-    // start the songcaster if the user session is active
+    // start songcast if the user session is active
     if (!iSessionResigned) {
         [iModel start];
     }
@@ -135,7 +135,7 @@
 
 - (IBAction)menuItemOnOffClicked:(id)aSender
 {
-    // toggle the state of the songcaster - allow the eventing to come back
+    // toggle the state of songcast - allow the eventing to come back
     // up through enabledChanged to update the UI
     [iModel setEnabled:![iModel enabled]];
 }
@@ -149,7 +149,7 @@
 
 - (IBAction)menuItemPrefsClicked:(id)aSender
 {
-    NSString* prefPaneName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterPreferencePane"];
+    NSString* prefPaneName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcastPreferencePane"];
     [[NSWorkspace sharedWorkspace] openFile:prefPaneName];
 }
 

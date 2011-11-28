@@ -1,7 +1,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "Preferences.h"
-#import "ModelSongcaster.h"
+#import "ModelSongcast.h"
 #import "AutoUpdate.h"
 
 
@@ -18,7 +18,7 @@
 {
     Preferences* iPreferences;
     id<IModelObserver> iObserver;
-    ModelSongcaster* iModelSongcaster;
+    ModelSongcast* iModelSongcast;
     AutoUpdate* iAutoUpdate;
 }
 

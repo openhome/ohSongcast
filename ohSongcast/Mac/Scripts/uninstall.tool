@@ -1,11 +1,11 @@
 #!/bin/sh
 
 
-launchFile="/Library/LaunchAgents/org.openhome.av.songcaster.plist"
-driver="/System/Library/Extensions/ohSongcaster.kext"
-prefs="/Library/PreferencePanes/ohSongcaster.prefPane"
-app="/Library/OpenHome/ohSongcaster.app"
-pkgId="org.openhome.av.songcaster"
+launchFile="/Library/LaunchAgents/org.openhome.av.songcast.plist"
+driver="/System/Library/Extensions/ohSongcast.kext"
+prefs="/Library/PreferencePanes/ohSongcast.prefPane"
+app="/Library/OpenHome/ohSongcast.app"
+pkgId="org.openhome.av.songcast"
 
 
 # stop the agent application

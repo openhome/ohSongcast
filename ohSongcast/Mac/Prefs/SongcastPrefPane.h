@@ -23,7 +23,7 @@
 
 
 // Main class for the preference pane
-@interface SongcasterPrefPane : NSPreferencePane 
+@interface SongcastPrefPane : NSPreferencePane 
 {
     IBOutlet NSButton* buttonOnOff;
     IBOutlet NSTextField* textAbout;

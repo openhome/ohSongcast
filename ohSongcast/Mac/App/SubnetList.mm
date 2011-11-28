@@ -1,6 +1,6 @@
 
 #import "SubnetList.h"
-#include "../../Songcaster.h"
+#include "../../Songcast.h"
 
 
 
@@ -165,7 +165,7 @@
 @end
 
 
-// Callback from the ohSongcaster code for a subnet event
+// Callback from the ohSongcast code for a subnet event
 void SubnetListCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
 {
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];

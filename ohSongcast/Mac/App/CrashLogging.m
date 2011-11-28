@@ -174,7 +174,7 @@
 - (void) dump:(CrashLog*)aCrashLog
 {
     NSString* bundleName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
-    NSString* manufacturerName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcasterManufacturerName"];
+    NSString* manufacturerName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcastManufacturerName"];
 
     NSAlert* alert = [[NSAlert alloc] init];
     [alert addButtonWithTitle:[NSString stringWithFormat:NSLocalizedString(@"CrashLogReport", @""), manufacturerName]];
