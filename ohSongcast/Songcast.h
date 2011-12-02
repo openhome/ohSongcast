@@ -146,6 +146,7 @@ private:
 private:
 	NetworkAdapter* iAdapter;
 	TIpAddress iSubnet;
+	TUint iRefCount;
 };
 
 class DllExportClass Songcast : public IReceiverManager3Handler
