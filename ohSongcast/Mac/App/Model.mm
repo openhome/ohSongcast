@@ -51,6 +51,15 @@
 }
 
 
+- (void) dealloc
+{
+    [self stop];
+    [iPreferences release];
+    [iAutoUpdate release];
+    [super dealloc];
+}
+
+
 - (void) start
 {
     if (iModelSongcast)

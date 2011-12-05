@@ -18,12 +18,12 @@
     iLock = [[NSObject alloc] init];
     iPtr = aPtr;
     ReceiverAddRef(iPtr);
-    
-    udn = [[NSString alloc] initWithUTF8String:ReceiverUdn(iPtr)];
-    room = [[NSString alloc] initWithUTF8String:ReceiverRoom(iPtr)];
-    group = [[NSString alloc] initWithUTF8String:ReceiverGroup(iPtr)];
-    name = [[NSString alloc] initWithUTF8String:ReceiverName(iPtr)];    
-    
+
+    self.udn = [NSString stringWithUTF8String:ReceiverUdn(iPtr)];
+    self.room = [NSString stringWithUTF8String:ReceiverRoom(iPtr)];
+    self.group = [NSString stringWithUTF8String:ReceiverGroup(iPtr)];
+    self.name = [NSString stringWithUTF8String:ReceiverName(iPtr)];
+
     return self;
 }
 
@@ -31,16 +31,26 @@
 - (id) initWithPref:(PrefReceiver*)aPref
 {
     [super init];
-    
+
     iLock = [[NSObject alloc] init];
     iPtr = nil;
-    
-    udn = [[aPref udn] retain];
-    room = [[aPref room] retain];
-    group = [[aPref group] retain];
-    name = [[aPref name] retain];
-    
+
+    self.udn = [aPref udn];
+    self.room = [aPref room];
+    self.group = [aPref group];
+    self.name = [aPref name];
+
     return self;
+}
+
+
+- (void) dealloc
+{
+    [udn release];
+    [room release];
+    [group release];
+    [name release];
+    [super dealloc];
 }
 
 
@@ -61,14 +71,10 @@
     
         if (aPtr)
         {
-            [udn release];
-            [room release];
-            [group release];
-            [name release];
-            udn = [[NSString alloc] initWithUTF8String:ReceiverUdn(iPtr)];
-            room = [[NSString alloc] initWithUTF8String:ReceiverRoom(iPtr)];
-            group = [[NSString alloc] initWithUTF8String:ReceiverGroup(iPtr)];
-            name = [[NSString alloc] initWithUTF8String:ReceiverName(iPtr)];
+            self.udn = [NSString stringWithUTF8String:ReceiverUdn(iPtr)];
+            self.room = [NSString stringWithUTF8String:ReceiverRoom(iPtr)];
+            self.group = [NSString stringWithUTF8String:ReceiverGroup(iPtr)];
+            self.name = [NSString stringWithUTF8String:ReceiverName(iPtr)];
         }
     }
 }

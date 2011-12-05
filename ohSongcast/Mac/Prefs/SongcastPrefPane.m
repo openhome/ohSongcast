@@ -389,17 +389,17 @@
 {
     self = [super init];
 
-    [self setUdn:[aPref udn]];
-    [self setSelected:false];
-    [self setStatus:[aPref status]];
+    self.udn = [aPref udn];
+    self.selected = false;
+    self.status = [aPref status];
 
     if (aUnique)
     {
-        [self setTitle:[aPref room]];
+        self.title = [aPref room];
     }
     else
     {
-        [self setTitle:[NSString stringWithFormat:@"%@ (%@)", [aPref room], [aPref group]]];
+        self.title = [NSString stringWithFormat:@"%@ (%@)", [aPref room], [aPref group]];
     }
     
     return self;
@@ -409,11 +409,19 @@
 - (id) copyWithZone:(NSZone*)aZone
 {
     Receiver* copy = [[Receiver alloc] init];
-    [copy setUdn:[NSString stringWithString:udn]];
-    [copy setTitle:[NSString stringWithString:title]];
+    [copy setUdn:udn];
+    [copy setTitle:title];
     [copy setSelected:selected];
     [copy setStatus:status];
     return copy;    
+}
+
+
+- (void) dealloc
+{
+    [udn release];
+    [title release];
+    [super dealloc];
 }
 
 @end

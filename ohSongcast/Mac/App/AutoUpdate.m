@@ -10,14 +10,25 @@
 {
     self = [super init];
 
-    iFeedUri = [aFeedUri retain];
-    iAppName = [aAppName retain];
-    iTarget = [[NSString stringWithUTF8String:"macosx"] retain];
-    iCurrentVersion = [aCurrentVersion retain];
-    iRelativeDataPath = [aRelativeDataPath retain];
+    iFeedUri = [[NSString alloc] initWithString:aFeedUri];
+    iAppName = [[NSString alloc] initWithString:aAppName];
+    iTarget = [[NSString alloc] initWithUTF8String:"macosx"];
+    iCurrentVersion = [[NSString alloc] initWithString:aCurrentVersion];
+    iRelativeDataPath = [[NSString alloc] initWithString:aRelativeDataPath];
     iCheckForBeta = false;
 
     return self;
+}
+
+
+- (void) dealloc
+{
+    [iFeedUri release];
+    [iAppName release];
+    [iTarget release];
+    [iCurrentVersion release];
+    [iRelativeDataPath release];
+    [super dealloc];
 }
 
 
@@ -366,6 +377,15 @@
 @synthesize version;
 @synthesize uri;
 @synthesize historyUri;
+
+- (void) dealloc
+{
+    [appName release];
+    [version release];
+    [uri release];
+    [historyUri release];
+    [super dealloc];
+}
 
 @end
 

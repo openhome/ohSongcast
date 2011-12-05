@@ -18,6 +18,13 @@
 }
 
 
+- (void) dealloc
+{
+    [iDumpers release];
+    [super dealloc];
+}
+
+
 - (void) addDumper:(NSObject<ICrashLogDumper>*)aDumper
 {
     [iDumpers addObject:aDumper];
@@ -124,7 +131,7 @@
 {
     self = [super init];
 
-    iLog = [aLog retain];
+    iLog = [[NSString alloc] initWithString:aLog];
 
     return self;
 }
@@ -156,8 +163,8 @@
 {
     self = [super init];
 
-    iProductId = [aProductId retain];
-    iUri = [aUri retain];
+    iProductId = [[NSString alloc] initWithString:aProductId];
+    iUri = [[NSString alloc] initWithString:aUri];
 
     return self;
 }
