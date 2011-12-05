@@ -247,8 +247,9 @@ Receiver::~Receiver()
 Subnet::Subnet(NetworkAdapter& aAdapter)
 	: iAdapter(&aAdapter)
     , iSubnet(aAdapter.Subnet())
+	, iRefCount(1)
 {
-	AddRef();
+	iAdapter->AddRef("Songcast");
 }
 
 Subnet::Subnet(TIpAddress aSubnet)
@@ -267,15 +268,19 @@ TBool Subnet::IsAttachedTo(NetworkAdapter& aAdapter)
 
 void Subnet::Attach(NetworkAdapter& aAdapter)
 {
-	RemoveRef();
+	if (iAdapter != 0) {
+		iAdapter->RemoveRef("Songcast");
+	}
 	iAdapter = &aAdapter;
-	AddRef();
+	iAdapter->AddRef("Songcast");
     ASSERT(iAdapter->Subnet() == iSubnet);
 }
 
 void Subnet::Detach()
 {
-	RemoveRef();
+	if (iAdapter != 0) {
+		iAdapter->RemoveRef("Songcast");
+	}
     iAdapter = 0;
 }
 
@@ -308,21 +313,21 @@ const TChar* Subnet::AdapterName() const
 
 void Subnet::AddRef()
 {
-	if (iAdapter != 0) {
-		iAdapter->AddRef();
-	}
+	iRefCount++;
 }
 
 void Subnet::RemoveRef()
 {
-	if (iAdapter != 0) {
-		iAdapter->RemoveRef();
+	if (--iRefCount == 0) {
+		delete (this);
 	}
 }
 
 Subnet::~Subnet()
 {
-	RemoveRef();
+	if (iAdapter != 0) {
+		iAdapter->RemoveRef("Songcast");
+	}
 }
     
 // Songcast
@@ -806,7 +811,7 @@ Songcast::~Songcast()
 	while (it != iSubnetList.end()) {
 		Subnet* subnet = *it;
 		(*iSubnetCallback)(iSubnetPtr, eRemoved, (THandle)subnet);
-		delete (subnet);
+		subnet->RemoveRef();
 		it++;
 	}
 

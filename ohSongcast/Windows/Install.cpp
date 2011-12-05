@@ -377,6 +377,7 @@ int __cdecl main(int aArgc, char* aArgv[])
         printf("Usage:\n");
         printf("Install driver and device:  InstallXX.exe -i <Hardware Id> <Inf>\n");
         printf("Delete driver and device :  InstallXX.exe -d <Hardware Id> <Inf>\n");
+        return(1);
     }
     
 	return (0);
