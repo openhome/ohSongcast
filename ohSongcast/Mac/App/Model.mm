@@ -71,8 +71,12 @@
     // songcast is always started disabled - ensure that the preferences reflect this
     [iPreferences setEnabled:false];
 
+    // get the selected subnet stored in the preferences
+    PrefSubnet* selectedSubnet = [iPreferences selectedSubnet];
+    uint32_t subnet = (selectedSubnet != NULL) ? [selectedSubnet address] : 0;
+
     // create the songcast model
-    iModelSongcast = [[ModelSongcast alloc] initWithReceivers:[iPreferences receiverList] andSelectedUdns:[iPreferences selectedUdnList] multicastEnabled:[iPreferences multicastEnabled] multicastChannel:[iPreferences multicastChannel] latencyMs:[iPreferences latencyMs]];
+    iModelSongcast = [[ModelSongcast alloc] initWithReceivers:[iPreferences receiverList] andSelectedUdns:[iPreferences selectedUdnList] multicastEnabled:[iPreferences multicastEnabled] multicastChannel:[iPreferences multicastChannel] latencyMs:[iPreferences latencyMs] subnet:subnet];
     [iModelSongcast setReceiversChangedObserver:self selector:@selector(receiversChanged)];
     [iModelSongcast setSubnetsChangedObserver:self selector:@selector(subnetsChanged)];
     [iModelSongcast setConfigurationChangedObserver:self selector:@selector(configurationChanged)];

@@ -18,7 +18,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcast);
 @implementation ModelSongcast
 
 
-- (id) initWithReceivers:(NSArray*)aReceivers andSelectedUdns:(NSArray*)aSelectedUdns multicastEnabled:(bool)aMulticastEnabled multicastChannel:(uint32_t)aMulticastChannel latencyMs:(uint32_t)aLatencyMs
+- (id) initWithReceivers:(NSArray*)aReceivers andSelectedUdns:(NSArray*)aSelectedUdns multicastEnabled:(bool)aMulticastEnabled multicastChannel:(uint32_t)aMulticastChannel latencyMs:(uint32_t)aLatencyMs subnet:(uint32_t)aSubnet
 {
     [super init];
 
@@ -46,7 +46,6 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcast);
     [iSubnets setObserver:self];
 
     // create the songcast object - always create disabled
-    uint32_t subnet = 0;
     uint32_t ttl = 4;
     uint32_t enabled = 0;
     uint32_t preset = 0;
@@ -58,7 +57,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcast);
     NSString* senderIconFile = [[NSBundle mainBundle] pathForResource:@"SenderIcon" ofType:@"png"];
     NSData* senderIcon = [NSData dataWithContentsOfFile:senderIconFile];
 
-    iSongcast = SongcastCreate([domain UTF8String], subnet, aMulticastChannel, ttl, aLatencyMs, aMulticastEnabled ? 1: 0, enabled, preset, ReceiverListCallback, iReceivers, SubnetListCallback, iSubnets, ModelConfigurationChangedCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String], (void*)[senderIcon bytes], [senderIcon length], "image/png");
+    iSongcast = SongcastCreate([domain UTF8String], aSubnet, aMulticastChannel, ttl, aLatencyMs, aMulticastEnabled ? 1: 0, enabled, preset, ReceiverListCallback, iReceivers, SubnetListCallback, iSubnets, ModelConfigurationChangedCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String], (void*)[senderIcon bytes], [senderIcon length], "image/png");
 
     return self;
 }
