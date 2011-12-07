@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Net;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace OpenHome.Songcast
 {
@@ -188,6 +189,7 @@ namespace OpenHome.Songcast
         public Subnet(IntPtr aSubnet)
         {
             iSubnet = aSubnet;
+            iMutex = new Mutex();
             iAddress = (uint)SubnetAddress(iSubnet);
             iAdapterName = Marshal.PtrToStringAnsi(SubnetAdapterName(iSubnet));
             SubnetAddRef(iSubnet);
@@ -195,13 +197,30 @@ namespace OpenHome.Songcast
 
         internal bool Owns(IntPtr aSubnet)
         {
-            return (iSubnet == aSubnet);
+            iMutex.WaitOne();
+            bool owns = iSubnet == aSubnet;
+            iMutex.ReleaseMutex();
+            return (owns);
+        }
+
+        internal void Update(IntPtr aSubnet)
+        {
+            iMutex.WaitOne();
+            SubnetRemoveRef(iSubnet);
+            iSubnet = aSubnet;
+            iAddress = (uint)SubnetAddress(iSubnet);
+            iAdapterName = Marshal.PtrToStringAnsi(SubnetAdapterName(iSubnet));
+            SubnetAddRef(iSubnet);
+            iMutex.ReleaseMutex();
         }
 
         public uint Address
         {
             get
             {
+                iMutex.WaitOne();
+                uint address = iAddress;
+                iMutex.ReleaseMutex();
                 return (iAddress);
             }
         }
@@ -210,16 +229,22 @@ namespace OpenHome.Songcast
         {
             get
             {
-                return (iAdapterName);
+                iMutex.WaitOne();
+                string name = iAdapterName;
+                iMutex.ReleaseMutex();
+                return (name);
             }
         }
 
         public void Dispose()
         {
+            iMutex.WaitOne();
             SubnetRemoveRef(iSubnet);
+            iMutex.ReleaseMutex();
         }
 
         IntPtr iSubnet;
+        Mutex iMutex;
         uint iAddress;
         string iAdapterName;
     }
@@ -375,6 +400,7 @@ namespace OpenHome.Songcast
             {
                 if (subnet.Owns(aSubnet))
                 {
+                    subnet.Update(aSubnet);
                     iSubnetHandler.SubnetChanged(subnet);
                     return;
                 }
