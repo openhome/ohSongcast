@@ -6,4 +6,4 @@ copy ..\..\Build\Obj\Windows\Release\ohSongcast.net.dll Build\ohSongcast.net.dll
 copy Driver\ohSongcast.inf Build\ohSongcast.inf
 msbuild Wpf\ohSongcast\ohSongcast.sln /target:ohSongcast /p:Configuration=Release
 "%ProgramFiles(x86)%\NSIS\makensis.exe" Installer\Installer.nsi
-Signtool sign /v /a /t http://timestamp.verisign.com/scripts/timestamp.dll Build\ohSongcastInstaller.exe
+Signtool sign /v /a /sm /t http://timestamp.verisign.com/scripts/timestamp.dll Build\ohSongcastInstaller.exe
