@@ -12,7 +12,7 @@ extern void SubnetListCallback(void* aPtr, ECallbackType aType, THandle aSubnet)
 
 // Forward declarations of callback functions defined below
 void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcast);
-
+void ModelFatalErrorCallback(void* aPtr, const char* aMsg);
 
 
 @implementation ModelSongcast
@@ -57,7 +57,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcast);
     NSString* senderIconFile = [[NSBundle mainBundle] pathForResource:@"SenderIcon" ofType:@"png"];
     NSData* senderIcon = [NSData dataWithContentsOfFile:senderIconFile];
 
-    iSongcast = SongcastCreate([domain UTF8String], aSubnet, aMulticastChannel, ttl, aLatencyMs, aMulticastEnabled ? 1: 0, enabled, preset, ReceiverListCallback, iReceivers, SubnetListCallback, iSubnets, ModelConfigurationChangedCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String], (void*)[senderIcon bytes], [senderIcon length], "image/png");
+    iSongcast = SongcastCreate([domain UTF8String], aSubnet, aMulticastChannel, ttl, aLatencyMs, aMulticastEnabled ? 1: 0, enabled, preset, ReceiverListCallback, iReceivers, SubnetListCallback, iSubnets, ModelConfigurationChangedCallback, self, ModelFatalErrorCallback, self, [manufacturerName UTF8String], [manufacturerUrl UTF8String], [modelUrl UTF8String], (void*)[senderIcon bytes], [senderIcon length], "image/png");
 
     return self;
 }
@@ -401,6 +401,11 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcast)
     [model configurationChanged];
 }
 
+
+void ModelFatalErrorCallback(void* aPtr, const char* aMsg)
+{
+    [NSException raise:@"SongcastError" format:[NSString stringWithUTF8String:aMsg]];
+}
 
 
 
