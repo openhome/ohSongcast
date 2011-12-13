@@ -376,9 +376,11 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 
 	InitialisationParams* initParams = InitialisationParams::Create();
 
-	FunctorMsg fatal = MakeFunctorMsg(*this, &Songcast::FatalErrorHandler);
-
-	initParams->SetFatalErrorHandler(fatal);
+    if (iFatalErrorCallback) {
+        // only set the fatal error handler if it has been specified - use the default ohnet handler otherwise
+        FunctorMsg fatal = MakeFunctorMsg(*this, &Songcast::FatalErrorHandler);
+        initParams->SetFatalErrorHandler(fatal);
+    }
 
 	Functor callback = MakeFunctor(*this, &Songcast::SubnetListChanged);
 
@@ -417,9 +419,7 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 
 void Songcast::FatalErrorHandler(const char* aMessage)
 {
-    if (iFatalErrorCallback != NULL) {
-        (*iFatalErrorCallback)(iFatalErrorPtr, aMessage);
-    }
+    (*iFatalErrorCallback)(iFatalErrorPtr, aMessage);
 }
 
 
