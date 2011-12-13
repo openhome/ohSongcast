@@ -113,7 +113,7 @@ int CDECL main(int /* aArgc */, char** /* aArgv[] */)
     TBool disabled = false;
     TUint preset = 99;
 
-	THandle Songcast = SongcastCreate("av.openhome.org", subnet, channel, ttl, latency, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0, loggerConfigurationChanged, 0, "OpenHome", "http://www.openhome.org", "http://www.openhome.org", icon_png, icon_png_len, "image/png");
+	THandle Songcast = SongcastCreate("av.openhome.org", subnet, channel, ttl, latency, multicast, !disabled, preset, loggerReceiver, 0, loggerSubnet, 0, loggerConfigurationChanged, 0, NULL, 0, "OpenHome", "http://www.openhome.org", "http://www.openhome.org", icon_png, icon_png_len, "image/png");
 
 	if (Songcast == 0) {
 		printf("Songcast error\n");

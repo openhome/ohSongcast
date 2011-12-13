@@ -13,6 +13,11 @@ namespace OpenHome.Songcast
             : base("Songcast audio driver not installed")
         {
         }
+
+        internal SongcastError(string aMsg)
+            : base(aMsg)
+        {
+        }
     }
 
     public interface IConfiguration
@@ -261,9 +266,10 @@ namespace OpenHome.Songcast
         private delegate void DelegateReceiverCallback(IntPtr aPtr, ECallbackType aType, IntPtr aReceiver);
         private delegate void DelegateSubnetCallback(IntPtr aPtr, ECallbackType aType, IntPtr aSubnet);
         private delegate void DelegateConfigurationChangedCallback(IntPtr aPtr, IntPtr aSongcast);
+        private unsafe delegate void DelegateFatalErrorCallback(IntPtr aPtr, char* aMessage);
 
         [DllImport("ohSongcast.dll")]
-        static extern unsafe IntPtr SongcastCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, uint aLatency, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, DelegateConfigurationChangedCallback aConfigurationChangedCallback, IntPtr aConfigurationChangedPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl, byte[] aImagePtr, int aImageBytes, string aMimeType);
+        static extern unsafe IntPtr SongcastCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, uint aLatency, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, DelegateConfigurationChangedCallback aConfigurationChangedCallback, IntPtr aConfigurationChangedPtr, DelegateFatalErrorCallback aFatalErrorCallback, IntPtr aFatalErrorPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl, byte[] aImagePtr, int aImageBytes, string aMimeType);
 
         [DllImport("ohSongcast.dll")]
         static extern uint SongcastSubnet(IntPtr aHandle);
@@ -311,10 +317,11 @@ namespace OpenHome.Songcast
             iReceiverCallback = new DelegateReceiverCallback(ReceiverCallback);
             iSubnetCallback = new DelegateSubnetCallback(SubnetCallback);
             iConfigurationChangedCallback = new DelegateConfigurationChangedCallback(ConfigurationChangedCallback);
+            iFatalErrorCallback = new DelegateFatalErrorCallback(FatalErrorCallback);
             iReceiverList = new List<Receiver>();
             iSubnetList = new List<Subnet>();
 
-            iHandle = SongcastCreate(aDomain, aSubnet, aChannel, aTtl, aLatency, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, iConfigurationChangedCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl, aImage, aImage.Length, aMimeType);
+            iHandle = SongcastCreate(aDomain, aSubnet, aChannel, aTtl, aLatency, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, iConfigurationChangedCallback, IntPtr.Zero, iFatalErrorCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl, aImage, aImage.Length, aMimeType);
 
             if (iHandle == IntPtr.Zero)
             {
@@ -426,6 +433,12 @@ namespace OpenHome.Songcast
             iConfigurationChangedHandler.ConfigurationChanged(this);
         }
 
+        private unsafe void FatalErrorCallback(IntPtr aPtr, char* aMessage)
+        {
+            string msg = Marshal.PtrToStringAnsi((IntPtr)aMessage);
+            throw new SongcastError(msg);
+        }
+
         public uint Subnet()
         {
             return (SongcastSubnet(iHandle));
@@ -531,5 +544,6 @@ namespace OpenHome.Songcast
         private DelegateReceiverCallback iReceiverCallback;
         private DelegateSubnetCallback iSubnetCallback;
         private DelegateConfigurationChangedCallback iConfigurationChangedCallback;
+        private DelegateFatalErrorCallback iFatalErrorCallback;
     }
 } // namespace OpenHome.Songcast
