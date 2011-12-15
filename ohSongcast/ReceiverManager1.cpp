@@ -243,6 +243,7 @@ ReceiverManager1Receiver::ReceiverManager1Receiver(ReceiverManager1Room& aRoom, 
 	, iRefCount(1)
 {
 	iRoom.AddRef();
+    iDevice.AddRef();
 }
 
 const Brx& ReceiverManager1Receiver::Room() const
@@ -316,6 +317,7 @@ void ReceiverManager1Receiver::SetSourceIndex(TUint aValue)
 ReceiverManager1Receiver::~ReceiverManager1Receiver()
 {
 	iRoom.RemoveRef();
+    iDevice.RemoveRef();
 }
 
 // ReceiverManager
