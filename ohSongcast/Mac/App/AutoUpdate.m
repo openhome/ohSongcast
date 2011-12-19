@@ -241,6 +241,37 @@
 }
 
 
+- (bool) isVersion:(NSString*)aVersion1 greaterThan:(NSString*)aVersion2
+{
+    unsigned int maj1, min1, rev1;
+    unsigned int maj2, min2, rev2;
+
+    if (sscanf([aVersion1 UTF8String], "%u.%u.%u", &maj1, &min1, &rev1) != 3) {
+        return false;
+    }
+
+    if (sscanf([aVersion2 UTF8String], "%u.%u.%u", &maj2, &min2, &rev2) != 3) {
+        return false;
+    }
+
+    if (maj1 > maj2) {
+        return true;
+    }
+    else if (maj1 < maj2) {
+        return false;
+    }
+    else if (min1 > min2) {
+        return true;
+    }
+    else if (min1 < min2) {
+        return false;
+    }
+    else {
+        return (rev1 > rev2);
+    }
+}
+
+
 - (AutoUpdateInfo*) checkForUpdates
 {
     // get the XML description for the auto updates
@@ -290,7 +321,7 @@
         }
         else if (betaInfo != NULL) {
             // beta and stable available - choose highest version
-            if ([[info version] compare:[betaInfo version]] == NSOrderedAscending) {
+            if ([self isVersion:[betaInfo version] greaterThan:[info version]]) {
                 info = betaInfo;
             }
         }
@@ -298,7 +329,7 @@
 
     if (info != NULL)
     {
-        if ([iCurrentVersion compare:[info version]] != NSOrderedAscending) {
+        if (![self isVersion:[info version] greaterThan:iCurrentVersion]) {
             // no new version available
             info = NULL;
         }
