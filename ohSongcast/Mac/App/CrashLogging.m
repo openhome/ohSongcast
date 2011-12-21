@@ -54,6 +54,7 @@
 
     // find the most recent crash file - relevant crash log files are appName_YYYY-MM-DD-HHMMSS_macName.crash
     NSString* appName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleExecutable"];
+    appName = [appName stringByAppendingString:@"_"];
 
     NSString* mostRecentDate = nil;
     NSString* mostRecentFile = nil;
@@ -62,7 +63,7 @@
     {
         if ([f hasPrefix:appName] && [f hasSuffix:@".crash"])
         {
-            NSString* dateTimeStr = [f substringWithRange:NSMakeRange([appName length]+1, 17)];
+            NSString* dateTimeStr = [f substringWithRange:NSMakeRange([appName length], 17)];
 
             if (mostRecentDate == nil || [dateTimeStr compare:mostRecentDate] == NSOrderedDescending)
             {
@@ -88,6 +89,16 @@
             lastCrashDate = (NSString*)((CFStringRef)pref);
         }
         CFRelease(pref);
+    }
+
+    // check validity of stored pref
+    if (lastCrashDate != nil)
+    {
+        NSDateFormatter* df = [[[NSDateFormatter alloc] init] autorelease];
+        [df setDateFormat:@"yyyy-MM-dd-HHmmss"];
+        if ([df dateFromString:lastCrashDate] == nil) {
+            lastCrashDate = nil;
+        }
     }
 
     if (lastCrashDate != nil && [mostRecentDate compare:lastCrashDate] != NSOrderedDescending)
