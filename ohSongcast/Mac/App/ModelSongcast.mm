@@ -404,7 +404,7 @@ void ModelConfigurationChangedCallback(void* aPtr, THandle aSongcast)
 
 void ModelFatalErrorCallback(void* aPtr, const char* aMsg)
 {
-    [NSException raise:@"SongcastError" format:[NSString stringWithUTF8String:aMsg]];
+    [NSException raise:@"SongcastError" format:@"%s", aMsg];
 }
 
 
