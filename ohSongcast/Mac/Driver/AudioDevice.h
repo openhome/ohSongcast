@@ -2,7 +2,6 @@
 #define HEADER_AUDIODEVICE
 
 #include <IOKit/audio/IOAudioDevice.h>
-#include "Branding.h"
 #include "AudioEngine.h"
 
 class SongcastSocket;

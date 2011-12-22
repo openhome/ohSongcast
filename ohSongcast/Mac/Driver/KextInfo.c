@@ -1,6 +1,5 @@
 
 #include <mach/mach_types.h>
-#include "Branding.h"
 
 // additional layer of macro to ensure that BRANDING_KEXTINFO_KMODNAME gets expanded - this is because the
 // KMOD_EXPLICIT_DECL macro uses the stringify operator (#) for the first argument
