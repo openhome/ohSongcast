@@ -211,11 +211,17 @@ namespace OpenHome.Songcast
         internal void Update(IntPtr aSubnet)
         {
             iMutex.WaitOne();
+
+            // update internal subnet ref - increment passed in subnet first
+            // in case aSubnet == iSubnet (in this case, decrementing first can
+            // delete the subnet - and has done in a bug)
+            SubnetAddRef(aSubnet);
             SubnetRemoveRef(iSubnet);
             iSubnet = aSubnet;
+
             iAddress = (uint)SubnetAddress(iSubnet);
             iAdapterName = Marshal.PtrToStringAnsi(SubnetAdapterName(iSubnet));
-            SubnetAddRef(iSubnet);
+
             iMutex.ReleaseMutex();
         }
 
