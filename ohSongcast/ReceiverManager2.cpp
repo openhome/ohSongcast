@@ -218,6 +218,14 @@ void ReceiverManager2Receiver::ChangedSelected()
 
 void ReceiverManager2Receiver::Removed()
 {
+    // This is called in the ReceiverManager1 thread (which is actually the CpTopology2 thread)
+    // and there are event handlers, above, which can get called in eventing threads. There is potential
+    // that this function will call the iHandler.ReceiverRemoved thread before the iHandler.ReceiverChanged
+    // calls in the eventing threads.
+    // This next line ensures that the eventing stops, thus, no further iHandler.ReceiverChanged calls will
+    // be made after this iHandler.ReceiverRemoved call.
+    iServiceReceiver->Unsubscribe();
+
 	iMutex.Wait();
 
 	if (iActive) {
