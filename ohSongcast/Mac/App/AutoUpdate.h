@@ -11,10 +11,10 @@
     NSString* historyUri;
 }
 
-@property (retain) NSString* appName;
-@property (retain) NSString* version;
-@property (retain) NSString* uri;
-@property (retain) NSString* historyUri;
+@property (copy) NSString* appName;
+@property (copy) NSString* version;
+@property (copy) NSString* uri;
+@property (copy) NSString* historyUri;
 
 @end
 

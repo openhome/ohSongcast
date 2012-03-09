@@ -184,6 +184,12 @@
 @synthesize isManual;
 @synthesize updateInfo;
 
+- (void) dealloc
+{
+    [updateInfo release];
+    [super dealloc];
+}
+
 @end
 
 

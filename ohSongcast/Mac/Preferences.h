@@ -23,10 +23,10 @@ typedef enum
     EReceiverState status;
 }
 
-@property (assign) NSString* udn;
-@property (assign) NSString* room;
-@property (assign) NSString* group;
-@property (assign) NSString* name;
+@property (copy) NSString* udn;
+@property (copy) NSString* room;
+@property (copy) NSString* group;
+@property (copy) NSString* name;
 @property (assign) EReceiverState status;
 
 - (id) initWithDict:(NSDictionary*)aDict;
@@ -43,7 +43,7 @@ typedef enum
 }
 
 @property (assign) uint32_t address;
-@property (assign) NSString* name;
+@property (copy) NSString* name;
 
 - (id) initWithDict:(NSDictionary*)aDict;
 - (NSDictionary*) convertToDict;

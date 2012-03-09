@@ -21,7 +21,7 @@
     SEL iConfigurationChangedSelector;
 }
 
-- (id) initWithReceivers:(NSArray*)aReceivers andSelectedUdns:(NSArray*)aSelectedUdns multicastEnabled:(bool)aMulticastEnabled multicastChannel:(uint32_t)aMulticastChannel latencyMs:(uint32_t)aLatencyMs;
+- (id) initWithReceivers:(NSArray*)aReceivers andSelectedUdns:(NSArray*)aSelectedUdns multicastEnabled:(bool)aMulticastEnabled multicastChannel:(uint32_t)aMulticastChannel latencyMs:(uint32_t)aLatencyMs subnet:(uint32_t)aSubnet;
 - (void) dispose;
 
 - (void) setReceiversChangedObserver:(id)aObserver selector:(SEL)aSelector;

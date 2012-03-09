@@ -14,10 +14,10 @@
     NSObject* iLock;
 }
 
-@property (assign) NSString* udn;
-@property (assign) NSString* room;
-@property (assign) NSString* group;
-@property (assign) NSString* name;
+@property (copy) NSString* udn;
+@property (copy) NSString* room;
+@property (copy) NSString* group;
+@property (copy) NSString* name;
 
 - (id) initWithPtr:(void*)aPtr;
 - (id) initWithPref:(PrefReceiver*)aPref;

@@ -12,8 +12,8 @@
     EReceiverState status;
 }
 
-@property (assign) NSString* udn;
-@property (assign) NSString* title;
+@property (copy) NSString* udn;
+@property (copy) NSString* title;
 @property (assign) bool selected;
 @property (assign) EReceiverState status;
 

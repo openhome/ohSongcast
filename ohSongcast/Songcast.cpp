@@ -333,7 +333,7 @@ Subnet::~Subnet()
     
 // Songcast
 
-Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, const Brx& aImage, const Brx& aMimeType)
+Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, FatalErrorCallback aFatalErrorCallback, void* aFatalErrorPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, const Brx& aImage, const Brx& aMimeType)
 	: iSubnet(aSubnet)
 	, iChannel(aChannel)
 	, iTtl(aTtl)
@@ -347,6 +347,8 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 	, iSubnetPtr(aSubnetPtr)
 	, iConfigurationChangedCallback(aConfigurationChangedCallback)
 	, iConfigurationChangedPtr(aConfigurationChangedPtr)
+    , iFatalErrorCallback(aFatalErrorCallback)
+    , iFatalErrorPtr(aFatalErrorPtr)
 	, iMutex("SCRD")
 	, iClosing(false)
 	, iAdapter(0)
@@ -375,11 +377,11 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 
 	InitialisationParams* initParams = InitialisationParams::Create();
 
-	/*
-	FunctorMsg fatal = MakeFunctorMsg(*this, &Songcast::FatalErrorHandler);
-
-	initParams->SetFatalErrorHandler(fatal);
-	*/
+    if (iFatalErrorCallback) {
+        // only set the fatal error handler if it has been specified - use the default ohnet handler otherwise
+        FunctorMsg fatal = MakeFunctorMsg(*this, &Songcast::FatalErrorHandler);
+        initParams->SetFatalErrorHandler(fatal);
+    }
 
 	Functor callback = MakeFunctor(*this, &Songcast::SubnetListChanged);
 
@@ -416,8 +418,9 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 }
 
 
-void Songcast::FatalErrorHandler(const char* /*aMessage*/)
+void Songcast::FatalErrorHandler(const char* aMessage)
 {
+    (*iFatalErrorCallback)(iFatalErrorPtr, aMessage);
 }
 
 

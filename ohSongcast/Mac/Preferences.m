@@ -15,11 +15,11 @@
 {
     self = [super init];
 
-    udn = [[aDict objectForKey:@"Udn"] retain];
-    room = [[aDict objectForKey:@"Room"] retain];
-    group = [[aDict objectForKey:@"Group"] retain];
-    name = [[aDict objectForKey:@"Name"] retain];
-    status = [[aDict objectForKey:@"Status"] intValue];
+    self.udn = [aDict objectForKey:@"Udn"];
+    self.room = [aDict objectForKey:@"Room"];
+    self.group = [aDict objectForKey:@"Group"];
+    self.name = [aDict objectForKey:@"Name"];
+    self.status = [[aDict objectForKey:@"Status"] intValue];
     
     return self;
 }
@@ -33,6 +33,16 @@
             group, @"Group",
             name, @"Name",
             [NSNumber numberWithInt:status], @"Status", nil];
+}
+
+
+- (void) dealloc
+{
+    [udn release];
+    [room release];
+    [group release];
+    [name release];
+    [super dealloc];
 }
 
 @end
@@ -49,8 +59,8 @@
 {
     self = [super init];
 
-    address = [[aDict objectForKey:@"Address"] unsignedIntValue];
-    name = [[aDict objectForKey:@"Name"] retain];
+    self.address = [[aDict objectForKey:@"Address"] unsignedIntValue];
+    self.name = [aDict objectForKey:@"Name"];
 
     return self;
 }
@@ -64,6 +74,12 @@
             nil];
 }
 
+
+- (void) dealloc
+{
+    [name release];
+    [super dealloc];
+}
 
 @end
 

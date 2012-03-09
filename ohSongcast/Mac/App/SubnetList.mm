@@ -75,6 +75,14 @@
 }
 
 
+- (void) dealloc
+{
+    [iLock release];
+    [iList release];
+    [super dealloc];
+}
+
+
 - (NSArray*) subnets
 {
     // lock the list and return a copy containing the same objects
@@ -89,15 +97,7 @@
 {
     @synchronized(iLock)
     {
-        if (iObserver) {
-            [iObserver release];
-        }
-
         iObserver = aObserver;
-
-        if (iObserver) {
-            [iObserver retain];
-        }
     }
 }
 
