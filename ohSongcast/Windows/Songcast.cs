@@ -198,19 +198,16 @@ namespace OpenHome.Songcast
         internal bool Owns(IntPtr aSubnet)
         {
             iMutex.WaitOne();
-            bool owns = iSubnet == aSubnet;
+            bool owns = (iSubnet == aSubnet);
             iMutex.ReleaseMutex();
             return (owns);
         }
 
-        internal void Update(IntPtr aSubnet)
+        internal void Update()
         {
             iMutex.WaitOne();
-            SubnetRemoveRef(iSubnet);
-            iSubnet = aSubnet;
             iAddress = (uint)SubnetAddress(iSubnet);
             iAdapterName = Marshal.PtrToStringAnsi(SubnetAdapterName(iSubnet));
-            SubnetAddRef(iSubnet);
             iMutex.ReleaseMutex();
         }
 
@@ -400,7 +397,7 @@ namespace OpenHome.Songcast
             {
                 if (subnet.Owns(aSubnet))
                 {
-                    subnet.Update(aSubnet);
+                    subnet.Update();
                     iSubnetHandler.SubnetChanged(subnet);
                     return;
                 }

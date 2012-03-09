@@ -78,7 +78,6 @@ class OhmSender
     static const TUint kTimerAliveAudioTimeoutMs = 3000;
     static const TUint kTimerExpiryTimeoutMs = 3100;
     static const TUint kMaxSlaveCount = 4;
-	static const TUint kMaxImageBytes = 30 * 1024;
 	static const TUint kMaxMimeTypeBytes = 100;
     static const TUint kMaxZoneFrameBytes = 1 * 1024;
     static const TUint kTimerZoneUriDelayMs = 100;
@@ -156,7 +155,7 @@ private:
     TUint iLatency;
     TBool iMulticast;
     TBool iEnabled;
-	Bws<kMaxImageBytes> iImage;
+	Brh iImage;
 	Bws<kMaxMimeTypeBytes> iMimeType;
     OhmSocket iSocketOhm;
     OhzSocket iSocketOhz;
