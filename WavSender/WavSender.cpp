@@ -538,6 +538,8 @@ int CDECL main(int aArgc, char* aArgv[])
 
     delete (device);
     
+	UpnpLibrary::Close();
+
 	printf("\n");
 	
     return (0);

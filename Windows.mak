@@ -63,9 +63,9 @@ clean:
 	del /S /Q $(objdirbare)
 
 
-$(objdir)$(dllprefix)ohSongcast.$(dllext) : $(objects_songcast) $(objects_netmon) $(objects_Songcast) ohSongcast\Windows\SoundcardDriver.cpp
+$(objdir)$(dllprefix)ohSongcast.$(dllext) : $(objects_topology) $(objects_sender) $(objects_songcast) $(objects_netmon) ohSongcast\Windows\SoundcardDriver.cpp
 	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcast\Windows\SoundcardDriver.cpp
-	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcast.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_songcast) $(objects_netmon) $(objects_Songcast) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcast.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_sender) $(objects_songcast) $(objects_netmon) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
 
 $(objdir)$(dllprefix)ohSongcast.net.$(dllext) : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast\Windows\Songcast.cs
 	$(csharp) /unsafe /t:library \

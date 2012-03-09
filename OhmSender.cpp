@@ -163,7 +163,7 @@ void ProviderSender::TimerAudioPresentExpired()
     SetPropertyAudio(false);
 }
 
-// OHM SENDER DRIVER
+// OhmSenderDriver
 
 OhmSenderDriver::OhmSenderDriver()
     : iMutex("OHMD")
@@ -1486,6 +1486,8 @@ void OhmSender::TimerPresetInfoExpired()
     
 
 // OhmSenderSession
+
+// OhmSender must run an http server just to serve up the image that it is constructed with and that is reported in its metadata
 
 OhmSenderSession::OhmSenderSession(const OhmSender& aSender)
 	: iSender(aSender)

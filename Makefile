@@ -66,20 +66,20 @@ all : all_common $(objdir)$(dllprefix)ohSongcast.$(dllext) $(objdir)TestSongcast
 
 
 ifeq ($(MACHINE), Darwin)
-objects_Songcast_os = $(objdir)SoundcardDriver.$(objext)
+objects_driver = $(objdir)SoundcardDriver.$(objext)
 
 $(objdir)SoundcardDriver.$(objext) : ohSongcast/Mac/SoundcardDriver.cpp
 	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcast/Mac/SoundcardDriver.cpp
 else
-objects_Songcast_os = $(objdir)SoundcardDriver.$(objext)
+objects_driver = $(objdir)SoundcardDriver.$(objext)
 
 $(objdir)SoundcardDriver.$(objext) : ohSongcast/Posix/SoundcardDriver.cpp
 	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcast/Posix/SoundcardDriver.cpp
 endif
 
 
-$(objdir)$(dllprefix)ohSongcast.$(dllext) : $(objects_songcast) $(objects_netmon) $(objects_Songcast) $(objects_Songcast_os)
-	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcast.$(dllext) $(objects_topology) $(objects_songcast)  $(objects_netmon) $(objects_Songcast) $(objects_Songcast_os) $(ohnetdir)$(libprefix)ohNetCore.$(libext)
+$(objdir)$(dllprefix)ohSongcast.$(dllext) : $(objects_topology) $(objects_sender) $(objects_songcast) $(objects_netmon) $(objects_driver)
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcast.$(dllext) $(objects_topology) $(objects_sender) $(objects_songcast) $(objects_netmon) $(objects_driver) $(ohnetdir)$(libprefix)ohNetCore.$(libext)
 
 
 $(objdir)TestSongcast.$(exeext) : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast/TestSongcast.cpp
