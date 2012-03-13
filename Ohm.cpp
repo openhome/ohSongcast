@@ -5,6 +5,8 @@ using namespace OpenHome::Net;
 
 // OhmSocket
 
+// Sends on same socket in Unicast mode, but different socket in Multicast mode
+
 OhmSocket::OhmSocket()
     : iRxSocket(0)
 	, iTxSocket(0)
@@ -18,9 +20,8 @@ void OhmSocket::OpenUnicast(TIpAddress aInterface, TUint aTtl)
     ASSERT(!iTxSocket);
     ASSERT(!iReader);
     iRxSocket = new SocketUdp(0, aInterface);
-	iTxSocket = new SocketUdp(0, aInterface);
-    iTxSocket->SetTtl(aTtl);
-    iTxSocket->SetSendBufBytes(kSendBufBytes);
+    iRxSocket->SetTtl(aTtl);
+    iRxSocket->SetSendBufBytes(kSendBufBytes);
     iReader = new UdpReader(*iRxSocket);
     iThis.Replace(Endpoint(iRxSocket->Port(), aInterface));
 }
@@ -40,8 +41,12 @@ void OhmSocket::OpenMulticast(TIpAddress aInterface, TUint aTtl, const Endpoint&
 
 void OhmSocket::Send(const Brx& aBuffer, const Endpoint& aEndpoint)
 {
-    ASSERT(iTxSocket);
-    iTxSocket->Send(aBuffer, aEndpoint);
+	if (iTxSocket) {
+		iTxSocket->Send(aBuffer, aEndpoint);
+	}
+	else {
+		iRxSocket->Send(aBuffer, aEndpoint);
+	}
 }
 
 Endpoint OhmSocket::This() const
@@ -57,15 +62,16 @@ Endpoint OhmSocket::Sender() const
 
 void OhmSocket::Close()
 {
-    ASSERT(iRxSocket);
-    ASSERT(iTxSocket);
     ASSERT(iReader);
-    delete (iRxSocket);
-    delete (iTxSocket);
     delete (iReader);
-    iRxSocket = 0;
-    iTxSocket = 0;
     iReader = 0;
+    ASSERT (iRxSocket);
+    delete (iRxSocket);
+    iRxSocket = 0;
+	if (iTxSocket) {
+		delete (iTxSocket);
+	    iTxSocket = 0;
+	}
 }
     
 void OhmSocket::Read(Bwx& aBuffer)
@@ -193,7 +199,7 @@ void OhmHeader::Internalise(IReader& aReader)
 
     iMsgType  = reader.ReadUintBe(1);
 
-    if(iMsgType > kMsgTypeMetatext) {
+    if(iMsgType > kMsgTypeResend) {
         THROW(OhmError);
     }
 
@@ -478,6 +484,35 @@ void OhmHeaderSlave::Externalise(IWriter& aWriter) const
     WriterBinary writer(aWriter);
 
     writer.WriteUint32Be(iSlaveCount);
+}
+    
+    
+
+// OhmHeaderResend
+
+OhmHeaderResend::OhmHeaderResend()
+{
+}
+
+OhmHeaderResend::OhmHeaderResend(TUint aFramesCount)
+    : iFramesCount(aFramesCount)
+{
+}
+    
+void OhmHeaderResend::Internalise(IReader& aReader, const OhmHeader& aHeader)
+{
+    ASSERT (aHeader.MsgType() == OhmHeader::kMsgTypeResend);
+    
+    ReaderBinary readerBinary(aReader);
+
+    iFramesCount = readerBinary.ReadUintBe(4);
+}
+
+void OhmHeaderResend::Externalise(IWriter& aWriter) const
+{
+    WriterBinary writer(aWriter);
+
+    writer.WriteUint32Be(iFramesCount);
 }
     
     

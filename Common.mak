@@ -13,13 +13,17 @@ $(objdir)OhmSender.$(objext) : OhmSender.cpp $(headers_sender)
 
 objects_receiver = $(objdir)Ohm.$(objext) \
                    $(objdir)OhmReceiver.$(objext) \
+				   $(objdir)OhmProtocolMulticast.$(objext) \
+				   $(objdir)OhmProtocolUnicast.$(objext) \
                    $(ohnetdir)DvAvOpenhomeOrgReceiver1.$(objext)
 
 headers_receiver = Ohm.h \
                    OhmReceiver.h
 
-$(objdir)OhmReceiver.$(objext) : OhmReceiver.cpp $(headers_receiver)
+$(objdir)OhmReceiver.$(objext) : OhmReceiver.cpp OhmProtocolMulticast.cpp OhmProtocolUnicast.cpp $(headers_receiver)
 	$(compiler)OhmReceiver.$(objext) -c $(cflags) $(includes) OhmReceiver.cpp
+	$(compiler)OhmProtocolMulticast.$(objext) -c $(cflags) $(includes) OhmProtocolMulticast.cpp
+	$(compiler)OhmProtocolUnicast.$(objext) -c $(cflags) $(includes) OhmProtocolUnicast.cpp
 
 objects_topology = $(ohnetdir)CpTopology.$(objext) \
                    $(ohnetdir)CpTopology1.$(objext) \
