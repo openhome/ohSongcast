@@ -63,7 +63,11 @@ void OhmProtocolUnicast::HandleAudio(const OhmHeader& aHeader)
         	iSocket.Send(iMessageBuffer, iSlaveList[i]);
         }
 	}
-                
+    
+	if (iLeaving) {
+		THROW(ReaderError);
+	}
+
 	const Brx& frames = iReceiver->Add(audio);
 
 	TUint bytes = frames.Bytes();
@@ -110,8 +114,8 @@ void OhmProtocolUnicast::HandleTrack(const OhmHeader& aHeader)
 
 		aHeader.Externalise(writer);
 		headerTrack.Externalise(writer);
-        writer.Write(iReceiver->Uri());
-        writer.Write(iReceiver->Metadata());
+        writer.Write(iReceiver->TrackUri());
+        writer.Write(iReceiver->TrackMetadata());
 
         for (TUint i = 0; i < iSlaveCount; i++) {
         	iSocket.Send(iMessageBuffer, iSlaveList[i]);
@@ -124,7 +128,10 @@ void OhmProtocolUnicast::HandleMetatext(const OhmHeader& aHeader)
 	OhmHeaderMetatext headerMetatext;
 	headerMetatext.Internalise(iReadBuffer, aHeader);
 
-	iReceiver->SetMetatext(iReadBuffer.Read(headerMetatext.MetatextBytes()));
+	TUint sequence = headerMetatext.Sequence();
+	const Brx& metatext = iReadBuffer.Read(headerMetatext.MetatextBytes());
+
+	iReceiver->SetMetatext(sequence, metatext);
 
 	if (iSlaveCount > 0)
 	{

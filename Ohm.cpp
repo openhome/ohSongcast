@@ -109,6 +109,11 @@ OhzSocket::OhzSocket()
 {
 }
 
+const Endpoint& OhzSocket::This() const
+{
+	return (iEndpoint);
+}
+
 void OhzSocket::Open(TIpAddress aInterface, TUint aTtl)
 {
     ASSERT(!iRxSocket);

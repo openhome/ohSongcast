@@ -8,7 +8,6 @@
 #include <OpenHome/Private/Timer.h>
 #include <OpenHome/Private/Uri.h>
 
-
 #include "Ohm.h"
 
 namespace OpenHome {
@@ -24,6 +23,7 @@ enum EOhmReceiverTransportState
 
 enum EOhmReceiverPlayMode
 {
+	eNone,
 	eMulticast,
 	eUnicast,
 	eNull,
@@ -37,7 +37,7 @@ public:
     static const TUint kMaxMetatextBytes = 5000;
     virtual void SetAudioFormat(TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth, TBool aLossless, const Brx& aCodecName) = 0;
 	virtual void SetTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata) = 0;
-	virtual void SetMetatext(const Brx& aValue) = 0;
+	virtual void SetMetatext(TUint aSequence, const Brx& aValue) = 0;
 	virtual void SetTransportState(EOhmReceiverTransportState aValue) = 0;
     virtual void Play(const TByte* aData, TUint aBytes, TUint64 aSampleStart, TUint64 aSamplesTotal) = 0;
 	virtual ~IOhmReceiverDriver() {}
@@ -65,9 +65,11 @@ class IOhmReceiver
 public:
 	virtual const Brx& Add(IOhmAudio& aAudio) = 0; // returns array of missed frame numbers
 	virtual void SetTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata) = 0;
-	virtual void SetMetatext(const Brx& aValue) = 0;
-	virtual const Brx& Uri() const = 0;
-	virtual const Brx& Metadata() const = 0;
+	virtual void SetMetatext(TUint aSequence, const Brx& aValue) = 0;
+	virtual TUint TrackSequence() const = 0;
+	virtual const Brx& TrackUri() const = 0;
+	virtual const Brx& TrackMetadata() const = 0;
+	virtual TUint MetatextSequence() const = 0;
 	virtual const Brx& Metatext() const = 0;
 	virtual ~IOhmReceiver() {}
 };
@@ -157,7 +159,14 @@ class OhmReceiver : public IOhmReceiver, public IOhmAudioFactory
 {
     static const TUint kThreadPriority = kPriorityNormal;
     static const TUint kThreadStackBytes = 64 * 1024;
+
+    static const TUint kThreadZonePriority = kPriorityNormal;
+    static const TUint kThreadZoneStackBytes = 64 * 1024;
+
 	static const TUint kMaxUriBytes = 100;
+
+	static const TUint kMaxZoneBytes = 100;
+	static const TUint kMaxZoneFrameBytes = 1024;
 
 public:
     OhmReceiver(TIpAddress aInterface, TUint aTtl, IOhmReceiverDriver& aDriver);
@@ -175,15 +184,17 @@ public:
 
 private:
 	void Run();
+	void RunZone();
 	void StopLocked();
-	void PlayZone(const OpenHome::Uri& aUri);
 
 	// IOhmReceiver
 	virtual const Brx& Add(IOhmAudio& aAudio);
 	virtual void SetTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata);
-	virtual void SetMetatext(const Brx& aValue);
-	virtual const Brx& Uri() const;
-	virtual const Brx& Metadata() const;
+	virtual void SetMetatext(TUint aSequence, const Brx& aValue);
+	virtual TUint TrackSequence() const;
+	virtual const Brx& TrackUri() const;
+	virtual const Brx& TrackMetadata() const;
+	virtual TUint MetatextSequence() const;
 	virtual const Brx& Metatext() const;
 
 	// IOhmAudioFactory
@@ -194,22 +205,31 @@ private:
 	TUint iTtl;
     IOhmReceiverDriver* iDriver;
 	ThreadFunctor* iThread;
+	ThreadFunctor* iThreadZone;
 	Mutex iMutex;
-	Semaphore iPlay;
 	Semaphore iPlaying;
+	Semaphore iZoning;
 	Semaphore iStopped;
 	Semaphore iNullStop;
 	EOhmReceiverTransportState iTransportState;
 	EOhmReceiverPlayMode iPlayMode;
 	TBool iZoneMode;
 	TBool iTerminating;
+	Endpoint iEndpointNull;
 	OhmProtocolMulticast* iProtocolMulticast;
 	OhmProtocolUnicast* iProtocolUnicast;
-	Bws<kMaxUriBytes> iUri;
+	OpenHome::Uri iUri;
+	Endpoint iEndpoint;
 	TUint iTrackSequence;
 	Bws<IOhmReceiverDriver::kMaxUriBytes> iTrackUri;
 	Bws<IOhmReceiverDriver::kMaxMetadataBytes> iTrackMetadata;
-	Bws<IOhmReceiverDriver::kMaxMetatextBytes> iTrackMetatext;
+	TUint iMetatextSequence;
+	Bws<IOhmReceiverDriver::kMaxMetatextBytes> iMetatext;
+	Endpoint iZoneEndpoint;
+    OhzSocket iSocketZone;
+    Bws<kMaxZoneBytes> iZone;
+    Srs<kMaxZoneFrameBytes> iRxZone;
+    Bws<kMaxZoneFrameBytes> iTxZone;
 };
 
 

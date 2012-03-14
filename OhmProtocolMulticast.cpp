@@ -109,7 +109,11 @@ void OhmProtocolMulticast::HandleMetatext(const OhmHeader& aHeader)
 {
 	OhmHeaderMetatext headerMetatext;
 	headerMetatext.Internalise(iReadBuffer, aHeader);
-	iReceiver->SetMetatext(iReadBuffer.Read(headerMetatext.MetatextBytes()));
+
+	TUint sequence = headerMetatext.Sequence();
+	const Brx& metatext = iReadBuffer.Read(headerMetatext.MetatextBytes());
+
+	iReceiver->SetMetatext(sequence, metatext);
 }
 
 void OhmProtocolMulticast::Play(const Endpoint& aEndpoint)

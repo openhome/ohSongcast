@@ -57,6 +57,7 @@ class OhzSocket : public IReaderSource, public INonCopyable
 public:
     OhzSocket();
 
+	const Endpoint& This() const;
 	void Open(TIpAddress aInterface, TUint aTtl);
     void Send(const Brx& aBuffer);
     void Close();

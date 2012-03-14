@@ -58,7 +58,7 @@ public:
 	OhmReceiverDriver();
     virtual void SetAudioFormat(TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth, TBool aLossless, const Brx& aCodecName);
 	virtual void SetTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata);
-	virtual void SetMetatext(const Brx& aValue);
+	virtual void SetMetatext(TUint aSequence, const Brx& aValue);
 	virtual void SetTransportState(EOhmReceiverTransportState aValue);
     virtual void Play(const TByte* aData, TUint aBytes, TUint64 aSampleStart, TUint64 aSamplesTotal);
 };
@@ -76,15 +76,16 @@ void OhmReceiverDriver::SetAudioFormat(TUint aSampleRate, TUint aBitRate, TUint 
 
 void OhmReceiverDriver::SetTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata)
 {
-	printf("SEQUENCE %d\n", aSequence);
+	printf("TRACK SEQUENCE %d\n", aSequence);
 	Brhz uri(aUri);
-	printf("URI\n%s\n", uri.CString());
+	printf("TRACK URI\n%s\n", uri.CString());
 	Brhz metadata(aMetadata);
-	printf("METADATA\n%s\n", metadata.CString());
+	printf("TRACK METADATA\n%s\n", metadata.CString());
 }
 
-void OhmReceiverDriver::SetMetatext(const Brx& aValue)
+void OhmReceiverDriver::SetMetatext(TUint aSequence, const Brx& aValue)
 {
+	printf("METATEXT SEQUENCE %d\n", aSequence);
 	Brhz value(aValue);
 	printf("METATEXT\n%s\n", value.CString());
 }
