@@ -38,25 +38,13 @@ using namespace OpenHome::Net;
        
 
 
-OhmProtocolMulticast::OhmProtocolMulticast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory)
-    : iInterface(aInterface)
-	, iTtl(aTtl)
-	, iReceiver(&aReceiver)
+OhmProtocolMulticast::OhmProtocolMulticast(IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory)
+    : iReceiver(&aReceiver)
 	, iFactory(&aFactory)
     , iReadBuffer(iSocket)
     , iTimerJoin(MakeFunctor(*this, &OhmProtocolMulticast::SendJoin))
     , iTimerListen(MakeFunctor(*this, &OhmProtocolMulticast::SendListen))
 {
-}
-
-void OhmProtocolMulticast::SetInterface(TIpAddress aValue)
-{
-	iInterface = aValue;
-}
-
-void OhmProtocolMulticast::SetTtl(TUint aValue)
-{
-	iTtl = aValue;
 }
 
 void OhmProtocolMulticast::RequestResend(const Brx& aFrames)
@@ -87,13 +75,13 @@ void OhmProtocolMulticast::RequestResend(const Brx& aFrames)
 	}
 }
 
-void OhmProtocolMulticast::Play(const Endpoint& aEndpoint)
+void OhmProtocolMulticast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint& aEndpoint)
 {
     LOG(kMedia, ">OhmProtocolMulticast::Play\n");
 
 	iEndpoint.Replace(aEndpoint);
 
-	iSocket.OpenMulticast(iInterface, iTtl, iEndpoint);
+	iSocket.OpenMulticast(aInterface, aTtl, iEndpoint);
 
     try {
         OhmHeader header;

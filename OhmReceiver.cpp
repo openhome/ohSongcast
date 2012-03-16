@@ -35,8 +35,8 @@ OhmReceiver::OhmReceiver(TIpAddress aInterface, TUint aTtl, IOhmReceiverDriver& 
 	, iFactory(100, 10, 10)
 	, iRepairing(false)
 {
-	iProtocolMulticast = new OhmProtocolMulticast(iInterface, iTtl, *this, iFactory);
-	iProtocolUnicast = new OhmProtocolUnicast(iInterface, iTtl, *this, iFactory);
+	iProtocolMulticast = new OhmProtocolMulticast(*this, iFactory);
+	iProtocolUnicast = new OhmProtocolUnicast(*this, iFactory);
     iThread = new ThreadFunctor("OHRT", MakeFunctor(*this, &OhmReceiver::Run), kThreadPriority, kThreadStackBytes);
     iThread->Start();
     iThreadZone = new ThreadFunctor("OHRZ", MakeFunctor(*this, &OhmReceiver::RunZone), kThreadZonePriority, kThreadZoneStackBytes);
@@ -69,22 +69,108 @@ OhmReceiver::~OhmReceiver()
 
 TUint OhmReceiver::Ttl() const
 {
-	return (iTtl);
+	iMutexTransport.Wait();
+
+	TUint ttl = iTtl;
+
+	iMutexTransport.Signal();
+
+	return (ttl);
 }
 
 TIpAddress OhmReceiver::Interface() const
 {
-	return (iInterface);
+	iMutexTransport.Wait();
+
+	TIpAddress iface = iInterface;
+
+	iMutexTransport.Signal();
+
+	return (iface);
 }
 
 void OhmReceiver::SetTtl(TUint aValue)
 {
-	iTtl = aValue;
+	iMutexTransport.Wait();
+	iMutexMode.Wait();
+
+	if (iTransportState != eStopped) {
+		switch (iPlayMode)
+		{
+		case eNone:
+			iTtl = aValue;
+			break;
+		case eMulticast:
+			iProtocolMulticast->Stop();
+			iStopped.Wait();
+			iTtl = aValue;
+			iTransportState = eBuffering;
+			iDriver->SetTransportState(eBuffering);
+			iThread->Signal();
+			iPlaying.Wait();
+			break;
+		case eUnicast:
+			iProtocolUnicast->Stop();
+			iStopped.Wait();
+			iTtl = aValue;
+			iTransportState = eBuffering;
+			iDriver->SetTransportState(eBuffering);
+			iThread->Signal();
+			iPlaying.Wait();
+			break;
+		case eNull:
+			iTtl = aValue;
+			break;
+		}
+	}
+	else {
+		iTtl = aValue;
+	}
+
+	iMutexMode.Signal();
+	iMutexTransport.Signal();
 }
 
 void OhmReceiver::SetInterface(TIpAddress aValue)
 {
-	iInterface = aValue;
+	iMutexTransport.Wait();
+	iMutexMode.Wait();
+
+	if (iTransportState != eStopped) {
+		switch (iPlayMode)
+		{
+		case eNone:
+			iInterface = aValue;
+			break;
+		case eMulticast:
+			iProtocolMulticast->Stop();
+			iStopped.Wait();
+			iInterface = aValue;
+			iTransportState = eBuffering;
+			iDriver->SetTransportState(eBuffering);
+			iThread->Signal();
+			iPlaying.Wait();
+			break;
+		case eUnicast:
+			iProtocolUnicast->Stop();
+			iStopped.Wait();
+			iInterface = aValue;
+			iTransportState = eBuffering;
+			iDriver->SetTransportState(eBuffering);
+			iThread->Signal();
+			iPlaying.Wait();
+			break;
+		case eNull:
+			iInterface = aValue;
+			break;
+		}
+	}
+	else {
+		iInterface = aValue;
+	}
+
+	iMutexMode.Signal();
+	iMutexTransport.Signal();
 }
 
 void OhmReceiver::Play(const Brx& aUri)
@@ -203,9 +289,7 @@ void OhmReceiver::PlayZoneMode(const Brx& aUri)
 	}
 
 	iLatency = 0;
-
 	iRepairing = RepairClear();
-
 	iEndpoint.Replace(endpoint);
 
 	if (iEndpoint.Equals(iEndpointNull))
@@ -287,11 +371,11 @@ void OhmReceiver::StopLocked()
 		break;
 	}
 
-	iLatency = 0;
+	iMutexTransport.Wait();
 
+	iLatency = 0;
 	iRepairing = RepairClear();
 
-	iMutexTransport.Wait();
 	iMutexMode.Signal();
 }
 
@@ -304,16 +388,18 @@ void OhmReceiver::Run()
 			break;
 		}
 
+		TUint ttl(iTtl);
+		TIpAddress iface(iInterface);
 		Endpoint endpoint(iEndpoint);
 
 		switch (iPlayMode) {
 		case eMulticast:
 			iPlaying.Signal();
-			iProtocolMulticast->Play(endpoint);
+			iProtocolMulticast->Play(iface, ttl, endpoint);
 			break;
 		case eUnicast:
 			iPlaying.Signal();
-			iProtocolUnicast->Play(endpoint);
+			iProtocolUnicast->Play(iface, ttl, endpoint);
 			break;
 		case eNull:
 			iPlaying.Signal();

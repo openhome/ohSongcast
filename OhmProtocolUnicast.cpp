@@ -13,26 +13,14 @@ using namespace OpenHome::Net;
 
 // OhmProtocolUnicast
 
-OhmProtocolUnicast::OhmProtocolUnicast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory)
-    : iInterface(aInterface)
-	, iTtl(aTtl)
-	, iReceiver(&aReceiver)
+OhmProtocolUnicast::OhmProtocolUnicast(IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory)
+    : iReceiver(&aReceiver)
 	, iFactory(&aFactory)
     , iReadBuffer(iSocket)
     , iTimerJoin(MakeFunctor(*this, &OhmProtocolUnicast::SendJoin))
     , iTimerListen(MakeFunctor(*this, &OhmProtocolUnicast::SendListen))
     , iTimerLeave(MakeFunctor(*this, &OhmProtocolUnicast::TimerLeaveExpired))
 {
-}
-
-void OhmProtocolUnicast::SetInterface(TIpAddress aValue)
-{
-	iInterface = aValue;
-}
-
-void OhmProtocolUnicast::SetTtl(TUint aValue)
-{
-	iTtl = aValue;
 }
 
 void OhmProtocolUnicast::HandleAudio(const OhmHeader& aHeader)
@@ -138,7 +126,7 @@ void OhmProtocolUnicast::Broadcast(OhmMsg& aMsg)
 	}
 }
 
-void OhmProtocolUnicast::Play(const Endpoint& aEndpoint)
+void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint& aEndpoint)
 {
     LOG(kMedia, ">OhmProtocolUnicast::Play\n");
 
@@ -148,7 +136,7 @@ void OhmProtocolUnicast::Play(const Endpoint& aEndpoint)
 
 	iEndpoint.Replace(aEndpoint);
 
-	iSocket.OpenUnicast(iInterface, iTtl);
+	iSocket.OpenUnicast(aInterface, aTtl);
 
     try {
         OhmHeader header;

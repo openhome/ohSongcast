@@ -30,6 +30,9 @@ enum EOhmReceiverPlayMode
 	eNull,
 };
 
+// IOhmReceiverDriver defines the interface between the OhmReceiver and the msg pipeline
+// OhmReceiver guarantees a continuous sequence of audio frames are passed to the driver
+
 class IOhmReceiverDriver
 {
 public:
@@ -37,6 +40,9 @@ public:
 	virtual void SetTransportState(EOhmReceiverTransportState aValue) = 0;
 	virtual ~IOhmReceiverDriver() {}
 };
+
+
+// IOhmReceiver defines the interface between the OhmProtocols and OhmReceiver
 
 class IOhmReceiver
 {
@@ -54,21 +60,17 @@ class OhmProtocolMulticast
     static const TUint kTimerListenTimeoutMs = 10000;
     
 public:
-	OhmProtocolMulticast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory);
-	void SetInterface(TIpAddress aValue);
-    void SetTtl(TUint aValue);
-    void Play(const Endpoint& aEndpoint);
+	OhmProtocolMulticast(IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory);
+    void Play(TIpAddress aInterface, TUint aTtl, const Endpoint& aEndpoint);
 	void Stop();
+	void RequestResend(const Brx& aFrames);
 
 private:
-	void RequestResend(const Brx& aFrames);
     void SendJoin();
     void SendListen();
     void Send(TUint aType);
 
 private:
-	TIpAddress iInterface;
-	TUint iTtl;
 	IOhmReceiver* iReceiver;
 	IOhmMsgFactory* iFactory;
     OhmSocket iSocket;
@@ -89,19 +91,19 @@ class OhmProtocolUnicast
 	static const TUint kMaxSlaveCount = 4;
     
 public:
-	OhmProtocolUnicast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory);
+	OhmProtocolUnicast(IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory);
 	void SetInterface(TIpAddress aValue);
     void SetTtl(TUint aValue);
-    void Play(const Endpoint& aEndpoint);
+    void Play(TIpAddress aInterface, TUint aTtl, const Endpoint& aEndpoint);
 	void Stop();
 	void EmergencyStop();
+	void RequestResend(const Brx& aFrames);
 
 private:
 	void HandleAudio(const OhmHeader& aHeader);
 	void HandleTrack(const OhmHeader& aHeader);
 	void HandleMetatext(const OhmHeader& aHeader);
 	void HandleSlave(const OhmHeader& aHeader);
-	void RequestResend(const Brx& aFrames);
 	void Broadcast(OhmMsg& aMsg);
     void SendJoin();
     void SendListen();
@@ -110,8 +112,6 @@ private:
     void TimerLeaveExpired();
 
 private:
-	TIpAddress iInterface;
-	TUint iTtl;
 	IOhmReceiver* iReceiver;
 	IOhmMsgFactory* iFactory;
     OhmSocket iSocket;
@@ -184,8 +184,8 @@ private:
     IOhmReceiverDriver* iDriver;
 	ThreadFunctor* iThread;
 	ThreadFunctor* iThreadZone;
-	Mutex iMutexMode;
-	Mutex iMutexTransport;
+	mutable Mutex iMutexMode;
+	mutable Mutex iMutexTransport;
 	Semaphore iPlaying;
 	Semaphore iZoning;
 	Semaphore iStopped;
