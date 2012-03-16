@@ -26,6 +26,7 @@ public:
 class OhmSocket : public IReaderSource, public INonCopyable
 {
     static const TUint kSendBufBytes = 16392;
+    static const TUint kReceiveBufBytes = 16392;
 
 public:
     OhmSocket();

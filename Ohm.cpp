@@ -21,6 +21,7 @@ void OhmSocket::OpenUnicast(TIpAddress aInterface, TUint aTtl)
     ASSERT(!iReader);
     iRxSocket = new SocketUdp(0, aInterface);
     iRxSocket->SetTtl(aTtl);
+    iRxSocket->SetRecvBufBytes(kReceiveBufBytes);
     iRxSocket->SetSendBufBytes(kSendBufBytes);
     iReader = new UdpReader(*iRxSocket);
     iThis.Replace(Endpoint(iRxSocket->Port(), aInterface));
@@ -32,6 +33,7 @@ void OhmSocket::OpenMulticast(TIpAddress aInterface, TUint aTtl, const Endpoint&
     ASSERT(!iTxSocket);
     ASSERT(!iReader);
     iRxSocket = new SocketUdpMulticast(aInterface, aEndpoint);
+    iRxSocket->SetRecvBufBytes(kReceiveBufBytes);
 	iTxSocket = new SocketUdp(0, aInterface);
     iTxSocket->SetTtl(aTtl);
     iTxSocket->SetSendBufBytes(kSendBufBytes);

@@ -51,8 +51,6 @@ void OhmProtocolUnicast::HandleSlave(const OhmHeader& aHeader)
         	
     iSlaveCount = headerSlave.SlaveCount();
 
-	LOG(kMedia, "OhmProtocolUnicast::HandleSlave SLAVE COUNT = %d\n", iSlaveCount);
-
 	ReaderBinary reader(iReadBuffer);
 
     for (TUint i = 0; i < iSlaveCount; i++) {
@@ -60,7 +58,6 @@ void OhmProtocolUnicast::HandleSlave(const OhmHeader& aHeader)
         TUint port = reader.ReadUintBe(2);
         iSlaveList[i].SetAddress(address);
         iSlaveList[i].SetPort(port);
-		LOG(kMedia, "OhmProtocolUnicast::HandleSlave ADDRESS = %x, PORT = %d\n", address, port);
     }
 }
 
@@ -82,13 +79,7 @@ void OhmProtocolUnicast::RequestResend(const Brx& aFrames)
 		headerResend.Externalise(writer);
 		writer.Write(aFrames);
 		
-		try {
-			iSocket.Send(buffer, iEndpoint);
-		}
-		catch (NetworkError&)
-		{
-			LOG(kMedia, "OhmProtocolUnicast::RequestResend NetworkError\n");
-		}
+		iSocket.Send(buffer, iEndpoint);
 	}
 }
 
@@ -112,8 +103,6 @@ void OhmProtocolUnicast::Broadcast(OhmMsg& aMsg)
 
 void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint& aEndpoint)
 {
-    LOG(kMedia, ">OhmProtocolUnicast::Play\n");
-
 	iLeaving = false;
 
 	iSlaveCount = 0;
@@ -164,7 +153,6 @@ void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint&
                 iReadBuffer.ReadFlush();
 			}
             catch (OhmError&) {
-                LOG(kMedia, "-OhmProtocolUnicast::Play header invalid\n");
             }
 		}
             
@@ -203,12 +191,10 @@ void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint&
                 iReadBuffer.ReadFlush();
 			}
             catch (OhmError&) {
-                LOG(kMedia, "-OhmProtocolUnicast::Play header invalid\n");
             }
 		}
     }
     catch (ReaderError&) {
-        LOG(kMedia, "-OhmProtocolUnicast::Play Reader Error (Interrupted!)\n");
     }
     
     iReadBuffer.ReadFlush();
@@ -220,13 +206,10 @@ void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint&
 	iTimerLeave.Cancel();
     
 	iSocket.Close();
-
-    LOG(kMedia, "<OhmProtocolUnicast::Play\n");
 }
 
 void OhmProtocolUnicast::Stop()
 {
-    LOG(kMedia, "OhmProtocolUnicast::Stop\n");
     iLeaving = true;
     iTimerLeave.FireIn(kTimerLeaveTimeoutMs);
 }
@@ -239,21 +222,18 @@ void OhmProtocolUnicast::EmergencyStop()
 
 void OhmProtocolUnicast::SendJoin()
 {
-    LOG(kMedia, "OhmProtocolUnicast::SendJoin\n");
     Send(OhmHeader::kMsgTypeJoin);
     iTimerJoin.FireIn(kTimerJoinTimeoutMs);
 }
 
 void OhmProtocolUnicast::SendListen()
 {
-    LOG(kMedia, "OhmProtocolUnicast::SendListen\n");
     Send(OhmHeader::kMsgTypeListen);
     iTimerListen.FireIn((kTimerListenTimeoutMs >> 2) - Random(kTimerListenTimeoutMs >> 3)); // listen primary timeout
 }
 
 void OhmProtocolUnicast::SendLeave()
 {
-    LOG(kMedia, "OhmProtocolUnicast::SendLeave\n");
     Send(OhmHeader::kMsgTypeLeave);
 }
 
@@ -270,13 +250,11 @@ void OhmProtocolUnicast::Send(TUint aType)
     }
     catch (NetworkError&)
     {
-        LOG(kMedia, "OhmProtocolUnicast::Send NetworkError\n");
     }
 }
 
 void OhmProtocolUnicast::TimerLeaveExpired()
 {
-    LOG(kMedia, "OhmProtocolUnicast::TimerLeaveExpired\n");
 	SendLeave();
 	iReadBuffer.ReadInterrupt();
 }

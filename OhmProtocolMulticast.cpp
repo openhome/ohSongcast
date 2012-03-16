@@ -65,20 +65,12 @@ void OhmProtocolMulticast::RequestResend(const Brx& aFrames)
 		headerResend.Externalise(writer);
 		writer.Write(aFrames);
 		
-		try {
-			iSocket.Send(buffer, iEndpoint);
-		}
-		catch (NetworkError&)
-		{
-			LOG(kMedia, "OhmProtocolMulticast::RequestResend NetworkError\n");
-		}
+		iSocket.Send(buffer, iEndpoint);
 	}
 }
 
 void OhmProtocolMulticast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint& aEndpoint)
 {
-    LOG(kMedia, ">OhmProtocolMulticast::Play\n");
-
 	iEndpoint.Replace(aEndpoint);
 
 	iSocket.OpenMulticast(aInterface, aTtl, iEndpoint);
@@ -123,7 +115,6 @@ void OhmProtocolMulticast::Play(TIpAddress aInterface, TUint aTtl, const Endpoin
                 iReadBuffer.ReadFlush();
 			}
             catch (OhmError&) {
-                LOG(kMedia, "-OhmProtocolMulticast::Play header invalid\n");
             }
 		}
             
@@ -160,20 +151,16 @@ void OhmProtocolMulticast::Play(TIpAddress aInterface, TUint aTtl, const Endpoin
                 iReadBuffer.ReadFlush();
 			}
             catch (OhmError&) {
-                LOG(kMedia, "-OhmProtocolMulticast::Play header invalid\n");
             }
 		}
     }
     catch (ReaderError&) {
-        LOG(kMedia, "-OhmProtocolMulticast::Play Reader Error (Interrupted!)\n");
     }
     
     iReadBuffer.ReadFlush();
    	iTimerJoin.Cancel();
     iTimerListen.Cancel();
 	iSocket.Close();
-
-    LOG(kMedia, "<OhmProtocolMulticast::Play\n");
 }
 
 void OhmProtocolMulticast::Stop()
@@ -183,14 +170,12 @@ void OhmProtocolMulticast::Stop()
 
 void OhmProtocolMulticast::SendListen()
 {
-    LOG(kMedia, "OhmProtocolMulticast::SendListen\n");
     Send(OhmHeader::kMsgTypeListen);
     iTimerListen.FireIn((kTimerListenTimeoutMs >> 2) - Random(kTimerListenTimeoutMs >> 3)); // listen primary timeout
 }
 
 void OhmProtocolMulticast::SendJoin()
 {
-    LOG(kMedia, "OhmProtocolMulticast::SendJoin\n");
     Send(OhmHeader::kMsgTypeJoin);
     iTimerJoin.FireIn(kTimerJoinTimeoutMs);
 }
@@ -203,12 +188,6 @@ void OhmProtocolMulticast::Send(TUint aType)
     OhmHeader msg(aType, 0);
     msg.Externalise(writer);
     
-    try {
-        iSocket.Send(buffer, iEndpoint);
-    }
-    catch (NetworkError&)
-    {
-        LOG(kMedia, "OhmProtocolMulticast::Send NetworkError\n");
-    }
+    iSocket.Send(buffer, iEndpoint);
 }
 

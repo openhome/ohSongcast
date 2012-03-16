@@ -66,11 +66,18 @@ private:
 	virtual void Process(OhmMsgAudio& aMsg);
 	virtual void Process(OhmMsgTrack& aMsg);
 	virtual void Process(OhmMsgMetatext& aMsg);
+
+private:
+	TBool iReset;
+	TUint iCount;
+	TUint iFrame;
 };
 
 
 OhmReceiverDriver::OhmReceiverDriver()
 {
+	iReset = true;
+	iCount = 0;
 }
 
 void OhmReceiverDriver::Add(OhmMsg& aMsg)
@@ -89,6 +96,8 @@ void OhmReceiverDriver::SetTransportState(EOhmReceiverTransportState aValue)
 		break;
 	case eStopped:
 		printf("Stopped\n");
+		iReset = true;
+		iCount = 0;
 		break;
 	case eWaiting:
 		printf("Waiting\n");
@@ -104,23 +113,37 @@ void OhmReceiverDriver::SetTransportState(EOhmReceiverTransportState aValue)
 
 void OhmReceiverDriver::Process(OhmMsgAudio& aMsg)
 {
-	printf("-%d-", aMsg.Frame());
+	if (++iCount == 100) {
+		printf(".");
+		iCount = 0;
+	}
+
+	if (iReset) {
+		iFrame = aMsg.Frame();
+		iReset = false;
+	}
+	else {
+		if (aMsg.Frame() != iFrame + 1) {
+			printf("Missed frames between %d and %d\n", iFrame, aMsg.Frame());
+		}
+		iFrame = aMsg.Frame();
+	}
 }
 
 void OhmReceiverDriver::Process(OhmMsgTrack& aMsg)
 {
 	printf("TRACK SEQUENCE %d\n", aMsg.Sequence());
 	Brhz uri(aMsg.Uri());
-	printf("TRACK URI\n%s\n", uri.CString());
+	printf("TRACK URI %s\n", uri.CString());
 	Brhz metadata(aMsg.Metadata());
-	printf("TRACK METADATA\n%s\n", metadata.CString());
+	printf("TRACK METADATA %s\n", metadata.CString());
 }
 
 void OhmReceiverDriver::Process(OhmMsgMetatext& aMsg)
 {
 	printf("METATEXT SEQUENCE %d\n", aMsg.Sequence());
 	Brhz metatext(aMsg.Metatext());
-	printf("METATEXT\n%s\n", metatext.CString());
+	printf("METATEXT %s\n", metatext.CString());
 }
 
 int CDECL main(int aArgc, char* aArgv[])

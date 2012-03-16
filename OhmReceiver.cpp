@@ -47,12 +47,7 @@ OhmReceiver::~OhmReceiver()
 {
 	iMutexTransport.Wait();
 
-	if (iTransportState != eStopped)
-	{
-		StopLocked();
-		iTransportState = eStopped;
-		iDriver->SetTransportState(eStopped);
-	}
+	StopLocked();
 
 	iTerminating = true;
 
@@ -145,6 +140,8 @@ void OhmReceiver::SetInterface(TIpAddress aValue)
 		case eMulticast:
 			iProtocolMulticast->Stop();
 			iStopped.Wait();
+			iTransportState = eStopped;
+			iDriver->SetTransportState(eStopped);
 			iInterface = aValue;
 			iTransportState = eBuffering;
 			iDriver->SetTransportState(eBuffering);
@@ -154,6 +151,8 @@ void OhmReceiver::SetInterface(TIpAddress aValue)
 		case eUnicast:
 			iProtocolUnicast->Stop();
 			iStopped.Wait();
+			iTransportState = eStopped;
+			iDriver->SetTransportState(eStopped);
 			iInterface = aValue;
 			iTransportState = eBuffering;
 			iDriver->SetTransportState(eBuffering);
@@ -175,16 +174,9 @@ void OhmReceiver::SetInterface(TIpAddress aValue)
 
 void OhmReceiver::Play(const Brx& aUri)
 {
-    LOG(kMedia, ">OhmReceiver::Play\n");
-
 	iMutexTransport.Wait();
 
-	if (iTransportState != eStopped)
-	{
-		StopLocked();
-		iTransportState = eStopped;
-		iDriver->SetTransportState(eStopped);
-	}
+	StopLocked();
 
 	OpenHome::Uri uri;
 
@@ -247,8 +239,6 @@ void OhmReceiver::Play(const Brx& aUri)
 
 void OhmReceiver::PlayZoneMode(const Brx& aUri)
 {
-    LOG(kMedia, ">OhmReceiver::PlayZoneMode\n");
-
 	iMutexTransport.Wait();
 
 	OpenHome::Uri uri;
@@ -266,7 +256,6 @@ void OhmReceiver::PlayZoneMode(const Brx& aUri)
 	if (iEndpoint.Equals(endpoint)) {
 		iMutexMode.Signal();
 		iMutexTransport.Signal();
-	    LOG(kMedia, "<OhmReceiver::PlayZoneMode ignored\n");
 		return;
 	}
 
@@ -290,6 +279,10 @@ void OhmReceiver::PlayZoneMode(const Brx& aUri)
 
 	iLatency = 0;
 	iRepairing = RepairClear();
+
+	iTransportState = eStopped;
+	iDriver->SetTransportState(eStopped);
+
 	iEndpoint.Replace(endpoint);
 
 	if (iEndpoint.Equals(iEndpointNull))
@@ -324,26 +317,24 @@ void OhmReceiver::PlayZoneMode(const Brx& aUri)
 
 	iMutexMode.Signal();
 	iMutexTransport.Signal();
-
-    LOG(kMedia, "<OhmReceiver::PlayZoneMode\n");
 }
 
 void OhmReceiver::Stop()
 {
 	iMutexTransport.Wait();
 
-	if (iTransportState != eStopped)
-	{
-		StopLocked();
-		iTransportState = eStopped;
-		iDriver->SetTransportState(eStopped);
-	}
+	StopLocked();
 
 	iMutexTransport.Signal();
 }
 
 void OhmReceiver::StopLocked()
 {
+	if (iTransportState == eStopped)
+	{
+		return;
+	}
+
 	iMutexMode.Wait();
 	iMutexTransport.Signal();
 
@@ -377,6 +368,9 @@ void OhmReceiver::StopLocked()
 	iRepairing = RepairClear();
 
 	iMutexMode.Signal();
+
+	iTransportState = eStopped;
+	iDriver->SetTransportState(eStopped);
 }
 
 void OhmReceiver::Run()
@@ -413,10 +407,6 @@ void OhmReceiver::Run()
 
 void OhmReceiver::SendZoneQuery()
 {
-	LOG(kMedia, "OhmReceiver::SendZoneQuery ");
-	LOG(kMedia, iZone);
-	LOG(kMedia, "\n");
-                
 	OhzHeaderZoneQuery headerZoneQuery(iZone);
 	OhzHeader header(OhzHeader::kMsgTypeZoneQuery, headerZoneQuery.MsgBytes());
 
@@ -435,8 +425,6 @@ void OhmReceiver::SendZoneQuery()
 void OhmReceiver::RunZone()
 {
     for (;;) {
-        LOG(kMedia, "OhmReceiver::RunZone wait\n");
-        
         iThreadZone->Wait();
 
 		if (iTerminating) {
@@ -447,8 +435,6 @@ void OhmReceiver::RunZone()
 		iZoning.Signal();
 		SendZoneQuery();
 
-        LOG(kMedia, "OhmReceiver::RunZone go\n");
-        
 		try {
 			for (;;) {
 				OhzHeader header;
@@ -459,7 +445,6 @@ void OhmReceiver::RunZone()
 						break;
 					}
 					catch (OhzError&) {
-						LOG(kMedia, "OhmReceiver::RunZone received error\n");
 						iRxZone.ReadFlush();
 					}
 				}
@@ -471,12 +456,6 @@ void OhmReceiver::RunZone()
 					Brn msgZone = iRxZone.Read(headerZoneUri.ZoneBytes());
 					Brn msgUri = iRxZone.Read(headerZoneUri.UriBytes());
 
-			        LOG(kMedia, "OhmReceiver::RunZone received ");
-					LOG(kMedia, msgZone);
-					LOG(kMedia, " = ");
-					LOG(kMedia, msgUri);
-					LOG(kMedia, "\n");
-                
 					if (msgZone == iZone)
 					{
 						iTimerZoneQuery.Cancel();
