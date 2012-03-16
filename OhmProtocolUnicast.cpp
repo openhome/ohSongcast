@@ -253,7 +253,7 @@ void OhmProtocolUnicast::Stop()
 {
     LOG(kMedia, "OhmProtocolUnicast::Stop\n");
     iLeaving = true;
-    //iTimerLeave.FireIn(kTimerLeaveTimeoutMs);
+    iTimerLeave.FireIn(kTimerLeaveTimeoutMs);
 }
 
 void OhmProtocolUnicast::EmergencyStop()

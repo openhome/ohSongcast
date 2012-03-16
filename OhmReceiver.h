@@ -85,7 +85,7 @@ class OhmProtocolUnicast
     
     static const TUint kTimerJoinTimeoutMs = 300;
     static const TUint kTimerListenTimeoutMs = 10000;
-    static const TUint kTimerLeaveTimeoutMs = 5000;
+    static const TUint kTimerLeaveTimeoutMs = 50;
 	static const TUint kMaxSlaveCount = 4;
     
 public:
