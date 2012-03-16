@@ -47,7 +47,7 @@ OhmMsgAudio::OhmMsgAudio(OhmMsgFactory& aFactory)
 void OhmMsgAudio::Create(IReader& aReader, const OhmHeader& aHeader)
 {
 	iHeader.Internalise(aReader, aHeader);
-	//iAudio.Replace(aReader.Read(iHeader.AudioBytes()));
+	iAudio.Replace(aReader.Read(iHeader.AudioBytes()));
 	OhmMsg::Create();
 }
 
@@ -143,7 +143,10 @@ void OhmMsgAudio::Process(IOhmMsgProcessor& aProcessor)
 
 void OhmMsgAudio::Externalise(IWriter& aWriter)
 {
-	aWriter.Write(Brn("HELLO"));
+	OhmHeader header(OhmHeader::kMsgTypeAudio, iHeader.MsgBytes());
+	header.Externalise(aWriter);
+	iHeader.Externalise(aWriter);
+	aWriter.Write(iAudio);
 }
 
 
@@ -186,7 +189,12 @@ void OhmMsgTrack::Process(IOhmMsgProcessor& aProcessor)
 
 void OhmMsgTrack::Externalise(IWriter& aWriter)
 {
-	aWriter.Write(Brn("HELLO"));
+	OhmHeaderTrack headerTrack(iSequence, iUri, iMetadata);
+	OhmHeader header(OhmHeader::kMsgTypeTrack, headerTrack.MsgBytes());
+	header.Externalise(aWriter);
+	headerTrack.Externalise(aWriter);
+	aWriter.Write(iUri);
+	aWriter.Write(iMetadata);
 }
 
 
@@ -223,7 +231,11 @@ void OhmMsgMetatext::Process(IOhmMsgProcessor& aProcessor)
 
 void OhmMsgMetatext::Externalise(IWriter& aWriter)
 {
-	aWriter.Write(Brn("HELLO"));
+	OhmHeaderMetatext headerMetatext(iSequence, iMetatext);
+	OhmHeader header(OhmHeader::kMsgTypeMetatext, headerMetatext.MsgBytes());
+	header.Externalise(aWriter);
+	headerMetatext.Externalise(aWriter);
+	aWriter.Write(iMetatext);
 }
 
 // OhmMsgFactory

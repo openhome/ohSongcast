@@ -25,44 +25,23 @@ OhmProtocolUnicast::OhmProtocolUnicast(IOhmReceiver& aReceiver, IOhmMsgFactory& 
 
 void OhmProtocolUnicast::HandleAudio(const OhmHeader& aHeader)
 {
-	try
-	{
-		OhmMsgAudio& msg = iFactory->CreateAudio(iReadBuffer, aHeader);
+	Broadcast(iFactory->CreateAudio(iReadBuffer, aHeader));
 
-		Broadcast(msg);
-
-		iReceiver->Add(msg);
-
-		if (iLeaving) {
-			LOG(kMedia, "OhmProtocolUnicast::HandleAudio leaving detected\n");
-			iTimerLeave.Cancel();
-			SendLeave();
-			iReadBuffer.ReadInterrupt();
-		}
+	if (iLeaving) {
+		iTimerLeave.Cancel();
+		SendLeave();
+		iReadBuffer.ReadInterrupt();
 	}
-	catch (...)
-	{
-		LOG(kMedia, "OhmProtocolUnicast::HandleAudio error\n");
-	}
-
 }
 
 void OhmProtocolUnicast::HandleTrack(const OhmHeader& aHeader)
 {
-	OhmMsgTrack& msg = iFactory->CreateTrack(iReadBuffer, aHeader);
-
-	Broadcast(msg);
-
-	iReceiver->Add(msg);
+	Broadcast(iFactory->CreateTrack(iReadBuffer, aHeader));
 }
 
 void OhmProtocolUnicast::HandleMetatext(const OhmHeader& aHeader)
 {
-	OhmMsgMetatext& msg = iFactory->CreateMetatext(iReadBuffer, aHeader);
-
-	Broadcast(msg);
-
-	iReceiver->Add(msg);
+	Broadcast(iFactory->CreateMetatext(iReadBuffer, aHeader));
 }
 
 void OhmProtocolUnicast::HandleSlave(const OhmHeader& aHeader)
@@ -72,13 +51,16 @@ void OhmProtocolUnicast::HandleSlave(const OhmHeader& aHeader)
         	
     iSlaveCount = headerSlave.SlaveCount();
 
+	LOG(kMedia, "OhmProtocolUnicast::HandleSlave SLAVE COUNT = %d\n", iSlaveCount);
+
 	ReaderBinary reader(iReadBuffer);
 
     for (TUint i = 0; i < iSlaveCount; i++) {
-        TIpAddress address = reader.ReadUintBe(4);
+        TIpAddress address = reader.ReadUintLe(4); // utterly confused due to ohNet's ridiculous decision to pass IpAddresses around memory in BE form
         TUint port = reader.ReadUintBe(2);
         iSlaveList[i].SetAddress(address);
         iSlaveList[i].SetPort(port);
+		LOG(kMedia, "OhmProtocolUnicast::HandleSlave ADDRESS = %x, PORT = %d\n", address, port);
     }
 }
 
@@ -124,6 +106,8 @@ void OhmProtocolUnicast::Broadcast(OhmMsg& aMsg)
         	iSocket.Send(iMessageBuffer, iSlaveList[i]);
         }
 	}
+
+	iReceiver->Add(aMsg);
 }
 
 void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint& aEndpoint)
@@ -174,6 +158,7 @@ void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint&
 					break;
 				case OhmHeader::kMsgTypeSlave:
 					HandleSlave(header);
+					break;
 				}
 
                 iReadBuffer.ReadFlush();
@@ -196,7 +181,6 @@ void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint&
 				switch(header.MsgType()) {
 				case OhmHeader::kMsgTypeJoin:
 				case OhmHeader::kMsgTypeLeave:
-				case OhmHeader::kMsgTypeSlave:
 				case OhmHeader::kMsgTypeResend:
 					break;
 				case OhmHeader::kMsgTypeListen:
@@ -210,6 +194,9 @@ void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint&
 					break;
 				case OhmHeader::kMsgTypeMetatext:
 					HandleMetatext(header);
+					break;
+				case OhmHeader::kMsgTypeSlave:
+					HandleSlave(header);
 					break;
 				}
 
