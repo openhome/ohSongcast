@@ -13,11 +13,11 @@ using namespace OpenHome::Net;
 
 // OhmProtocolUnicast
 
-OhmProtocolUnicast::OhmProtocolUnicast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmAudioFactory& aAudioFactory)
+OhmProtocolUnicast::OhmProtocolUnicast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory)
     : iInterface(aInterface)
 	, iTtl(aTtl)
 	, iReceiver(&aReceiver)
-	, iAudioFactory(&aAudioFactory)
+	, iFactory(&aFactory)
     , iReadBuffer(iSocket)
     , iTimerJoin(MakeFunctor(*this, &OhmProtocolUnicast::SendJoin))
     , iTimerListen(MakeFunctor(*this, &OhmProtocolUnicast::SendListen))
@@ -35,118 +35,46 @@ void OhmProtocolUnicast::SetTtl(TUint aValue)
 	iTtl = aValue;
 }
 
-/*
-	virtual const Brx& Add(OhmAudio& aAudio) = 0; // returns array of missed frame numbers
-	virtual void SetTrack(const Brx& aUri, const Brx& aMetadata)= 0;
-	virtual void SetMetatext(const Brx& aValue) = 0;
-*/
-
 void OhmProtocolUnicast::HandleAudio(const OhmHeader& aHeader)
 {
-	OhmHeaderAudio headerAudio;
-	
-	headerAudio.Internalise(iReadBuffer, aHeader);
-
-	IOhmAudio& audio = iAudioFactory->Create(headerAudio, iReadBuffer);
-
-	if (iSlaveCount > 0)
+	try
 	{
-		WriterBuffer writer(iMessageBuffer);
+		OhmMsgAudio& msg = iFactory->CreateAudio(iReadBuffer, aHeader);
 
-		writer.Flush();
+		Broadcast(msg);
 
-		aHeader.Externalise(writer);
-		headerAudio.Externalise(writer);
-        writer.Write(audio.Samples());
+		iReceiver->Add(msg);
 
-        for (TUint i = 0; i < iSlaveCount; i++) {
-        	iSocket.Send(iMessageBuffer, iSlaveList[i]);
-        }
-	}
-    
-	if (iLeaving) {
-		THROW(ReaderError);
-	}
-
-	const Brx& frames = iReceiver->Add(audio);
-
-	TUint bytes = frames.Bytes();
-
-	if (bytes > 0)
-	{
-		Bws<OhmHeader::kHeaderBytes + 400> buffer;
-
-		WriterBuffer writer(buffer);
-
-		OhmHeaderResend headerResend(bytes / 4);
-
-		OhmHeader header(OhmHeader::kMsgTypeResend, headerResend.MsgBytes());
-
-		header.Externalise(writer);
-		headerResend.Externalise(writer);
-		writer.Write(frames);
-		
-		try {
-			iSocket.Send(buffer, iEndpoint);
-		}
-		catch (NetworkError&)
-		{
-			LOG(kMedia, "OhmProtocolUnicast::HandleAudio NetworkError\n");
+		if (iLeaving) {
+			LOG(kMedia, "OhmProtocolUnicast::HandleAudio leaving detected\n");
+			iTimerLeave.Cancel();
+			SendLeave();
+			iReadBuffer.ReadInterrupt();
 		}
 	}
+	catch (...)
+	{
+		LOG(kMedia, "OhmProtocolUnicast::HandleAudio error\n");
+	}
+
 }
 
 void OhmProtocolUnicast::HandleTrack(const OhmHeader& aHeader)
 {
-	OhmHeaderTrack headerTrack;
-	headerTrack.Internalise(iReadBuffer, aHeader);
+	OhmMsgTrack& msg = iFactory->CreateTrack(iReadBuffer, aHeader);
 
-	TUint sequence = headerTrack.Sequence();
-	const Brx& uri = iReadBuffer.Read(headerTrack.UriBytes());
-	const Brx& metadata = iReadBuffer.Read(headerTrack.MetadataBytes());
-	iReceiver->SetTrack(sequence, uri, metadata);
+	Broadcast(msg);
 
-	if (iSlaveCount > 0)
-	{
-		WriterBuffer writer(iMessageBuffer);
-
-		writer.Flush();
-
-		aHeader.Externalise(writer);
-		headerTrack.Externalise(writer);
-        writer.Write(iReceiver->TrackUri());
-        writer.Write(iReceiver->TrackMetadata());
-
-        for (TUint i = 0; i < iSlaveCount; i++) {
-        	iSocket.Send(iMessageBuffer, iSlaveList[i]);
-        }
-	}
+	iReceiver->Add(msg);
 }
 
 void OhmProtocolUnicast::HandleMetatext(const OhmHeader& aHeader)
 {
-	OhmHeaderMetatext headerMetatext;
-	headerMetatext.Internalise(iReadBuffer, aHeader);
+	OhmMsgMetatext& msg = iFactory->CreateMetatext(iReadBuffer, aHeader);
 
-	TUint sequence = headerMetatext.Sequence();
-	const Brx& metatext = iReadBuffer.Read(headerMetatext.MetatextBytes());
+	Broadcast(msg);
 
-	iReceiver->SetMetatext(sequence, metatext);
-
-	if (iSlaveCount > 0)
-	{
-		WriterBuffer writer(iMessageBuffer);
-
-		writer.Flush();
-
-		aHeader.Externalise(writer);
-		headerMetatext.Externalise(writer);
-        writer.Write(iReceiver->Metatext());
-
-        for (TUint i = 0; i < iSlaveCount; i++) {
-        	iSocket.Send(iMessageBuffer, iSlaveList[i]);
-        }
-	}
+	iReceiver->Add(msg);
 }
 
 void OhmProtocolUnicast::HandleSlave(const OhmHeader& aHeader)
@@ -166,6 +94,49 @@ void OhmProtocolUnicast::HandleSlave(const OhmHeader& aHeader)
     }
 }
 
+void OhmProtocolUnicast::RequestResend(const Brx& aFrames)
+{
+	TUint bytes = aFrames.Bytes();
+
+	if (bytes > 0)
+	{
+		Bws<OhmHeader::kHeaderBytes + 400> buffer;
+
+		WriterBuffer writer(buffer);
+
+		OhmHeaderResend headerResend(bytes / 4);
+
+		OhmHeader header(OhmHeader::kMsgTypeResend, headerResend.MsgBytes());
+
+		header.Externalise(writer);
+		headerResend.Externalise(writer);
+		writer.Write(aFrames);
+		
+		try {
+			iSocket.Send(buffer, iEndpoint);
+		}
+		catch (NetworkError&)
+		{
+			LOG(kMedia, "OhmProtocolUnicast::RequestResend NetworkError\n");
+		}
+	}
+}
+
+void OhmProtocolUnicast::Broadcast(OhmMsg& aMsg)
+{
+	if (iSlaveCount > 0)
+	{
+		WriterBuffer writer(iMessageBuffer);
+
+		writer.Flush();
+
+		aMsg.Externalise(writer);
+
+        for (TUint i = 0; i < iSlaveCount; i++) {
+        	iSocket.Send(iMessageBuffer, iSlaveList[i]);
+        }
+	}
+}
 
 void OhmProtocolUnicast::Play(const Endpoint& aEndpoint)
 {
@@ -191,7 +162,7 @@ void OhmProtocolUnicast::Play(const Endpoint& aEndpoint)
 		TBool receivedMetatext = false;
 
 		while (!joinComplete) {
-            try {
+			try {
                 header.Internalise(iReadBuffer);
 
 				switch(header.MsgType()) {
@@ -231,7 +202,7 @@ void OhmProtocolUnicast::Play(const Endpoint& aEndpoint)
 	    iTimerListen.FireIn((kTimerListenTimeoutMs >> 2) - Random(kTimerListenTimeoutMs >> 3)); // listen primary timeout
 	    
         for (;;) {
-            try {
+			try {
                 header.Internalise(iReadBuffer);
 
 				switch(header.MsgType()) {
@@ -267,7 +238,7 @@ void OhmProtocolUnicast::Play(const Endpoint& aEndpoint)
     
     iReadBuffer.ReadFlush();
 
-	iLeaving = false;    
+	iLeaving = false;
 
    	iTimerJoin.Cancel();
     iTimerListen.Cancel();
@@ -280,14 +251,15 @@ void OhmProtocolUnicast::Play(const Endpoint& aEndpoint)
 
 void OhmProtocolUnicast::Stop()
 {
+    LOG(kMedia, "OhmProtocolUnicast::Stop\n");
     iLeaving = true;
-    iTimerLeave.FireIn(kTimerLeaveTimeoutMs);
+    //iTimerLeave.FireIn(kTimerLeaveTimeoutMs);
 }
 
 void OhmProtocolUnicast::EmergencyStop()
 {
 	SendLeave();
-    iReadBuffer.ReadInterrupt();
+	TimerLeaveExpired();
 }
 
 void OhmProtocolUnicast::SendJoin()
@@ -330,10 +302,7 @@ void OhmProtocolUnicast::Send(TUint aType)
 void OhmProtocolUnicast::TimerLeaveExpired()
 {
     LOG(kMedia, "OhmProtocolUnicast::TimerLeaveExpired\n");
-
-	if (iLeaving) {
-		SendLeave();
-		iReadBuffer.ReadInterrupt();
-	}
+	SendLeave();
+	iReadBuffer.ReadInterrupt();
 }
 

@@ -52,15 +52,20 @@ using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
 
 
-class OhmReceiverDriver : public IOhmReceiverDriver
+class OhmReceiverDriver : public IOhmReceiverDriver, public IOhmMsgProcessor
 {
 public:
 	OhmReceiverDriver();
-    virtual void SetAudioFormat(TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth, TBool aLossless, const Brx& aCodecName);
-	virtual void SetTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata);
-	virtual void SetMetatext(TUint aSequence, const Brx& aValue);
+
+private:
+	// IOhmReceiverDriver
+	virtual void Add(OhmMsg& aMsg);
 	virtual void SetTransportState(EOhmReceiverTransportState aValue);
-    virtual void Play(const TByte* aData, TUint aBytes, TUint64 aSampleStart, TUint64 aSamplesTotal);
+
+	// IOhmMsgProcessor
+	virtual void Process(OhmMsgAudio& aMsg);
+	virtual void Process(OhmMsgTrack& aMsg);
+	virtual void Process(OhmMsgMetatext& aMsg);
 };
 
 
@@ -68,26 +73,10 @@ OhmReceiverDriver::OhmReceiverDriver()
 {
 }
 
-void OhmReceiverDriver::SetAudioFormat(TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth, TBool aLossless, const Brx& aCodecName)
+void OhmReceiverDriver::Add(OhmMsg& aMsg)
 {
-	Brhz codec(aCodecName);
-	printf("SR: %d, BR: %d, CH: %d, BD: %d, LL: %d, CO: %s", aSampleRate, aBitRate, aChannels, aBitDepth, aLossless, codec.CString());
-}
-
-void OhmReceiverDriver::SetTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata)
-{
-	printf("TRACK SEQUENCE %d\n", aSequence);
-	Brhz uri(aUri);
-	printf("TRACK URI\n%s\n", uri.CString());
-	Brhz metadata(aMetadata);
-	printf("TRACK METADATA\n%s\n", metadata.CString());
-}
-
-void OhmReceiverDriver::SetMetatext(TUint aSequence, const Brx& aValue)
-{
-	printf("METATEXT SEQUENCE %d\n", aSequence);
-	Brhz value(aValue);
-	printf("METATEXT\n%s\n", value.CString());
+	aMsg.Process(*this);
+	aMsg.RemoveRef();
 }
 
 void OhmReceiverDriver::SetTransportState(EOhmReceiverTransportState aValue)
@@ -113,9 +102,25 @@ void OhmReceiverDriver::SetTransportState(EOhmReceiverTransportState aValue)
 	}
 }
 
-void OhmReceiverDriver::Play(const TByte* /*aData*/, TUint /*aBytes*/, TUint64 aSampleStart, TUint64 aSamplesTotal)
+void OhmReceiverDriver::Process(OhmMsgAudio& aMsg)
 {
-	printf("%lld, %lld\n", aSampleStart, aSamplesTotal);
+	printf("-%d-", aMsg.Frame());
+}
+
+void OhmReceiverDriver::Process(OhmMsgTrack& aMsg)
+{
+	printf("TRACK SEQUENCE %d\n", aMsg.Sequence());
+	Brhz uri(aMsg.Uri());
+	printf("TRACK URI\n%s\n", uri.CString());
+	Brhz metadata(aMsg.Metadata());
+	printf("TRACK METADATA\n%s\n", metadata.CString());
+}
+
+void OhmReceiverDriver::Process(OhmMsgMetatext& aMsg)
+{
+	printf("METATEXT SEQUENCE %d\n", aMsg.Sequence());
+	Brhz metatext(aMsg.Metatext());
+	printf("METATEXT\n%s\n", metatext.CString());
 }
 
 int CDECL main(int aArgc, char* aArgv[])

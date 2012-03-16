@@ -1,28 +1,39 @@
 objects_sender   = $(objdir)Ohm.$(objext) \
+                   $(objdir)OhmMsg.$(objext) \
                    $(objdir)OhmSender.$(objext) \
                    $(ohnetdir)DvAvOpenhomeOrgSender1.$(objext)
 
 headers_sender   = Ohm.h \
+                   OhmMsg.h \
                    OhmSender.h
 
-$(objdir)Ohm.$(objext) : Ohm.cpp $(headers_sender)
-	$(compiler)Ohm.$(objext) -c $(cflags) $(includes) Ohm.cpp
-
-$(objdir)OhmSender.$(objext) : OhmSender.cpp $(headers_sender)
-	$(compiler)OhmSender.$(objext) -c $(cflags) $(includes) OhmSender.cpp
-
 objects_receiver = $(objdir)Ohm.$(objext) \
+                   $(objdir)OhmMsg.$(objext) \
                    $(objdir)OhmReceiver.$(objext) \
 				   $(objdir)OhmProtocolMulticast.$(objext) \
 				   $(objdir)OhmProtocolUnicast.$(objext) \
                    $(ohnetdir)DvAvOpenhomeOrgReceiver1.$(objext)
 
 headers_receiver = Ohm.h \
+                   OhmMsg.h \
                    OhmReceiver.h
 
-$(objdir)OhmReceiver.$(objext) : OhmReceiver.cpp OhmProtocolMulticast.cpp OhmProtocolUnicast.cpp $(headers_receiver)
+$(objdir)Ohm.$(objext) : Ohm.cpp Ohm.h
+	$(compiler)Ohm.$(objext) -c $(cflags) $(includes) Ohm.cpp
+
+$(objdir)OhmMsg.$(objext) : OhmMsg.cpp OhmMsg.h
+	$(compiler)OhmMsg.$(objext) -c $(cflags) $(includes) OhmMsg.cpp
+
+$(objdir)OhmSender.$(objext) : OhmSender.cpp OhmSender.h
+	$(compiler)OhmSender.$(objext) -c $(cflags) $(includes) OhmSender.cpp
+
+$(objdir)OhmReceiver.$(objext) : OhmReceiver.cpp OhmReceiver.h
 	$(compiler)OhmReceiver.$(objext) -c $(cflags) $(includes) OhmReceiver.cpp
+
+$(objdir)OhmProtocolMulticast.$(objext) : OhmProtocolMulticast.cpp OhmReceiver.h
 	$(compiler)OhmProtocolMulticast.$(objext) -c $(cflags) $(includes) OhmProtocolMulticast.cpp
+
+$(objdir)OhmProtocolUnicast.$(objext) : OhmProtocolUnicast.cpp OhmReceiver.h
 	$(compiler)OhmProtocolUnicast.$(objext) -c $(cflags) $(includes) OhmProtocolUnicast.cpp
 
 objects_topology = $(ohnetdir)CpTopology.$(objext) \

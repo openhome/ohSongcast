@@ -9,6 +9,7 @@
 #include <OpenHome/Private/Uri.h>
 
 #include "Ohm.h"
+#include "OhmMsg.h"
 
 namespace OpenHome {
 namespace Net {
@@ -32,45 +33,15 @@ enum EOhmReceiverPlayMode
 class IOhmReceiverDriver
 {
 public:
-    static const TUint kMaxUriBytes = 1000;
-    static const TUint kMaxMetadataBytes = 5000;
-    static const TUint kMaxMetatextBytes = 5000;
-    virtual void SetAudioFormat(TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth, TBool aLossless, const Brx& aCodecName) = 0;
-	virtual void SetTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata) = 0;
-	virtual void SetMetatext(TUint aSequence, const Brx& aValue) = 0;
+	virtual void Add(OhmMsg& aMsg) = 0;
 	virtual void SetTransportState(EOhmReceiverTransportState aValue) = 0;
-    virtual void Play(const TByte* aData, TUint aBytes, TUint64 aSampleStart, TUint64 aSamplesTotal) = 0;
 	virtual ~IOhmReceiverDriver() {}
-};
-
-class IOhmAudio
-{
-public:
-	virtual void AddRef() = 0;
-	virtual void RemoveRef() = 0;
-	virtual const OhmHeader& Header() = 0;
-	virtual const Brx& Samples() = 0;
-	virtual ~IOhmAudio() {}
-};
-
-class IOhmAudioFactory
-{
-public:
-	virtual IOhmAudio& Create(OhmHeaderAudio& aHeader, IReader& aReader) = 0;
-	virtual ~IOhmAudioFactory() {}
 };
 
 class IOhmReceiver
 {
 public:
-	virtual const Brx& Add(IOhmAudio& aAudio) = 0; // returns array of missed frame numbers
-	virtual void SetTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata) = 0;
-	virtual void SetMetatext(TUint aSequence, const Brx& aValue) = 0;
-	virtual TUint TrackSequence() const = 0;
-	virtual const Brx& TrackUri() const = 0;
-	virtual const Brx& TrackMetadata() const = 0;
-	virtual TUint MetatextSequence() const = 0;
-	virtual const Brx& Metatext() const = 0;
+	virtual void Add(OhmMsg& aMsg) = 0;
 	virtual ~IOhmReceiver() {}
 };
 
@@ -83,16 +54,14 @@ class OhmProtocolMulticast
     static const TUint kTimerListenTimeoutMs = 10000;
     
 public:
-	OhmProtocolMulticast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmAudioFactory& aAudioFactory);
+	OhmProtocolMulticast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory);
 	void SetInterface(TIpAddress aValue);
     void SetTtl(TUint aValue);
     void Play(const Endpoint& aEndpoint);
 	void Stop();
 
 private:
-	void HandleAudio(const OhmHeader& aHeader);
-	void HandleTrack(const OhmHeader& aHeader);
-	void HandleMetatext(const OhmHeader& aHeader);
+	void RequestResend(const Brx& aFrames);
     void SendJoin();
     void SendListen();
     void Send(TUint aType);
@@ -101,7 +70,7 @@ private:
 	TIpAddress iInterface;
 	TUint iTtl;
 	IOhmReceiver* iReceiver;
-	IOhmAudioFactory* iAudioFactory;
+	IOhmMsgFactory* iFactory;
     OhmSocket iSocket;
     Srs<kMaxFrameBytes> iReadBuffer;
     Endpoint iEndpoint;
@@ -116,11 +85,11 @@ class OhmProtocolUnicast
     
     static const TUint kTimerJoinTimeoutMs = 300;
     static const TUint kTimerListenTimeoutMs = 10000;
-    static const TUint kTimerLeaveTimeoutMs = 50;
+    static const TUint kTimerLeaveTimeoutMs = 5000;
 	static const TUint kMaxSlaveCount = 4;
     
 public:
-	OhmProtocolUnicast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmAudioFactory& aAudioFactory);
+	OhmProtocolUnicast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory);
 	void SetInterface(TIpAddress aValue);
     void SetTtl(TUint aValue);
     void Play(const Endpoint& aEndpoint);
@@ -132,6 +101,8 @@ private:
 	void HandleTrack(const OhmHeader& aHeader);
 	void HandleMetatext(const OhmHeader& aHeader);
 	void HandleSlave(const OhmHeader& aHeader);
+	void RequestResend(const Brx& aFrames);
+	void Broadcast(OhmMsg& aMsg);
     void SendJoin();
     void SendListen();
     void SendLeave();
@@ -142,7 +113,7 @@ private:
 	TIpAddress iInterface;
 	TUint iTtl;
 	IOhmReceiver* iReceiver;
-	IOhmAudioFactory* iAudioFactory;
+	IOhmMsgFactory* iFactory;
     OhmSocket iSocket;
     Srs<kMaxFrameBytes> iReadBuffer;
     Endpoint iEndpoint;
@@ -155,7 +126,7 @@ private:
 	Bws<kMaxFrameBytes> iMessageBuffer;
 };
 
-class OhmReceiver : public IOhmReceiver, public IOhmAudioFactory
+class OhmReceiver : public IOhmReceiver, public IOhmMsgProcessor
 {
     static const TUint kThreadPriority = kPriorityNormal;
     static const TUint kThreadStackBytes = 64 * 1024;
@@ -167,6 +138,10 @@ class OhmReceiver : public IOhmReceiver, public IOhmAudioFactory
 
 	static const TUint kMaxZoneBytes = 100;
 	static const TUint kMaxZoneFrameBytes = 1024;
+
+	static const TUint kTimerZoneQueryDelayMs = 100;
+
+	static const TUint kDefaultLatency = 50;
 
 public:
     OhmReceiver(TIpAddress aInterface, TUint aTtl, IOhmReceiverDriver& aDriver);
@@ -186,19 +161,22 @@ private:
 	void Run();
 	void RunZone();
 	void StopLocked();
+	void SendZoneQuery();
+	void PlayZoneMode(const Brx& aUri);
 
+	TBool RepairClear();
+	TBool RepairBegin(OhmMsgAudio& aMsg);
+	TBool Repair(OhmMsgAudio& aMsg);
+
+	TUint Latency(OhmMsgAudio& aMsg);
+	
 	// IOhmReceiver
-	virtual const Brx& Add(IOhmAudio& aAudio);
-	virtual void SetTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata);
-	virtual void SetMetatext(TUint aSequence, const Brx& aValue);
-	virtual TUint TrackSequence() const;
-	virtual const Brx& TrackUri() const;
-	virtual const Brx& TrackMetadata() const;
-	virtual TUint MetatextSequence() const;
-	virtual const Brx& Metatext() const;
+	virtual void Add(OhmMsg& aMsg);
 
-	// IOhmAudioFactory
-	virtual IOhmAudio& Create(OhmHeaderAudio& aHeader, IReader& aReader);
+	// IOhmMsgProcessor
+	virtual void Process(OhmMsgAudio& aMsg);
+	virtual void Process(OhmMsgTrack& aMsg);
+	virtual void Process(OhmMsgMetatext& aMsg);
 
 private:
 	TIpAddress iInterface;
@@ -206,12 +184,14 @@ private:
     IOhmReceiverDriver* iDriver;
 	ThreadFunctor* iThread;
 	ThreadFunctor* iThreadZone;
-	Mutex iMutex;
+	Mutex iMutexMode;
+	Mutex iMutexTransport;
 	Semaphore iPlaying;
 	Semaphore iZoning;
 	Semaphore iStopped;
 	Semaphore iNullStop;
-	EOhmReceiverTransportState iTransportState;
+	TUint iLatency;									// [iMutexTransport] 0 = first audio message of stream not yet received
+	EOhmReceiverTransportState iTransportState;		// [iMutexTransport]
 	EOhmReceiverPlayMode iPlayMode;
 	TBool iZoneMode;
 	TBool iTerminating;
@@ -220,16 +200,15 @@ private:
 	OhmProtocolUnicast* iProtocolUnicast;
 	OpenHome::Uri iUri;
 	Endpoint iEndpoint;
-	TUint iTrackSequence;
-	Bws<IOhmReceiverDriver::kMaxUriBytes> iTrackUri;
-	Bws<IOhmReceiverDriver::kMaxMetadataBytes> iTrackMetadata;
-	TUint iMetatextSequence;
-	Bws<IOhmReceiverDriver::kMaxMetatextBytes> iMetatext;
 	Endpoint iZoneEndpoint;
     OhzSocket iSocketZone;
     Bws<kMaxZoneBytes> iZone;
     Srs<kMaxZoneFrameBytes> iRxZone;
     Bws<kMaxZoneFrameBytes> iTxZone;
+	Timer iTimerZoneQuery;
+	OhmMsgFactory iFactory;
+	TUint iFrame;
+	TBool iRepairing;
 };
 
 

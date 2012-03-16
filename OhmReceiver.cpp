@@ -18,20 +18,25 @@ OhmReceiver::OhmReceiver(TIpAddress aInterface, TUint aTtl, IOhmReceiverDriver& 
 	: iInterface(aInterface)
 	, iTtl(aTtl)
 	, iDriver(&aDriver)
-	, iMutex("OHRM")
+	, iMutexMode("OHRM")
+	, iMutexTransport("OHRT")
 	, iPlaying("OHRP", 0)
 	, iZoning("OHRZ", 0)
 	, iStopped("OHRS", 0)
 	, iNullStop("OHRN", 0)
+	, iLatency(0)
 	, iTransportState(eStopped)
 	, iPlayMode(eNone)
 	, iZoneMode(false)
 	, iTerminating(false)
 	, iEndpointNull(0, Brn("0.0.0.0"))
 	, iRxZone(iSocketZone)
+    , iTimerZoneQuery(MakeFunctor(*this, &OhmReceiver::SendZoneQuery))
+	, iFactory(100, 10, 10)
+	, iRepairing(false)
 {
-	iProtocolMulticast = new OhmProtocolMulticast(iInterface, iTtl, *this, *this);
-	iProtocolUnicast = new OhmProtocolUnicast(iInterface, iTtl, *this, *this);
+	iProtocolMulticast = new OhmProtocolMulticast(iInterface, iTtl, *this, iFactory);
+	iProtocolUnicast = new OhmProtocolUnicast(iInterface, iTtl, *this, iFactory);
     iThread = new ThreadFunctor("OHRT", MakeFunctor(*this, &OhmReceiver::Run), kThreadPriority, kThreadStackBytes);
     iThread->Start();
     iThreadZone = new ThreadFunctor("OHRZ", MakeFunctor(*this, &OhmReceiver::RunZone), kThreadZonePriority, kThreadZoneStackBytes);
@@ -40,7 +45,7 @@ OhmReceiver::OhmReceiver(TIpAddress aInterface, TUint aTtl, IOhmReceiverDriver& 
 
 OhmReceiver::~OhmReceiver()
 {
-	iMutex.Wait();
+	iMutexTransport.Wait();
 
 	if (iTransportState != eStopped)
 	{
@@ -59,7 +64,7 @@ OhmReceiver::~OhmReceiver()
 	delete (iProtocolMulticast);
 	delete (iProtocolUnicast);
 	
-	iMutex.Signal();
+	iMutexTransport.Signal();
 }
 
 TUint OhmReceiver::Ttl() const
@@ -86,7 +91,7 @@ void OhmReceiver::Play(const Brx& aUri)
 {
     LOG(kMedia, ">OhmReceiver::Play\n");
 
-	iMutex.Wait();
+	iMutexTransport.Wait();
 
 	if (iTransportState != eStopped)
 	{
@@ -103,6 +108,8 @@ void OhmReceiver::Play(const Brx& aUri)
 	catch (UriError&) {
 	}
 
+	iMutexMode.Wait();
+
 	iEndpoint.Replace(Endpoint(uri.Port(), uri.Host()));
 
 	if (iEndpoint.Equals(iEndpointNull))
@@ -117,6 +124,7 @@ void OhmReceiver::Play(const Brx& aUri)
 	else if (uri.Scheme() == Brn("ohz") && iEndpoint.Equals(iSocketZone.This())) {
 		iZoneMode = true;
 		iPlayMode = eNone;
+		iZone.Replace(uri.PathAndQuery().Split(1));
 		iTransportState = eBuffering;
 		iDriver->SetTransportState(eBuffering);
 		iThreadZone->Signal();
@@ -147,12 +155,98 @@ void OhmReceiver::Play(const Brx& aUri)
 		iPlaying.Wait();
 	}
 
-	iMutex.Signal();
+	iMutexMode.Signal();
+	iMutexTransport.Signal();
+}
+
+void OhmReceiver::PlayZoneMode(const Brx& aUri)
+{
+    LOG(kMedia, ">OhmReceiver::PlayZoneMode\n");
+
+	iMutexTransport.Wait();
+
+	OpenHome::Uri uri;
+
+	try {
+		uri.Replace(aUri);
+	}
+	catch (UriError&) {
+	}
+
+	Endpoint endpoint(uri.Port(), uri.Host());
+
+	iMutexMode.Wait();
+
+	if (iEndpoint.Equals(endpoint)) {
+		iMutexMode.Signal();
+		iMutexTransport.Signal();
+	    LOG(kMedia, "<OhmReceiver::PlayZoneMode ignored\n");
+		return;
+	}
+
+	switch (iPlayMode)
+	{
+	case eNone:
+		break;
+	case eMulticast:
+		iProtocolMulticast->Stop();
+		iStopped.Wait();
+		break;
+	case eUnicast:
+		iProtocolUnicast->Stop();
+		iStopped.Wait();
+		break;
+	case eNull:
+		iNullStop.Signal();
+		iStopped.Wait();
+		break;
+	}
+
+	iLatency = 0;
+
+	iRepairing = RepairClear();
+
+	iEndpoint.Replace(endpoint);
+
+	if (iEndpoint.Equals(iEndpointNull))
+	{
+		iPlayMode = eNull;
+		iTransportState = eWaiting;
+		iDriver->SetTransportState(eWaiting);
+		iThread->Signal();
+		iPlaying.Wait();
+	}
+	else if (uri.Scheme() == Brn("ohm")) {
+		iPlayMode = eMulticast;
+		iTransportState = eBuffering;
+		iDriver->SetTransportState(eBuffering);
+		iThread->Signal();
+		iPlaying.Wait();
+	}
+	else if (uri.Scheme() == Brn("ohu")) {
+		iPlayMode = eUnicast;
+		iTransportState = eBuffering;
+		iDriver->SetTransportState(eBuffering);
+		iThread->Signal();
+		iPlaying.Wait();
+	}
+	else {
+		iPlayMode = eNull;
+		iTransportState = eWaiting;
+		iDriver->SetTransportState(eWaiting);
+		iThread->Signal();
+		iPlaying.Wait();
+	}
+
+	iMutexMode.Signal();
+	iMutexTransport.Signal();
+
+    LOG(kMedia, "<OhmReceiver::PlayZoneMode\n");
 }
 
 void OhmReceiver::Stop()
 {
-	iMutex.Wait();
+	iMutexTransport.Wait();
 
 	if (iTransportState != eStopped)
 	{
@@ -161,11 +255,14 @@ void OhmReceiver::Stop()
 		iDriver->SetTransportState(eStopped);
 	}
 
-	iMutex.Signal();
+	iMutexTransport.Signal();
 }
 
 void OhmReceiver::StopLocked()
 {
+	iMutexMode.Wait();
+	iMutexTransport.Signal();
+
 	if (iZoneMode)
 	{
 		iSocketZone.ReadInterrupt();
@@ -189,6 +286,13 @@ void OhmReceiver::StopLocked()
 		iStopped.Wait();
 		break;
 	}
+
+	iLatency = 0;
+
+	iRepairing = RepairClear();
+
+	iMutexTransport.Wait();
+	iMutexMode.Signal();
 }
 
 void OhmReceiver::Run()
@@ -221,10 +325,31 @@ void OhmReceiver::Run()
 	}
 }
 
+void OhmReceiver::SendZoneQuery()
+{
+	LOG(kMedia, "OhmReceiver::SendZoneQuery ");
+	LOG(kMedia, iZone);
+	LOG(kMedia, "\n");
+                
+	OhzHeaderZoneQuery headerZoneQuery(iZone);
+	OhzHeader header(OhzHeader::kMsgTypeZoneQuery, headerZoneQuery.MsgBytes());
+
+	WriterBuffer writer(iTxZone);
+        
+    writer.Flush();
+    header.Externalise(writer);
+    headerZoneQuery.Externalise(writer);
+    writer.Write(iZone);
+
+	iSocketZone.Send(iTxZone);
+
+	iTimerZoneQuery.FireIn(kTimerZoneQueryDelayMs);
+}
+
 void OhmReceiver::RunZone()
 {
     for (;;) {
-        LOG(kMedia, "OhmSender::RunZone wait\n");
+        LOG(kMedia, "OhmReceiver::RunZone wait\n");
         
         iThreadZone->Wait();
 
@@ -233,10 +358,10 @@ void OhmReceiver::RunZone()
 		}
 
 		iSocketZone.Open(iInterface, iTtl);
-
 		iZoning.Signal();
+		SendZoneQuery();
 
-        LOG(kMedia, "OhmSender::RunZone go\n");
+        LOG(kMedia, "OhmReceiver::RunZone go\n");
         
 		try {
 			for (;;) {
@@ -248,48 +373,30 @@ void OhmReceiver::RunZone()
 						break;
 					}
 					catch (OhzError&) {
-						LOG(kMedia, "OhmSender::RunZone received error\n");
+						LOG(kMedia, "OhmReceiver::RunZone received error\n");
 						iRxZone.ReadFlush();
 					}
 				}
 
-				/*
-				if (header.MsgType() == OhzHeader::kMsgTypeZoneQuery) {
-					OhzHeaderZoneQuery headerZoneQuery;
-					headerZoneQuery.Internalise(iRxZone, header);
+				if (header.MsgType() == OhzHeader::kMsgTypeZoneUri) {
+					OhzHeaderZoneUri headerZoneUri;
+					headerZoneUri.Internalise(iRxZone, header);
 
-					Brn zone = iRxZone.Read(headerZoneQuery.ZoneBytes());
+					Brn msgZone = iRxZone.Read(headerZoneUri.ZoneBytes());
+					Brn msgUri = iRxZone.Read(headerZoneUri.UriBytes());
 
-			        LOG(kMedia, "OhmSender::RunZone received zone query for ");
-					LOG(kMedia, zone);
+			        LOG(kMedia, "OhmReceiver::RunZone received ");
+					LOG(kMedia, msgZone);
+					LOG(kMedia, " = ");
+					LOG(kMedia, msgUri);
 					LOG(kMedia, "\n");
                 
-					if (zone == iDevice.Udn())
+					if (msgZone == iZone)
 					{
-						iMutexZone.Wait();
-						SendZoneUri(1);
-						iMutexZone.Signal();
+						iTimerZoneQuery.Cancel();
+						PlayZoneMode(msgUri);
 					}
 				}
-				else if (header.MsgType() == OhzHeader::kMsgTypePresetQuery) {
-			        LOG(kMedia, "OhmSender::RunZone received preset query\n");
-					OhzHeaderPresetQuery headerPresetQuery;
-					headerPresetQuery.Internalise(iRxZone, header);
-					TUint preset = headerPresetQuery.Preset();
-
-					if (preset > 0) {
-						iMutexZone.Wait();
-						if (preset == iPreset) {
-							SendPresetInfo(1);
-						}
-						iMutexZone.Signal();
-					}
-				}
-
-				else {
-					LOG(kMedia, "OhmSender::RunZone received message type %d\n", header.MsgType());
-				}
-				*/
 
 				iRxZone.ReadFlush();
 			}
@@ -297,95 +404,98 @@ void OhmReceiver::RunZone()
 		catch (ReaderError&) {
 		}
 
+		iRxZone.ReadFlush();
+		iTimerZoneQuery.Cancel();
+		iSocketZone.Close();
         iStopped.Signal();
 	}
 }
 
+TUint OhmReceiver::Latency(OhmMsgAudio& aMsg)
+{
+	TUint latency = aMsg.MediaLatency();
+
+	if (latency != 0) {
+		return (latency);
+	}
+
+	return (kDefaultLatency);
+}
+
+TBool OhmReceiver::RepairClear()
+{
+	return (false);
+}
+
+TBool OhmReceiver::RepairBegin(OhmMsgAudio& aMsg)
+{
+	iDriver->Add(aMsg);
+	return (false);
+}
+
+TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
+{
+	iDriver->Add(aMsg);
+	return (false);
+}
+
 // IOhmReceiver
 
-const Brx& OhmReceiver::Add(IOhmAudio& /*aAudio*/)
+void OhmReceiver::Add(OhmMsg& aMsg)
 {
-	iMutex.Wait();
+	iMutexTransport.Wait();
 
-	if (iTransportState == eBuffering || iTransportState == eWaiting) {
+	aMsg.Process(*this);
+
+	iMutexTransport.Signal();
+}
+
+// IOhmMsgProcessor
+
+void OhmReceiver::Process(OhmMsgAudio& aMsg)
+{
+	if (iLatency == 0) {
+		iFrame = aMsg.Frame();
+		iLatency = Latency(aMsg);
 		iTransportState = ePlaying;
 		iDriver->SetTransportState(ePlaying);
+		iDriver->Add(aMsg);
 	}
+	else if (iRepairing) {
+		iRepairing = Repair(aMsg);
+	}
+	else {
+		TInt diff = aMsg.Frame() - iFrame;
 
-	iMutex.Signal();
-
-	printf(".");
-
-	return (Brx::Empty());
+		if (diff == 1) {
+			iFrame++;
+			iDriver->Add(aMsg);
+		}
+		else if (diff < 1) {
+			aMsg.RemoveRef();
+		}
+		else {
+			iRepairing = RepairBegin(aMsg);
+		}
+	}
 }
 
-void OhmReceiver::SetTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata)
+void OhmReceiver::Process(OhmMsgTrack& aMsg)
 {
-	iTrackSequence = aSequence;
-
-	iTrackUri.Replace(aUri);
-	
-	iTrackMetadata.Replace(aMetadata);
-	
-	iMutex.Wait();
-
 	if (iTransportState == eBuffering) {
 		iTransportState = eWaiting;
 		iDriver->SetTransportState(eWaiting);
 	}
 
-	iMutex.Signal();
-
-	iDriver->SetTrack(iTrackSequence, iTrackUri, iTrackMetadata);
+	iDriver->Add(aMsg);
 }
 
-void OhmReceiver::SetMetatext(TUint aSequence, const Brx& aValue)
+void OhmReceiver::Process(OhmMsgMetatext& aMsg)
 {
-	iMetatextSequence = aSequence;
-
-	iMetatext.Replace(aValue);
-
-	iMutex.Wait();
-
 	if (iTransportState == eBuffering) {
 		iTransportState = eWaiting;
 		iDriver->SetTransportState(eWaiting);
 	}
 
-	iMutex.Signal();
-
-	iDriver->SetMetatext(iMetatextSequence, iMetatext);
+	iDriver->Add(aMsg);
 }
-
-TUint OhmReceiver::TrackSequence() const
-{
-	return (iTrackSequence);
-}
-
-const Brx& OhmReceiver::TrackUri() const
-{
-	return (iTrackUri);
-}
-
-const Brx& OhmReceiver::TrackMetadata() const
-{
-	return (iTrackMetadata);
-}
-
-TUint OhmReceiver::MetatextSequence() const
-{
-	return (iMetatextSequence);
-}
-
-const Brx& OhmReceiver::Metatext() const
-{
-	return (iMetatext);
-}
-
-// IOhmAudioFactory
-
-IOhmAudio& OhmReceiver::Create(OhmHeaderAudio& /*aHeader*/, IReader& /*aReader*/)
-{
-	return (*(IOhmAudio*)0);
-}
-

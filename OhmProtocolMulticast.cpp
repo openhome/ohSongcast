@@ -38,11 +38,11 @@ using namespace OpenHome::Net;
        
 
 
-OhmProtocolMulticast::OhmProtocolMulticast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmAudioFactory& aAudioFactory)
+OhmProtocolMulticast::OhmProtocolMulticast(TIpAddress aInterface, TUint aTtl, IOhmReceiver& aReceiver, IOhmMsgFactory& aFactory)
     : iInterface(aInterface)
 	, iTtl(aTtl)
 	, iReceiver(&aReceiver)
-	, iAudioFactory(&aAudioFactory)
+	, iFactory(&aFactory)
     , iReadBuffer(iSocket)
     , iTimerJoin(MakeFunctor(*this, &OhmProtocolMulticast::SendJoin))
     , iTimerListen(MakeFunctor(*this, &OhmProtocolMulticast::SendListen))
@@ -59,17 +59,9 @@ void OhmProtocolMulticast::SetTtl(TUint aValue)
 	iTtl = aValue;
 }
 
-void OhmProtocolMulticast::HandleAudio(const OhmHeader& aHeader)
+void OhmProtocolMulticast::RequestResend(const Brx& aFrames)
 {
-	OhmHeaderAudio headerAudio;
-	
-	headerAudio.Internalise(iReadBuffer, aHeader);
-	
-	IOhmAudio& audio = iAudioFactory->Create(headerAudio, iReadBuffer);
-
-	const Brx& frames = iReceiver->Add(audio);
-
-	TUint bytes = frames.Bytes();
+	TUint bytes = aFrames.Bytes();
 
 	if (bytes > 0)
 	{
@@ -83,37 +75,16 @@ void OhmProtocolMulticast::HandleAudio(const OhmHeader& aHeader)
 
 		header.Externalise(writer);
 		headerResend.Externalise(writer);
-		writer.Write(frames);
+		writer.Write(aFrames);
 		
 		try {
 			iSocket.Send(buffer, iEndpoint);
 		}
 		catch (NetworkError&)
 		{
-			LOG(kMedia, "OhmProtocolMulticast::HandleAudio NetworkError\n");
+			LOG(kMedia, "OhmProtocolMulticast::RequestResend NetworkError\n");
 		}
 	}
-}
-
-void OhmProtocolMulticast::HandleTrack(const OhmHeader& aHeader)
-{
-	OhmHeaderTrack headerTrack;
-	headerTrack.Internalise(iReadBuffer, aHeader);
-	TUint sequence = headerTrack.Sequence();
-	const Brx& uri = iReadBuffer.Read(headerTrack.UriBytes());
-	const Brx& metadata = iReadBuffer.Read(headerTrack.MetadataBytes());
-	iReceiver->SetTrack(sequence, uri, metadata);
-}
-
-void OhmProtocolMulticast::HandleMetatext(const OhmHeader& aHeader)
-{
-	OhmHeaderMetatext headerMetatext;
-	headerMetatext.Internalise(iReadBuffer, aHeader);
-
-	TUint sequence = headerMetatext.Sequence();
-	const Brx& metatext = iReadBuffer.Read(headerMetatext.MetatextBytes());
-
-	iReceiver->SetMetatext(sequence, metatext);
 }
 
 void OhmProtocolMulticast::Play(const Endpoint& aEndpoint)
@@ -147,15 +118,15 @@ void OhmProtocolMulticast::Play(const Endpoint& aEndpoint)
 				case OhmHeader::kMsgTypeResend:
 					break;
 				case OhmHeader::kMsgTypeAudio:
-					HandleAudio(header);
+					iReceiver->Add(iFactory->CreateAudio(iReadBuffer, header));
 					break;
 				case OhmHeader::kMsgTypeTrack:
-					HandleTrack(header);
+					iReceiver->Add(iFactory->CreateTrack(iReadBuffer, header));
 					receivedTrack = true;
 					joinComplete = receivedMetatext;
 					break;
 				case OhmHeader::kMsgTypeMetatext:
-					HandleMetatext(header);
+					iReceiver->Add(iFactory->CreateMetatext(iReadBuffer, header));
 					receivedMetatext = true;
 					joinComplete = receivedTrack;
 					break;
@@ -188,13 +159,13 @@ void OhmProtocolMulticast::Play(const Endpoint& aEndpoint)
                     iTimerListen.FireIn((kTimerListenTimeoutMs >> 1) - Random(kTimerListenTimeoutMs >> 3)); // listen secondary timeout
 					break;
 				case OhmHeader::kMsgTypeAudio:
-					HandleAudio(header);
+					iReceiver->Add(iFactory->CreateAudio(iReadBuffer, header));
 					break;
 				case OhmHeader::kMsgTypeTrack:
-					HandleTrack(header);
+					iReceiver->Add(iFactory->CreateTrack(iReadBuffer, header));
 					break;
 				case OhmHeader::kMsgTypeMetatext:
-					HandleMetatext(header);
+					iReceiver->Add(iFactory->CreateMetatext(iReadBuffer, header));
 					break;
 				}
 
@@ -210,10 +181,8 @@ void OhmProtocolMulticast::Play(const Endpoint& aEndpoint)
     }
     
     iReadBuffer.ReadFlush();
-
    	iTimerJoin.Cancel();
     iTimerListen.Cancel();
-    
 	iSocket.Close();
 
     LOG(kMedia, "<OhmProtocolMulticast::Play\n");
