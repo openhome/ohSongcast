@@ -18,7 +18,7 @@ using OpenHome.Songcast;
 
             try
             {
-                Songcast songcast = new Songcast("av.openhome.org", 522, 1, 1, 100, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org", null, String.Empty);
+                Songcast songcast = new Songcast("av.openhome.org", 522, 1, 1, 100, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org", new byte[] {}, String.Empty);
 
                 while (true)
                 {

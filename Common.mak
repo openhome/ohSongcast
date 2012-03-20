@@ -73,7 +73,7 @@ objects_netmon   = $(ohnetmondir)NetworkMonitor.$(objext) \
                    $(ohnetdir)DvAvOpenhomeOrgNetworkMonitor1.$(objext)
 
 
-all_common : TestReceiverManager1 TestReceiverManager2 TestReceiverManager3 ZoneWatcher WavSender Receiver
+all_common : TestReceiverManager1 TestReceiverManager2 TestReceiverManager3 ZoneWatcher WavSender Receiver $(objdir)ohSongcast.net.dll $(objdir)TestSongcastCs.$(exeext)
 
 TestReceiverManager1 : $(objdir)TestReceiverManager1.$(exeext) $(headers_topology)
 $(objdir)TestReceiverManager1.$(exeext) : ohSongcast$(dirsep)TestReceiverManager1.cpp $(objects_topology)
@@ -109,4 +109,17 @@ $(objdir)Receiver.$(exeext) : Receiver$(dirsep)Receiver.cpp $(objects_receiver)
 	$(compiler)Receiver.$(objext) -c $(cflags) $(includes) Receiver$(dirsep)Receiver.cpp
 	$(link) $(linkoutput)$(objdir)Receiver.$(exeext) $(objdir)Receiver.$(objext) $(objects_receiver) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
+
+$(objdir)ohSongcast.net.dll : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast$(dirsep)Songcast.cs
+	$(csharp) /unsafe /t:library \
+		/out:$(objdir)ohSongcast.net.dll \
+		ohSongcast$(dirsep)Songcast.cs
+
+$(objdir)TestSongcastCs.$(exeext) : $(objdir)ohSongcast.net.dll ohSongcast$(dirsep)TestSongcastCs.cs
+	$(csharp) /target:exe /debug+ \
+		/out:$(objdir)TestSongcastCs.$(exeext) \
+		/reference:System.dll \
+		/reference:System.Net.dll \
+		/reference:$(objdir)ohSongcast.net.dll \
+		ohSongcast$(dirsep)TestSongcastCs.cs
 
