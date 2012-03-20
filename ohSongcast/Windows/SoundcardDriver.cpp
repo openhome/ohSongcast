@@ -437,6 +437,10 @@ void OhmSenderDriverWindows::SetTrackPosition(TUint64 /*aSamplesTotal*/, TUint64
 {
 }
 
+void OhmSenderDriverWindows::Resend(TUint /*aFrame*/)
+{
+}
+
 ULONG STDCALL OhmSenderDriverWindows::AddRef()
 {
     return (InterlockedIncrement(&iRefCount));

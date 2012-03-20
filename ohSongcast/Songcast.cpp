@@ -255,6 +255,7 @@ Subnet::Subnet(NetworkAdapter& aAdapter)
 Subnet::Subnet(TIpAddress aSubnet)
 	: iAdapter(0)
 	, iSubnet(aSubnet)
+	, iRefCount(1)
 {
 }
 

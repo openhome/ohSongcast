@@ -26,6 +26,7 @@ public:
 class OhmSocket : public IReaderSource, public INonCopyable
 {
     static const TUint kSendBufBytes = 16392;
+    static const TUint kReceiveBufBytes = 16392;
 
 public:
     OhmSocket();
@@ -57,6 +58,7 @@ class OhzSocket : public IReaderSource, public INonCopyable
 public:
     OhzSocket();
 
+	const Endpoint& This() const;
 	void Open(TIpAddress aInterface, TUint aTtl);
     void Send(const Brx& aBuffer);
     void Close();
@@ -79,17 +81,18 @@ class OhmHeader
 {
 public:
     static const Brn kOhm;
-    static const TUint8 kMajor = 1;
+    static const TUint kMajor = 1;
     static const TUint kHeaderBytes = 8;
     
 public:
-    static const TUint8 kMsgTypeJoin = 0;
-    static const TUint8 kMsgTypeListen = 1;
-    static const TUint8 kMsgTypeLeave = 2;
-    static const TUint8 kMsgTypeAudio = 3;
-    static const TUint8 kMsgTypeTrack = 4;
-    static const TUint8 kMsgTypeMetatext = 5;
-    static const TUint8 kMsgTypeSlave = 6;
+    static const TUint kMsgTypeJoin = 0;
+    static const TUint kMsgTypeListen = 1;
+    static const TUint kMsgTypeLeave = 2;
+    static const TUint kMsgTypeAudio = 3;
+    static const TUint kMsgTypeTrack = 4;
+    static const TUint kMsgTypeMetatext = 5;
+    static const TUint kMsgTypeSlave = 6;
+    static const TUint kMsgTypeResend = 7;
 
 public:
     OhmHeader();
@@ -294,6 +297,29 @@ private:
     //4         6 * n                   Slave address/port list
 
     TUint iSlaveCount;
+};
+
+class OhmHeaderResend
+{
+public:
+    static const TUint kHeaderBytes = 4;
+
+public:
+    OhmHeaderResend();
+    OhmHeaderResend(TUint aFramesCount);
+
+    void Internalise(IReader& aReader, const OhmHeader& aHeader);
+    void Externalise(IWriter& aWriter) const;
+
+    TUint FramesCount() const {return (iFramesCount);}
+    TUint MsgBytes() const {return (kHeaderBytes + (iFramesCount * 4));}
+
+private:
+    //Offset    Bytes                   Desc
+    //0         4                       Frames count (n)
+    //4         4 * n                   Frames list
+
+    TUint iFramesCount;
 };
 
 class OhzHeader

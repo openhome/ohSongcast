@@ -26,6 +26,7 @@ private:
     virtual void SetTtl(TUint aValue);
     virtual void SetLatency(TUint aValue);
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
+	virtual void Resend(TUint aFrame);
 };
 
 
@@ -70,6 +71,11 @@ void OhmSenderDriverPosix::SetLatency(TUint aValue)
 void OhmSenderDriverPosix::SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal)
 {
     printf("OhmSenderDriverPosix: TrackPosition %llu %llu\n", aSampleStart, aSamplesTotal);
+}
+
+void OhmSenderDriverPosix::Resend(TUint aFrame)
+{
+    printf("OhmSenderDriverPosix: Resend %d\n", aFrame);
 }
 
 

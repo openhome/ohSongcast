@@ -6,9 +6,11 @@
 #include <OpenHome/Net/Core/DvDevice.h>
 #include <OpenHome/Private/Thread.h>
 #include <OpenHome/Private/Timer.h>
+#include <OpenHome/Private/Fifo.h>
 #include <OpenHome/Private/Http.h>
 
 #include "Ohm.h"
+#include "OhmMsg.h"
 
 namespace OpenHome {
 namespace Net {
@@ -24,12 +26,14 @@ public:
     virtual void SetTtl(TUint aValue) = 0;
     virtual void SetLatency(TUint aValue) = 0;
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal) = 0;
+	virtual void Resend(TUint aFrame) = 0;
     virtual ~IOhmSenderDriver() {}
 };
 
 class OhmSenderDriver : public IOhmSenderDriver
 {
     static const TUint kMaxAudioFrameBytes = 16 * 1024;
+	static const TUint kMaxHistoryFrames = 100;
 
 public:
     OhmSenderDriver();
@@ -44,6 +48,7 @@ private:
     virtual void SetTtl(TUint aValue);
     virtual void SetLatency(TUint aValue);
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
+	virtual void Resend(TUint aFrame);
 
 private:
     Mutex iMutex;
@@ -64,6 +69,8 @@ private:
     TUint64 iSampleStart;
 	TUint iLatency;
     SocketUdp iSocket;
+	OhmMsgFactory iFactory;
+	FifoLite<OhmMsgAudio*, kMaxHistoryFrames> iFifoHistory;
 };
 
 class OhmSender
@@ -78,7 +85,6 @@ class OhmSender
     static const TUint kTimerAliveAudioTimeoutMs = 3000;
     static const TUint kTimerExpiryTimeoutMs = 3100;
     static const TUint kMaxSlaveCount = 4;
-	static const TUint kMaxImageBytes = 30 * 1024;
 	static const TUint kMaxMimeTypeBytes = 100;
     static const TUint kMaxZoneFrameBytes = 1 * 1024;
     static const TUint kTimerZoneUriDelayMs = 100;
@@ -156,7 +162,7 @@ private:
     TUint iLatency;
     TBool iMulticast;
     TBool iEnabled;
-	Bws<kMaxImageBytes> iImage;
+	Brh iImage;
 	Bws<kMaxMimeTypeBytes> iMimeType;
     OhmSocket iSocketOhm;
     OhzSocket iSocketOhz;
