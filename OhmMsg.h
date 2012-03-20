@@ -30,6 +30,12 @@ class OhmMsg
 public:
 	void AddRef();
 	void RemoveRef();
+	TBool TxTimestamped() const;
+	TBool RxTimestamped() const;
+	TUint TxTimestamp() const;
+	TUint RxTimestamp() const;
+	void SetTxTimestamp(TUint aValue);
+	void SetRxTimestamp(TUint aValue);
 	virtual void Process(IOhmMsgProcessor& aProcessor) = 0;
 	virtual void Externalise(IWriter& aWriter) = 0;
 
@@ -41,6 +47,10 @@ private:
 	OhmMsgFactory* iFactory;
 	TUint iMsgType;
 	TUint iRefCount;
+	TBool iTxTimestamped;
+	TBool iRxTimestamped;
+	TUint iTxTimestamp;
+	TUint iRxTimestamp;
 };
 
 class OhmMsgAudio : public OhmMsg

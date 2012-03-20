@@ -60,7 +60,12 @@ public:
 private:
 	// IOhmReceiverDriver
 	virtual void Add(OhmMsg& aMsg);
-	virtual void SetTransportState(EOhmReceiverTransportState aValue);
+	virtual void Timestamp(OhmMsg& aMsg);
+	virtual void Started();
+	virtual void Connected();
+	virtual void Playing();
+	virtual void Disconnected();
+	virtual void Stopped();
 
 	// IOhmMsgProcessor
 	virtual void Process(OhmMsgAudio& aMsg);
@@ -86,29 +91,34 @@ void OhmReceiverDriver::Add(OhmMsg& aMsg)
 	aMsg.RemoveRef();
 }
 
-void OhmReceiverDriver::SetTransportState(EOhmReceiverTransportState aValue)
+void OhmReceiverDriver::Timestamp(OhmMsg& /*aMsg*/)
 {
-	printf("TRANSPORT STATE: ");
-	switch(aValue)
-	{
-	case ePlaying:
-		printf("Playing\n");
-		break;
-	case eStopped:
-		printf("Stopped\n");
-		iReset = true;
-		iCount = 0;
-		break;
-	case eWaiting:
-		printf("Waiting\n");
-		break;
-	case eBuffering:
-		printf("Buffering\n");
-		break;
-	default:
-		printf("Unknown\n");
-		break;
-	}
+}
+
+void OhmReceiverDriver::Started()
+{
+	printf("=== STARTED ====\n");
+}
+
+void OhmReceiverDriver::Connected()
+{
+	iReset = true;
+	printf("=== CONNECTED ====\n");
+}
+
+void OhmReceiverDriver::Playing()
+{
+	printf("=== PLAYING ====\n");
+}
+
+void OhmReceiverDriver::Disconnected()
+{
+	printf("=== DISCONNECTED ====\n");
+}
+
+void OhmReceiverDriver::Stopped()
+{
+	printf("=== STOPPED ====\n");
 }
 
 void OhmReceiverDriver::Process(OhmMsgAudio& aMsg)
@@ -132,18 +142,24 @@ void OhmReceiverDriver::Process(OhmMsgAudio& aMsg)
 
 void OhmReceiverDriver::Process(OhmMsgTrack& aMsg)
 {
+	printf("TRACK %d\n", aMsg.Sequence());
+	/*
 	printf("TRACK SEQUENCE %d\n", aMsg.Sequence());
 	Brhz uri(aMsg.Uri());
 	printf("TRACK URI %s\n", uri.CString());
 	Brhz metadata(aMsg.Metadata());
 	printf("TRACK METADATA %s\n", metadata.CString());
+	*/
 }
 
 void OhmReceiverDriver::Process(OhmMsgMetatext& aMsg)
 {
+	printf("METATEXT %d\n", aMsg.Sequence());
+	/*
 	printf("METATEXT SEQUENCE %d\n", aMsg.Sequence());
 	Brhz metatext(aMsg.Metatext());
 	printf("METATEXT %s\n", metatext.CString());
+	*/
 }
 
 int CDECL main(int aArgc, char* aArgv[])

@@ -9,6 +9,10 @@ OhmMsg::OhmMsg(OhmMsgFactory& aFactory, TUint aMsgType)
 	: iFactory(&aFactory)
 	, iMsgType(aMsgType)
 	, iRefCount(0)
+	, iTxTimestamp(0)
+	, iRxTimestamp(0)
+	, iTxTimestamped(false)
+	, iRxTimestamped(false)
 {
 }
 
@@ -32,9 +36,45 @@ void OhmMsg::RemoveRef()
 	iFactory->Unlock();
 }
 
+TBool OhmMsg::TxTimestamped() const
+{
+	return (iTxTimestamped);
+}
+
+TBool OhmMsg::RxTimestamped() const
+{
+	return (iRxTimestamped);
+}
+
+TUint OhmMsg::TxTimestamp() const
+{
+	return (iTxTimestamp);
+}
+
+TUint OhmMsg::RxTimestamp() const
+{
+	return (iRxTimestamp);
+}
+
+void OhmMsg::SetTxTimestamp(TUint aValue)
+{
+	iTxTimestamp = aValue;
+	iTxTimestamped = true;
+}
+
+void OhmMsg::SetRxTimestamp(TUint aValue)
+{
+	iRxTimestamp = aValue;
+	iRxTimestamped = true;
+}
+
 void OhmMsg::Create()
 {
 	iRefCount = 1;
+	iTxTimestamp = 0;
+	iRxTimestamp = 0;
+	iTxTimestamped = false;
+	iRxTimestamped = false;
 }
 	
 // OhmMsgAudio

@@ -174,8 +174,82 @@ OhmSenderDriver::OhmSenderDriver()
     , iSamplesTotal(0)
     , iSampleStart(0)
 	, iLatency(100)
+	, iFactory(100, 10, 10)
 {
 }
+
+void OhmSenderDriver::SetAudioFormat(TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth, TBool aLossless, const Brx& aCodecName)
+{
+    iMutex.Wait();
+    iSampleRate = aSampleRate;
+    iBitRate = aBitRate;
+    iChannels = aChannels;
+    iBitDepth = aBitDepth;
+    iLossless = aLossless;
+    iCodecName.Replace(aCodecName);
+    iMutex.Signal();
+}
+
+void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
+{
+    iMutex.Wait();
+    
+    TUint samples = aBytes * 8 / iChannels / iBitDepth;
+
+    if (!iSend) {
+        iSampleStart += samples;
+        iMutex.Signal();
+        return;
+    }
+
+	TUint multiplier = 48000 * 256;
+
+	if ((iSampleRate % 441) == 0)
+	{
+		multiplier = 44100 * 256;
+	}
+
+	TUint latency = iLatency * multiplier / 1000;
+    
+    OhmHeaderAudio headerAudio(false,  // halt
+                               iLossless,
+                               samples,
+                               iFrame,
+							   latency,
+                               iSampleStart,
+                               iSamplesTotal,
+                               iSampleRate,
+                               iBitRate,
+                               0, // volume offset
+                               iBitDepth,
+                               iChannels,
+                               iCodecName);
+    
+    OhmHeader header(OhmHeader::kMsgTypeAudio, headerAudio.MsgBytes());
+
+    WriterBuffer writer(iBuffer);
+    
+    writer.Flush();
+    header.Externalise(writer);
+    headerAudio.Externalise(writer);
+    
+    writer.Write(Brn(aData, aBytes));
+
+    try {
+        iSocket.Send(iBuffer, iEndpoint);
+    }
+    catch (NetworkError&) {
+        ASSERTS();
+    }
+        
+    iSampleStart += samples;
+
+    iFrame++;
+    
+    iMutex.Signal();
+}
+
+// IOhmSenderDriver
 
 void OhmSenderDriver::SetEnabled(TBool aValue)
 {
@@ -250,75 +324,8 @@ void OhmSenderDriver::SetTrackPosition(TUint64 aSamplesTotal, TUint64 aSampleSta
     iMutex.Signal();
 }
 
-void OhmSenderDriver::SetAudioFormat(TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth, TBool aLossless, const Brx& aCodecName)
+void OhmSenderDriver::Resend(TUint /*aFrame*/)
 {
-    iMutex.Wait();
-    iSampleRate = aSampleRate;
-    iBitRate = aBitRate;
-    iChannels = aChannels;
-    iBitDepth = aBitDepth;
-    iLossless = aLossless;
-    iCodecName.Replace(aCodecName);
-    iMutex.Signal();
-}
-
-void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
-{
-    iMutex.Wait();
-    
-    TUint samples = aBytes * 8 / iChannels / iBitDepth;
-
-    if (!iSend) {
-        iSampleStart += samples;
-        iMutex.Signal();
-        return;
-    }
-
-	TUint multiplier = 48000 * 256;
-
-	if ((iSampleRate % 441) == 0)
-	{
-		multiplier = 44100 * 256;
-	}
-
-	TUint latency = iLatency * multiplier / 1000;
-    
-    OhmHeaderAudio headerAudio(false,  // halt
-                               iLossless,
-                               samples,
-                               iFrame,
-							   latency,
-                               iSampleStart,
-                               iSamplesTotal,
-                               iSampleRate,
-                               iBitRate,
-                               0, // volume offset
-                               iBitDepth,
-                               iChannels,
-                               iCodecName);
-    
-    OhmHeader header(OhmHeader::kMsgTypeAudio, headerAudio.MsgBytes());
-
-    WriterBuffer writer(iBuffer);
-    
-    writer.Flush();
-    header.Externalise(writer);
-    headerAudio.Externalise(writer);
-    
-    writer.Write(Brn(aData, aBytes));
-
-    try {
-        iSocket.Send(iBuffer, iEndpoint);
-    }
-    catch (NetworkError&) {
-        ASSERTS();
-    }
-        
-    iSampleStart += samples;
-
-    iFrame++;
-    
-    iMutex.Signal();
 }
 
 // OhmSender

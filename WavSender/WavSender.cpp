@@ -204,22 +204,15 @@ PcmSender::~PcmSender()
 	delete (iDriver);
 }
 
-static void RandomiseUdn(Bwh& aUdn, TIpAddress aAdapter)
-{
-    aUdn.Grow(aUdn.Bytes() + 1 + Ascii::kMaxUintStringBytes + 1);
-    aUdn.Append('-');
-    Bws<Ascii::kMaxUintStringBytes> buf;
-    (void)Ascii::AppendDec(buf, Random(aAdapter));
-    aUdn.Append(buf);
-    aUdn.PtrZ();
-}
-
 int CDECL main(int aArgc, char* aArgv[])
 {
     OptionParser parser;
     
     OptionString optionFile("-f", "--file", Brn(""), "[file] wav file to send");
     parser.AddOption(&optionFile);
+    
+    OptionString optionUdn("-u", "--udn", Brn("12345678"), "[udn] udn for the upnp device");
+    parser.AddOption(&optionUdn);
     
     OptionString optionName("-n", "--name", Brn("Openhome WavSender"), "[name] name of the sender");
     parser.AddOption(&optionName);
@@ -264,6 +257,7 @@ int CDECL main(int aArgc, char* aArgv[])
     	return (1);
     }
     
+	Brhz udn(optionUdn.Value());
     Brhz name(optionName.Value());
     TUint channel = optionChannel.Value();
     TUint ttl = optionTtl.Value();
@@ -433,9 +427,6 @@ int CDECL main(int aArgc, char* aArgv[])
     }
     
     UpnpLibrary::StartDv();
-
-	Bwh udn("device");
-    RandomiseUdn(udn, adapter);
 
     DvDeviceStandard* device = new DvDeviceStandard(udn);
     

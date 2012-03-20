@@ -33,6 +33,7 @@ private:
     virtual void SetTtl(TUint aValue);
     virtual void SetLatency(TUint aValue);
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
+	virtual void Resend(TUint aFrame);
 
     static void DriverFound(void* aPtr, io_iterator_t aIterator);
     void DriverFound();
@@ -439,7 +440,9 @@ void OhmSenderDriverMac::SetTrackPosition(TUint64 aSampleStart, TUint64 aSamples
 {
 }
 
-
+void OhmSenderDriverMac::Resend(TUint /*aFrame*/)
+{
+}
 
 // Implementation of internal Driver class
 

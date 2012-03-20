@@ -7,6 +7,7 @@
 #include <OpenHome/Private/Thread.h>
 #include <OpenHome/Private/Timer.h>
 #include <OpenHome/Private/Uri.h>
+#include <OpenHome/Private/Fifo.h>
 
 #include "Ohm.h"
 #include "OhmMsg.h"
@@ -16,10 +17,11 @@ namespace Net {
 
 enum EOhmReceiverTransportState
 {
-	ePlaying,
 	eStopped,
-	eWaiting,
-	eBuffering
+	eStarted,
+	eConnected,
+	ePlaying,
+	eDisconnected
 };
 
 enum EOhmReceiverPlayMode
@@ -37,10 +39,14 @@ class IOhmReceiverDriver
 {
 public:
 	virtual void Add(OhmMsg& aMsg) = 0;
-	virtual void SetTransportState(EOhmReceiverTransportState aValue) = 0;
+	virtual void Timestamp(OhmMsg& aMsg) = 0;
+	virtual void Started() = 0;
+	virtual void Connected() = 0;
+	virtual void Playing() = 0;
+	virtual void Disconnected() = 0;
+	virtual void Stopped() = 0;
 	virtual ~IOhmReceiverDriver() {}
 };
-
 
 // IOhmReceiver defines the interface between the OhmProtocols and OhmReceiver
 
@@ -143,6 +149,9 @@ class OhmReceiver : public IOhmReceiver, public IOhmMsgProcessor
 
 	static const TUint kDefaultLatency = 50;
 
+	static const TUint kMaxRepairBacklogFrames = 200;
+	static const TUint kMaxRepairMissedFrames = 20;
+
 public:
     OhmReceiver(TIpAddress aInterface, TUint aTtl, IOhmReceiverDriver& aDriver);
 
@@ -163,8 +172,10 @@ private:
 	void StopLocked();
 	void SendZoneQuery();
 	void PlayZoneMode(const Brx& aUri);
+	void Reset();
+	void RepairReset();
+	void TimerRepairExpired();
 
-	TBool RepairClear();
 	TBool RepairBegin(OhmMsgAudio& aMsg);
 	TBool Repair(OhmMsgAudio& aMsg);
 
@@ -209,8 +220,11 @@ private:
 	OhmMsgFactory iFactory;
 	TUint iFrame;
 	TBool iRepairing;
+	TUint iRepairLast;
+	OhmMsgAudio* iRepairFirst;
+	FifoLite<OhmMsgAudio*, kMaxRepairBacklogFrames> iFifoRepair;
+	Timer iTimerRepair;
 };
-
 
 } // namespace Net
 } // namespace OpenHome
