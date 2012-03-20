@@ -52,6 +52,8 @@ all: $(objdir)$(dllprefix)ohSongcast.$(dllext) $(objdir)$(dllprefix)ohSongcast.n
 # Include rules to build platform independent code
 include Common.mak
 
+$(objects_topology) : make_obj_dir
+$(objects_sender) : make_obj_dir
 $(objects_songcast) : make_obj_dir
 
 make_obj_dir : $(objdirbare)
