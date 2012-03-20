@@ -94,7 +94,7 @@ $(objdir)TestReceiverManager3.$(exeext) : ohSongcast$(dirsep)TestReceiverManager
 
 
 ZoneWatcher : $(objdir)ZoneWatcher.$(exeext) $(headers_sender)
-$(objdir)ZoneWatcher.$(exeext) : ZoneWatcher$(dirsep)ZoneWatcher.cpp
+$(objdir)ZoneWatcher.$(exeext) : ZoneWatcher$(dirsep)ZoneWatcher.cpp $(objects_sender)
 	$(compiler)ZoneWatcher.$(objext) -c $(cflags) $(includes) ZoneWatcher$(dirsep)ZoneWatcher.cpp
 	$(link) $(linkoutput)$(objdir)ZoneWatcher.$(exeext) $(objdir)ZoneWatcher.$(objext) $(objects_sender) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 

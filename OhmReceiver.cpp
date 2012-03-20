@@ -378,6 +378,8 @@ void OhmReceiver::Run()
 		Endpoint endpoint(iEndpoint);
 
 		switch (iPlayMode) {
+        case eNone:
+            break;
 		case eMulticast:
 			iPlaying.Signal();
 			iProtocolMulticast->Play(iface, ttl, endpoint);

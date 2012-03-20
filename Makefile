@@ -13,8 +13,8 @@ endif
 
 MACHINE = $(shell uname -s)
 ifeq ($(MACHINE), Darwin)
-platform_cflags = -DPLATFORM_MACOSX_GNU -arch x86_64 -mmacosx-version-min=10.4
-platform_linkflags = -arch x86_64 -framework IOKit -framework CoreFoundation -framework CoreAudio -framework SystemConfiguration
+platform_cflags = -DPLATFORM_MACOSX_GNU -arch i386 -mmacosx-version-min=10.4
+platform_linkflags = -arch i386 -framework IOKit -framework CoreFoundation -framework CoreAudio -framework SystemConfiguration
 platform_dllflags = -install_name @executable_path/$(@F)
 platform_include = -I/System/Library/Frameworks/IOKit.framework/Headers/
 osdir = Mac
@@ -55,7 +55,11 @@ default : all
 # Include rules to build the shared code
 include Common.mak
 
+$(objects_topology) : | make_obj_dir
+$(objects_sender) : | make_obj_dir
 $(objects_songcast) : | make_obj_dir
+$(objects_driver) : | make_obj_dir
+
 make_obj_dir :
 	mkdir -p $(objdir)
 

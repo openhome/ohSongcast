@@ -9,10 +9,10 @@ OhmMsg::OhmMsg(OhmMsgFactory& aFactory, TUint aMsgType)
 	: iFactory(&aFactory)
 	, iMsgType(aMsgType)
 	, iRefCount(0)
-	, iTxTimestamp(0)
-	, iRxTimestamp(0)
 	, iTxTimestamped(false)
 	, iRxTimestamped(false)
+	, iTxTimestamp(0)
+	, iRxTimestamp(0)
 {
 }
 
