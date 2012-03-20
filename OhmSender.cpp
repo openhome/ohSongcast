@@ -211,29 +211,31 @@ void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
 
 	TUint latency = iLatency * multiplier / 1000;
     
-    OhmHeaderAudio headerAudio(false,  // halt
-                               iLossless,
-                               samples,
-                               iFrame,
-							   latency,
-                               iSampleStart,
-                               iSamplesTotal,
-                               iSampleRate,
-                               iBitRate,
-                               0, // volume offset
-                               iBitDepth,
-                               iChannels,
-                               iCodecName);
+	OhmMsgAudio& msg = iFactory.CreateAudio(
+		false,  // halt
+        iLossless,
+		false,
+		false,
+        samples,
+        iFrame,
+		0, // network timestamp
+		latency,
+		0,
+        iSampleStart,
+        iSamplesTotal,
+        iSampleRate,
+        iBitRate,
+        0, // volume offset
+        iBitDepth,
+        iChannels,
+        iCodecName,
+		Brn(aData, aBytes)
+	);
     
-    OhmHeader header(OhmHeader::kMsgTypeAudio, headerAudio.MsgBytes());
-
-    WriterBuffer writer(iBuffer);
-    
-    writer.Flush();
-    header.Externalise(writer);
-    headerAudio.Externalise(writer);
-    
-    writer.Write(Brn(aData, aBytes));
+	WriterBuffer writer(iBuffer);
+	writer.Flush();
+	msg.Externalise(writer);
+	msg.RemoveRef();
 
     try {
         iSocket.Send(iBuffer, iEndpoint);

@@ -123,26 +123,16 @@ public:
     static const TUint kReserved = 0;
     static const TUint kFlagHalt = 1;
     static const TUint kFlagLossless = 2;
-    static const TUint kFlagTimestamp = 4;
+    static const TUint kFlagTimestamped = 4;
+    static const TUint kFlagResent = 8;
 
 public:
     OhmHeaderAudio();
-    OhmHeaderAudio(TBool aHalt, 
-                   TBool aLossless,
-                   TUint aSamples,
-                   TUint aFrame,
-                   TUint aMediaLatency,
-                   TUint64 aSampleStart,
-                   TUint64 aSamplesTotal,
-                   TUint aSampleRate,
-                   TUint aBitRate,
-                   TUint aVolumeOffset,
-                   TUint aBitDepth,
-                   TUint aChannels,
-                   const Brx& aCodecName);
     
     OhmHeaderAudio(TBool aHalt, 
                    TBool aLossless,
+				   TBool aTimestamped,
+				   TBool aResent,
                    TUint aSamples,
                    TUint aFrame,
                    TUint aNetworkTimestamp,
@@ -163,6 +153,7 @@ public:
     TBool Halt() const {return (iHalt);}
     TBool Lossless() const {return (iLossless);}
     TBool Timestamped() const {return (iTimestamped);}
+    TBool Resent() const {return (iResent);}
     TUint Samples() const {return (iSamples);}
     TUint Frame() const {return (iFrame);}
     TUint NetworkTimestamp() const {return (iNetworkTimestamp);}
@@ -204,6 +195,7 @@ private:
     TBool iHalt;
     TBool iLossless;
     TBool iTimestamped;
+	TBool iResent;
     TUint iSamples;
     TUint iFrame;
     TUint iNetworkTimestamp;

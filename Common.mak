@@ -75,37 +75,36 @@ objects_netmon   = $(ohnetmondir)NetworkMonitor.$(objext) \
 
 all_common : TestReceiverManager1 TestReceiverManager2 TestReceiverManager3 ZoneWatcher WavSender Receiver
 
-TestReceiverManager1 : $(objdir)TestReceiverManager1.$(exeext) $(headers_topology)
-$(objdir)TestReceiverManager1.$(exeext) : ohSongcast$(dirsep)TestReceiverManager1.cpp $(objects_topology)
+TestReceiverManager1 : $(objdir)TestReceiverManager1.$(exeext)
+$(objdir)TestReceiverManager1.$(exeext) : ohSongcast$(dirsep)TestReceiverManager1.cpp $(headers_topology) $(objects_topology)
 	$(compiler)TestReceiverManager1.$(objext) -c $(cflags) $(includes) ohSongcast$(dirsep)TestReceiverManager1.cpp
 	$(link) $(linkoutput)$(objdir)TestReceiverManager1.$(exeext) $(objdir)TestReceiverManager1.$(objext) $(objects_topology) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
 
-TestReceiverManager2 : $(objdir)TestReceiverManager2.$(exeext) $(headers_topology)
-$(objdir)TestReceiverManager2.$(exeext) : ohSongcast$(dirsep)TestReceiverManager2.cpp $(objects_topology)
+TestReceiverManager2 : $(objdir)TestReceiverManager2.$(exeext)
+$(objdir)TestReceiverManager2.$(exeext) : ohSongcast$(dirsep)TestReceiverManager2.cpp $(headers_topology) $(objects_topology)
 	$(compiler)TestReceiverManager2.$(objext) -c $(cflags) $(includes) ohSongcast$(dirsep)TestReceiverManager2.cpp
 	$(link) $(linkoutput)$(objdir)TestReceiverManager2.$(exeext) $(objdir)TestReceiverManager2.$(objext) $(objects_topology) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
 
-TestReceiverManager3 : $(objdir)TestReceiverManager3.$(exeext) $(headers_topology)
-$(objdir)TestReceiverManager3.$(exeext) : ohSongcast$(dirsep)TestReceiverManager3.cpp $(objects_topology)
+TestReceiverManager3 : $(objdir)TestReceiverManager3.$(exeext)
+$(objdir)TestReceiverManager3.$(exeext) : ohSongcast$(dirsep)TestReceiverManager3.cpp  $(headers_topology) $(objects_topology)
 	$(compiler)TestReceiverManager3.$(objext) -c $(cflags) $(includes) ohSongcast$(dirsep)TestReceiverManager3.cpp
 	$(link) $(linkoutput)$(objdir)TestReceiverManager3.$(exeext) $(objdir)TestReceiverManager3.$(objext) $(objects_topology) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
 
-ZoneWatcher : $(objdir)ZoneWatcher.$(exeext) $(headers_sender)
-$(objdir)ZoneWatcher.$(exeext) : ZoneWatcher$(dirsep)ZoneWatcher.cpp
+ZoneWatcher : $(objdir)ZoneWatcher.$(exeext)
+$(objdir)ZoneWatcher.$(exeext) : ZoneWatcher$(dirsep)ZoneWatcher.cpp  $(headers_sender)  $(objects_sender)
 	$(compiler)ZoneWatcher.$(objext) -c $(cflags) $(includes) ZoneWatcher$(dirsep)ZoneWatcher.cpp
 	$(link) $(linkoutput)$(objdir)ZoneWatcher.$(exeext) $(objdir)ZoneWatcher.$(objext) $(objects_sender) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
-
-WavSender : $(objdir)WavSender.$(exeext) $(headers_sender)
-$(objdir)WavSender.$(exeext) : WavSender$(dirsep)WavSender.cpp $(objects_sender)
+WavSender : $(objdir)WavSender.$(exeext)
+$(objdir)WavSender.$(exeext) : WavSender$(dirsep)WavSender.cpp $(headers_sender) $(objects_sender)
 	$(compiler)WavSender.$(objext) -c $(cflags) $(includes) WavSender$(dirsep)WavSender.cpp
 	$(link) $(linkoutput)$(objdir)WavSender.$(exeext) $(objdir)WavSender.$(objext) $(objects_sender) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
-Receiver : $(objdir)Receiver.$(exeext) $(headers_receiver)
-$(objdir)Receiver.$(exeext) : Receiver$(dirsep)Receiver.cpp $(objects_receiver)
+Receiver : $(objdir)Receiver.$(exeext) 
+$(objdir)Receiver.$(exeext) : Receiver$(dirsep)Receiver.cpp $(headers_receiver) $(objects_receiver)
 	$(compiler)Receiver.$(objext) -c $(cflags) $(includes) Receiver$(dirsep)Receiver.cpp
 	$(link) $(linkoutput)$(objdir)Receiver.$(exeext) $(objdir)Receiver.$(objext) $(objects_receiver) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 

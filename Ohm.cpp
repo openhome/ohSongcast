@@ -234,41 +234,11 @@ OhmHeaderAudio::OhmHeaderAudio()
 {
 }
 
+ 
 OhmHeaderAudio::OhmHeaderAudio(TBool aHalt, 
                                TBool aLossless,
-                               TUint aSamples,
-                               TUint aFrame,
-							   TUint aMediaLatency,
-                               TUint64 aSampleStart,
-                               TUint64 aSamplesTotal,
-                               TUint aSampleRate,
-                               TUint aBitRate,
-                               TUint aVolumeOffset,
-                               TUint aBitDepth,
-                               TUint aChannels,
-                               const Brx& aCodecName)
-    : iHalt(aHalt)
-    , iLossless(aLossless)
-    , iTimestamped(false)
-    , iSamples(aSamples)
-    , iFrame(aFrame)
-    , iNetworkTimestamp(0)
-    , iMediaLatency(aMediaLatency)
-    , iMediaTimestamp(0)
-    , iSampleStart(aSampleStart)
-    , iSamplesTotal(aSamplesTotal)
-    , iSampleRate(aSampleRate)
-    , iBitRate(aBitRate)
-    , iVolumeOffset(aVolumeOffset)
-    , iBitDepth(aBitDepth)
-    , iChannels(aChannels)
-    , iCodecName(aCodecName)
-{
-    iAudioBytes = iSamples * iBitDepth * iChannels / 8;
-}
-    
-OhmHeaderAudio::OhmHeaderAudio(TBool aHalt, 
-                               TBool aLossless,
+							   TBool aTimestamped,
+							   TBool aResent,
                                TUint aSamples,
                                TUint aFrame,
                                TUint aNetworkTimestamp,
@@ -284,7 +254,8 @@ OhmHeaderAudio::OhmHeaderAudio(TBool aHalt,
                                const Brx& aCodecName)
     : iHalt(aHalt)
     , iLossless(aLossless)
-    , iTimestamped(true)
+    , iTimestamped(aTimestamped)
+	, iResent(aResent)
     , iSamples(aSamples)
     , iFrame(aFrame)
     , iNetworkTimestamp(aNetworkTimestamp)
@@ -317,6 +288,8 @@ void OhmHeaderAudio::Internalise(IReader& aReader, const OhmHeader& aHeader)
 
     iHalt = false;
     iLossless = false;
+	iTimestamped = false;
+	iResent = false;
 
     TUint flags = readerBinary.ReadUintBe(1);
     
@@ -326,6 +299,14 @@ void OhmHeaderAudio::Internalise(IReader& aReader, const OhmHeader& aHeader)
 
     if (flags & kFlagLossless) {
         iLossless = true;
+    }
+
+    if (flags & kFlagTimestamped) {
+        iTimestamped = true;
+    }
+
+    if (flags & kFlagResent) {
+        iResent = true;
     }
 
     iSamples = readerBinary.ReadUintBe(2);
@@ -372,6 +353,14 @@ void OhmHeaderAudio::Externalise(IWriter& aWriter) const
     if (iLossless) {
         flags |= kFlagLossless;
     }
+
+	if (iTimestamped) {
+		flags |= kFlagTimestamped;
+	}
+
+	if (iResent) {
+		flags |= kFlagResent;
+	}
     
     writer.WriteUint8(kHeaderBytes);
     writer.WriteUint8(flags);
