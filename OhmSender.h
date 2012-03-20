@@ -26,7 +26,7 @@ public:
     virtual void SetTtl(TUint aValue) = 0;
     virtual void SetLatency(TUint aValue) = 0;
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal) = 0;
-	virtual void Resend(TUint aFrame) = 0;
+	virtual void Resend(const Brx& aFrames) = 0;
     virtual ~IOhmSenderDriver() {}
 };
 
@@ -48,7 +48,10 @@ private:
     virtual void SetTtl(TUint aValue);
     virtual void SetLatency(TUint aValue);
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
-	virtual void Resend(TUint aFrame);
+	virtual void Resend(const Brx& aFrames);
+
+private:
+	void ResetLocked();
 
 private:
     Mutex iMutex;

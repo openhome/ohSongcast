@@ -35,7 +35,7 @@ private:
 	virtual void SetTtl(TUint aValue);
 	virtual void SetLatency(TUint aValue);
 	virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
-	virtual void Resend(TUint aFrame);
+	virtual void Resend(const Brx& aFrames);
 
 	// IMMNotificationClient
     ULONG STDCALL AddRef();

@@ -211,6 +211,10 @@ void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
 
 	TUint latency = iLatency * multiplier / 1000;
     
+	if (iFifoHistory.SlotsUsed() == kMaxHistoryFrames) {
+		iFifoHistory.Read()->RemoveRef();
+	}
+
 	OhmMsgAudio& msg = iFactory.CreateAudio(
 		false,  // halt
         iLossless,
@@ -235,7 +239,8 @@ void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
 	WriterBuffer writer(iBuffer);
 	writer.Flush();
 	msg.Externalise(writer);
-	msg.RemoveRef();
+
+	iFifoHistory.Write(&msg);
 
     try {
         iSocket.Send(iBuffer, iEndpoint);
@@ -261,8 +266,7 @@ void OhmSenderDriver::SetEnabled(TBool aValue)
 
 	if (iSend) {
 		if (!aValue) { // turning off
-			iSend = false;
-			iFrame = 0;
+			ResetLocked();
 		}
 	}
 	else {
@@ -282,8 +286,7 @@ void OhmSenderDriver::SetActive(TBool aValue)
 
 	if (iSend) {
 		if (!aValue) { // turning off
-			iSend = false;
-			iFrame = 0;
+			ResetLocked();
 		}
 	}
 	else {
@@ -326,8 +329,60 @@ void OhmSenderDriver::SetTrackPosition(TUint64 aSamplesTotal, TUint64 aSampleSta
     iMutex.Signal();
 }
 
-void OhmSenderDriver::Resend(TUint /*aFrame*/)
+void OhmSenderDriver::Resend(const Brx& aFrames)
 {
+    iMutex.Wait();
+
+	ReaderBuffer buffer(aFrames);
+	ReaderBinary reader(buffer);
+
+	TUint frames = aFrames.Bytes() / 4;
+
+	while (frames-- > 0) {
+		TUint frame = reader.ReadUintBe(4);
+
+		TBool found = false;
+
+		TUint count = iFifoHistory.SlotsUsed();
+
+		for (TUint i = 0; i < count; i++) {
+			OhmMsgAudio* msg = iFifoHistory.Read();
+
+			if (!found) {
+				if (msg->Frame() == frame) {
+					WriterBuffer writer(iBuffer);
+					writer.Flush();
+					msg->Externalise(writer);
+
+					try {
+						iSocket.Send(iBuffer, iEndpoint);
+					}
+					catch (NetworkError&) {
+						ASSERTS();
+					}
+
+					found = true;
+				}
+			}
+
+			iFifoHistory.Write(msg);
+		}
+	}
+
+	iMutex.Signal();
+}
+
+void OhmSenderDriver::ResetLocked()
+{
+	iSend = false;
+
+	iFrame = 0;
+
+	TUint count = iFifoHistory.SlotsUsed();
+
+	for (TUint i = 0; i < count; i++) {
+		iFifoHistory.Read()->RemoveRef();
+	}
 }
 
 // OhmSender

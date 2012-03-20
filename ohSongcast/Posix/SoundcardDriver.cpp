@@ -26,7 +26,7 @@ private:
     virtual void SetTtl(TUint aValue);
     virtual void SetLatency(TUint aValue);
     virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal);
-	virtual void Resend(TUint aFrame);
+	virtual void Resend(const Brx& aFrames);
 };
 
 
@@ -73,9 +73,20 @@ void OhmSenderDriverPosix::SetTrackPosition(TUint64 aSampleStart, TUint64 aSampl
     printf("OhmSenderDriverPosix: TrackPosition %llu %llu\n", aSampleStart, aSamplesTotal);
 }
 
-void OhmSenderDriverPosix::Resend(TUint aFrame)
+void OhmSenderDriverPosix::Resend(const Brx& aFrames)
 {
-    printf("OhmSenderDriverPosix: Resend %d\n", aFrame);
+    printf("OhmSenderDriverPosix: Resend", aFrame);
+
+	ReaderBuffer buffer(aFrames);
+	ReaderBinary reader(buffer);
+
+	TUint frames = aFrames.Bytes() / 4;
+
+	while (frames-- > 0) {
+		printf(" %d", reader.ReadUintBe(4));
+	}
+
+	printf("\n");
 }
 
 

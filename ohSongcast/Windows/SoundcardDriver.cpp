@@ -437,7 +437,7 @@ void OhmSenderDriverWindows::SetTrackPosition(TUint64 /*aSamplesTotal*/, TUint64
 {
 }
 
-void OhmSenderDriverWindows::Resend(TUint /*aFrame*/)
+void OhmSenderDriverWindows::Resend(const Brx& /*aFrames*/)
 {
 }
 
