@@ -55,7 +55,11 @@ default : all
 # Include rules to build the shared code
 include Common.mak
 
+$(objects_topology) : | make_obj_dir
+$(objects_sender) : | make_obj_dir
 $(objects_songcast) : | make_obj_dir
+$(objects_driver) : | make_obj_dir
+
 make_obj_dir :
 	mkdir -p $(objdir)
 

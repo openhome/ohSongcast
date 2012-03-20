@@ -46,12 +46,14 @@ rmdir = Scripts\rmdir.bat
 uset4 = no
 
 
-all: $(objdir)$(dllprefix)ohSongcast.$(dllext) $(objdir)$(dllprefix)ohSongcast.net.$(dllext) $(objdir)TestSongcast.$(exeext) $(objdir)TestSongcastCs.$(exeext) all_common
+all: $(objdir)$(dllprefix)ohSongcast.$(dllext) $(objdir)TestSongcast.$(exeext) all_common
 
 
 # Include rules to build platform independent code
 include Common.mak
 
+$(objects_topology) : make_obj_dir
+$(objects_sender) : make_obj_dir
 $(objects_songcast) : make_obj_dir
 
 make_obj_dir : $(objdirbare)
@@ -67,19 +69,7 @@ $(objdir)$(dllprefix)ohSongcast.$(dllext) : $(objects_topology) $(objects_sender
 	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcast\Windows\SoundcardDriver.cpp
 	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcast.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_sender) $(objects_songcast) $(objects_netmon) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
 
-$(objdir)$(dllprefix)ohSongcast.net.$(dllext) : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast\Windows\Songcast.cs
-	$(csharp) /unsafe /t:library \
-		/out:$(objdir)$(dllprefix)ohSongcast.net.$(dllext) \
-		ohSongcast\Windows\Songcast.cs
-
 $(objdir)TestSongcast.$(exeext) : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast\TestSongcast.cpp
 	$(compiler)TestSongcast.$(objext) -c $(cflags) $(includes) ohSongcast\TestSongcast.cpp
 	$(link) $(linkoutput)$(objdir)TestSongcast.$(exeext) $(objdir)ohSongcast.$(libext) $(objdir)TestSongcast.$(objext) 
 
-$(objdir)TestSongcastCs.$(exeext) : $(objdir)$(dllprefix)ohSongcast.net.$(dllext) ohSongcast\Windows\TestSongcastCs.cs
-	$(csharp) /target:exe /debug+ \
-		/out:$(objdir)TestSongcastCs.$(exeext) \
-		/reference:System.dll \
-		/reference:System.Net.dll \
-		/reference:$(objdir)$(dllprefix)ohSongcast.net.$(dllext)  \
-		ohSongcast\Windows\TestSongcastCs.cs

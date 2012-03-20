@@ -218,6 +218,14 @@ void ReceiverManager2Receiver::ChangedSelected()
 
 void ReceiverManager2Receiver::Removed()
 {
+    // This is called in the ReceiverManager1 thread (which is actually the CpTopology2 thread)
+    // and there are event handlers, above, which can get called in eventing threads. There is potential
+    // that this function will call the iHandler.ReceiverRemoved thread before the iHandler.ReceiverChanged
+    // calls in the eventing threads.
+    // This next line ensures that the eventing stops, thus, no further iHandler.ReceiverChanged calls will
+    // be made after this iHandler.ReceiverRemoved call.
+    iServiceReceiver->Unsubscribe();
+
 	iMutex.Wait();
 
 	if (iActive) {
@@ -330,6 +338,12 @@ void ReceiverManager2::ReceiverRemoved(ReceiverManager1Receiver& aReceiver)
 
 void ReceiverManager2::ReceiverAdded(ReceiverManager2Receiver& aReceiver)
 {
+    LOG(kTopology, "ReceiverManager2::ReceiverAdded ");
+    LOG(kTopology, aReceiver.Room());
+    LOG(kTopology, ":");
+    LOG(kTopology, aReceiver.Group());
+    LOG(kTopology, "\n");
+
 	ReceiverManager2Job* job = iFree.Read();
 	job->Set(aReceiver, &IReceiverManager2Handler::ReceiverAdded);
 	iReady.Write(job);
@@ -337,6 +351,12 @@ void ReceiverManager2::ReceiverAdded(ReceiverManager2Receiver& aReceiver)
 
 void ReceiverManager2::ReceiverChanged(ReceiverManager2Receiver& aReceiver)
 {
+    LOG(kTopology, "ReceiverManager2::ReceiverChanged ");
+    LOG(kTopology, aReceiver.Room());
+    LOG(kTopology, ":");
+    LOG(kTopology, aReceiver.Group());
+    LOG(kTopology, "\n");
+
 	ReceiverManager2Job* job = iFree.Read();
 	job->Set(aReceiver, &IReceiverManager2Handler::ReceiverChanged);
 	iReady.Write(job);
@@ -344,6 +364,12 @@ void ReceiverManager2::ReceiverChanged(ReceiverManager2Receiver& aReceiver)
 
 void ReceiverManager2::ReceiverRemoved(ReceiverManager2Receiver& aReceiver)
 {
+    LOG(kTopology, "ReceiverManager2::ReceiverRemoved ");
+    LOG(kTopology, aReceiver.Room());
+    LOG(kTopology, ":");
+    LOG(kTopology, aReceiver.Group());
+    LOG(kTopology, "\n");
+
 	ReceiverManager2Job* job = iFree.Read();
 	job->Set(aReceiver, &IReceiverManager2Handler::ReceiverRemoved);
 	iReady.Write(job);
