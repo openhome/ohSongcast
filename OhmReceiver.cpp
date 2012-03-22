@@ -508,8 +508,6 @@ void OhmReceiver::Reset()
 
 TBool OhmReceiver::RepairBegin(OhmMsgAudio& aMsg)
 {
-	LOG(kMedia, "BEGIN REPAIR ON FRAME %d AFTER FRAME %d\n", aMsg.Frame(), iFrame);
-
 	iRepairFirst = &aMsg;
 
     iTimerRepair.FireIn(Random((iLatency >> 2) + (iLatency >> 3))); // request repair randomly across 3/8 of the audio latency
@@ -791,9 +789,6 @@ void OhmReceiver::TimerRepairExpired()
 		}
 
 	    iTimerRepair.FireIn(Random((iLatency >> 2) + (iLatency >> 3))); // request repair randomly across 3/8 of the audio latency
-	}
-	else {
-		LOG(kMedia, "REQUEST RESEND NOTHING");
 	}
 
 	iMutexTransport.Signal();

@@ -9,6 +9,6 @@ SOURCES=\
         $(SOURCES)      \
         mintopo.cpp     \
         minwave.cpp     \
-        network.cpp
-
+        network.cpp \
+		oh.cpp
 

@@ -243,7 +243,9 @@ void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
 	iFifoHistory.Write(&msg);
 
     try {
-        iSocket.Send(iBuffer, iEndpoint);
+		if (Random(99) > 49) {
+			iSocket.Send(iBuffer, iEndpoint);
+		}
     }
     catch (NetworkError&) {
         ASSERTS();
@@ -329,45 +331,91 @@ void OhmSenderDriver::SetTrackPosition(TUint64 aSamplesTotal, TUint64 aSampleSta
     iMutex.Signal();
 }
 
+void OhmSenderDriver::Resend(OhmMsgAudio& aMsg)
+{
+	WriterBuffer writer(iBuffer);
+
+	writer.Flush();
+
+	aMsg.Externalise(writer);
+
+	try {
+		iSocket.Send(iBuffer, iEndpoint);
+	}
+	catch (NetworkError&) {
+		ASSERTS();
+	}
+
+}
+
 void OhmSenderDriver::Resend(const Brx& aFrames)
 {
     iMutex.Wait();
+
+	printf("RESEND");
 
 	ReaderBuffer buffer(aFrames);
 	ReaderBinary reader(buffer);
 
 	TUint frames = aFrames.Bytes() / 4;
 
-	while (frames-- > 0) {
-		TUint frame = reader.ReadUintBe(4);
+	TUint frame = reader.ReadUintBe(4);
 
-		TBool found = false;
+	frames--;
 
-		TUint count = iFifoHistory.SlotsUsed();
+	printf(" %d", frame);
+	
+	TBool found = false;
 
-		for (TUint i = 0; i < count; i++) {
-			OhmMsgAudio* msg = iFifoHistory.Read();
+	TUint count = iFifoHistory.SlotsUsed();
 
-			if (!found) {
-				if (msg->Frame() == frame) {
-					WriterBuffer writer(iBuffer);
-					writer.Flush();
-					msg->Externalise(writer);
+	for (TUint i = 0; i < count; i++) {
+		OhmMsgAudio* msg = iFifoHistory.Read();
 
-					try {
-						iSocket.Send(iBuffer, iEndpoint);
-					}
-					catch (NetworkError&) {
-						ASSERTS();
-					}
+		if (!found) {
+			TInt diff = frame - msg->Frame();
 
+			if (diff == 0) {
+				Resend(*msg);
+				if (frames-- > 0) {
+					frame = reader.ReadUintBe(4);
+				}
+				else {
 					found = true;
 				}
 			}
+			else {
+				while (diff < 0) {
+					if (frames-- > 0) {
+						frame = reader.ReadUintBe(4);
+					}
+					else {
+						found = true;
+						break;
+					}
 
-			iFifoHistory.Write(msg);
+					diff = frame - msg->Frame();
+
+					if (diff == 0) {
+						Resend(*msg);
+
+						if (frames-- > 0) {
+							frame = reader.ReadUintBe(4);
+						}
+						else {
+							found = true;
+						}
+
+						break;
+					}
+				}
+			}
 		}
+
+		iFifoHistory.Write(msg);
 	}
+
+	printf("\n");
 
 	iMutex.Signal();
 }
@@ -808,6 +856,18 @@ void OhmSender::RunMulticast()
 
                         iMutexActive.Signal();
                     }
+					else if (header.MsgType() == OhmHeader::kMsgTypeResend) {
+                        LOG(kMedia, "OhmSender::RunMulticast resend received\n");
+
+						OhmHeaderResend headerResend;
+						headerResend.Internalise(iRxBuffer, header);
+
+						TUint frames = headerResend.FramesCount();
+
+						if (frames > 0) {
+							iDriver.Resend(iRxBuffer.Read(frames * 4));
+						}
+					}
                     else {
 						// Check sender not us
 
@@ -1051,6 +1111,18 @@ void OhmSender::RunUnicast()
                                 }
                             }
                         }
+						else if (header.MsgType() == OhmHeader::kMsgTypeResend) {
+							LOG(kMedia, "OhmSender::RunMulticast resend received\n");
+
+							OhmHeaderResend headerResend;
+							headerResend.Internalise(iRxBuffer, header);
+
+							TUint frames = headerResend.FramesCount();
+
+							if (frames > 0) {
+								iDriver.Resend(iRxBuffer.Read(frames * 4));
+							}
+						}
                     }
                     catch (OhmError&)
                     {

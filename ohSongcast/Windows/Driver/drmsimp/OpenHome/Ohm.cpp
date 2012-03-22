@@ -5,8 +5,6 @@ using namespace OpenHome::Net;
 
 // OhmHeader
 
-const Brn OhmHeader::kOhm("Ohm ");
-
 OhmHeader::OhmHeader()
     : iMsgType(kMsgTypeJoin)
     , iBytes(kHeaderBytes)
@@ -25,7 +23,7 @@ void OhmHeader::Internalise(IReader& aReader)
 
     Brn ohm = reader.Read(4);
     
-    if(ohm != kOhm) {
+    if(ohm != Brn("Ohm ")) {
         THROW(OhmError);
     }
 
@@ -52,7 +50,7 @@ void OhmHeader::Externalise(IWriter& aWriter) const
 {
     WriterBinary writer(aWriter);
 
-    writer.Write(kOhm);
+    writer.Write(Brn("Ohm "));
     writer.WriteUint8(kMajor);
     writer.WriteUint8(iMsgType);
     writer.WriteUint16Be(iBytes);
@@ -165,7 +163,7 @@ void OhmHeaderAudio::Internalise(IReader& aReader, const OhmHeader& aHeader)
         iCodecName.Replace(aReader.Read(bytes));
     }
     else {
-        iCodecName.Replace(Brx::Empty());
+        iCodecName.Clear();
     }
     
     iAudioBytes = aHeader.MsgBytes() - kHeaderBytes - iCodecName.Bytes();
@@ -350,8 +348,6 @@ void OhmHeaderResend::Externalise(IWriter& aWriter) const
     
 // OhzHeader
 
-const Brn OhzHeader::kOhz("Ohz ");
-
 OhzHeader::OhzHeader()
     : iMsgType(0)
     , iBytes(kHeaderBytes)
@@ -370,7 +366,7 @@ void OhzHeader::Internalise(IReader& aReader)
 
     Brn ohz = reader.Read(4);
 
-    if(ohz != kOhz) {
+    if(ohz != Brn("Ohz ")) {
         THROW(OhzError);
     }
 
@@ -397,7 +393,7 @@ void OhzHeader::Externalise(IWriter& aWriter) const
 {
     WriterBinary writer(aWriter);
 
-    writer.Write(kOhz);
+    writer.Write(Brn("Ohz "));
     writer.WriteUint8(kMajor);
     writer.WriteUint8(iMsgType);
     writer.WriteUint16Be(iBytes);

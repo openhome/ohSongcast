@@ -3,7 +3,7 @@
 
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Buffer.h>
-#include <OpenHome/Private/Stream.h>
+#include <OpenHome/Stream.h>
 
 EXCEPTION(OhmError);
 EXCEPTION(OhzError);
@@ -25,7 +25,6 @@ public:
 class OhmHeader
 {
 public:
-    static const Brn kOhm;
     static const TUint kMajor = 1;
     static const TUint kHeaderBytes = 8;
     
@@ -262,7 +261,6 @@ private:
 class OhzHeader
 {
 public:
-    static const Brn kOhz;
     static const TUint kMajor = 1;
     static const TUint kHeaderBytes = 8;
     

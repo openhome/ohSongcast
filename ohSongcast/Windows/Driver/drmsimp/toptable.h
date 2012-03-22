@@ -215,6 +215,12 @@ PCPROPERTY_ITEM PropertiesTopoFilter[] =
         KSPROPERTY_OHSOUNDCARD_LATENCY,
         KSPROPERTY_TYPE_SET,
         PropertyHandler_Wave
+    },
+    {
+        &KSPROPSETID_Private,
+        KSPROPERTY_OHSOUNDCARD_RESEND,
+        KSPROPERTY_TYPE_SET,
+        PropertyHandler_Wave
     }
 };
 

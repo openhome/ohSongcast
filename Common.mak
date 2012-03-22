@@ -1,14 +1,17 @@
 objects_sender   = $(objdir)Ohm.$(objext) \
                    $(objdir)OhmMsg.$(objext) \
+                   $(objdir)OhmSocket.$(objext) \
                    $(objdir)OhmSender.$(objext) \
                    $(ohnetdir)DvAvOpenhomeOrgSender1.$(objext)
 
 headers_sender   = Ohm.h \
                    OhmMsg.h \
+				   OhmSocket.h \
                    OhmSender.h
 
 objects_receiver = $(objdir)Ohm.$(objext) \
                    $(objdir)OhmMsg.$(objext) \
+                   $(objdir)OhmSocket.$(objext) \
                    $(objdir)OhmReceiver.$(objext) \
 				   $(objdir)OhmProtocolMulticast.$(objext) \
 				   $(objdir)OhmProtocolUnicast.$(objext) \
@@ -16,6 +19,7 @@ objects_receiver = $(objdir)Ohm.$(objext) \
 
 headers_receiver = Ohm.h \
                    OhmMsg.h \
+				   OhmSocket.h \
                    OhmReceiver.h
 
 $(objdir)Ohm.$(objext) : Ohm.cpp Ohm.h
@@ -23,6 +27,9 @@ $(objdir)Ohm.$(objext) : Ohm.cpp Ohm.h
 
 $(objdir)OhmMsg.$(objext) : OhmMsg.cpp OhmMsg.h
 	$(compiler)OhmMsg.$(objext) -c $(cflags) $(includes) OhmMsg.cpp
+
+$(objdir)OhmSocket.$(objext) : OhmSocket.cpp OhmSocket.h
+	$(compiler)OhmSocket.$(objext) -c $(cflags) $(includes) OhmSocket.cpp
 
 $(objdir)OhmSender.$(objext) : OhmSender.cpp OhmSender.h
 	$(compiler)OhmSender.$(objext) -c $(cflags) $(includes) OhmSender.cpp

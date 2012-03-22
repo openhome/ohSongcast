@@ -52,6 +52,7 @@ private:
 
 private:
 	void ResetLocked();
+	void Resend(OhmMsgAudio& aMsg);
 
 private:
     Mutex iMutex;

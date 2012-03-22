@@ -66,6 +66,7 @@ static const TUint KSPROPERTY_OHSOUNDCARD_ACTIVE = 2;
 static const TUint KSPROPERTY_OHSOUNDCARD_ENDPOINT = 3;
 static const TUint KSPROPERTY_OHSOUNDCARD_TTL = 4;
 static const TUint KSPROPERTY_OHSOUNDCARD_LATENCY = 5;
+static const TUint KSPROPERTY_OHSOUNDCARD_RESEND = 6;
 
 OhmSenderDriverWindows::OhmSenderDriverWindows(const char* aDomain, const char* aManufacturer, TBool aEnabled)
 	: iEnabled(aEnabled)
@@ -437,8 +438,17 @@ void OhmSenderDriverWindows::SetTrackPosition(TUint64 /*aSamplesTotal*/, TUint64
 {
 }
 
-void OhmSenderDriverWindows::Resend(const Brx& /*aFrames*/)
+void OhmSenderDriverWindows::Resend(const Brx& aFrames)
 {
+    KSPROPERTY prop;
+				
+	prop.Set = OHSOUNDCARD_GUID;
+    prop.Id = KSPROPERTY_OHSOUNDCARD_RESEND;
+    prop.Flags = KSPROPERTY_TYPE_SET;
+
+    DWORD bytes;
+
+    DeviceIoControl(iHandle, IOCTL_KS_PROPERTY, &prop, sizeof(KSPROPERTY), (LPVOID) aFrames.Ptr(), aFrames.Bytes(), &bytes, 0);
 }
 
 ULONG STDCALL OhmSenderDriverWindows::AddRef()

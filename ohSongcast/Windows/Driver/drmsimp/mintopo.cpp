@@ -28,6 +28,7 @@ extern void MpusUpdateActive(UINT aValue);
 extern void MpusUpdateTtl(UINT aValue);
 extern void MpusUpdateLatency(UINT aValue);
 extern void MpusUpdateEndpoint(UINT aAddress, UINT aPort, UINT aAdapter);
+extern void MpusResend(UINT* aFrames, UINT aCount);
 
 PHYSICALCONNECTIONTABLE TopologyPhysicalConnections =
 {
@@ -571,7 +572,17 @@ PropertyHandler_Wave
 		}
 		else if (PropertyRequest->Verb & KSPROPERTY_TYPE_SET)
 		{
-			if (PropertyRequest->PropertyItem->Id == KSPROPERTY_OHSOUNDCARD_ENABLED) {
+			if (PropertyRequest->PropertyItem->Id == KSPROPERTY_OHSOUNDCARD_RESEND) {
+
+				if (PropertyRequest->ValueSize != sizeof (UINT)) {
+					return STATUS_INVALID_PARAMETER;
+				}
+
+				MpusResend((UINT*)PropertyRequest->Value, PropertyRequest->ValueSize / 4);
+
+				return STATUS_SUCCESS;
+			}
+			else if (PropertyRequest->PropertyItem->Id == KSPROPERTY_OHSOUNDCARD_ENABLED) {
 				if (PropertyRequest->ValueSize != sizeof (UINT)) {
 					return STATUS_INVALID_PARAMETER;
 				}
