@@ -9,12 +9,12 @@
 #include <Mmdeviceapi.h>
 
 #include "../../Ohm.h"
-#include "../../OhmSender.h"
-#include "../Songcast.h"
-
+#include "../../OhmSenderDriver.h"
 
 namespace OpenHome {
 namespace Net {
+
+class Songcast;
 
 class OhmSenderDriverWindows : public IOhmSenderDriver, public IMMNotificationClient
 {

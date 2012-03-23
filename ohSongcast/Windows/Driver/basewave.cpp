@@ -18,8 +18,6 @@ Abstract:
 #include "common.h"
 #include "basewave.h"
 
-extern void MpusStop();
-extern void MpusSetFormat(UINT aSampleRate, UINT aBitRate, UINT aBitDepth, UINT aChannels);
 
 //=============================================================================
 // CMiniportWaveCyclicMSVAD
@@ -502,7 +500,7 @@ Return Value:
     {
         KeCancelTimer(m_pTimer);
 
-		MpusStop();
+		m_pMiniport->PipelineStop();
     
 		ExFreePoolWithTag(m_pTimer, OHSOUNDCARD_POOLTAG);
     }
@@ -828,7 +826,7 @@ Return Value:
             {
                 if (!m_fCapture)
                 {
-					MpusSetFormat(pWfx->nSamplesPerSec, pWfx->nAvgBytesPerSec * 8, pWfx->wBitsPerSample, pWfx->nChannels);
+					m_pMiniport->SetFormat(pWfx->nSamplesPerSec, pWfx->nAvgBytesPerSec * 8, pWfx->wBitsPerSample, pWfx->nChannels);
                 }
 
                 m_usBlockAlign = pWfx->nBlockAlign;
@@ -980,7 +978,7 @@ Return Value:
 
                 m_fDmaActive = FALSE;
 
-				MpusStop();
+				m_pMiniport->PipelineStop();
 
 	            break;
 
@@ -995,7 +993,7 @@ Return Value:
 				m_ullElapsedTimeCarryForward      = 0;
 				m_ulByteDisplacementCarryForward  = 0;
 
-				MpusStop();
+				m_pMiniport->PipelineStop();
 
 				break;
         }

@@ -4,10 +4,11 @@
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Exception.h>
 
+#include <wdm.h>
+
 namespace OpenHome {
 
-#define ASSERT(x) if (!(x)) ASSERTS()
-#define ASSERTS() for(;;);
+#define ASSERTS() ASSERT(false);
 
 class INonCopyable
 {

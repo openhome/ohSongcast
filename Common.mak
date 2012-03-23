@@ -7,6 +7,7 @@ objects_sender   = $(objdir)Ohm.$(objext) \
 headers_sender   = Ohm.h \
                    OhmMsg.h \
 				   OhmSocket.h \
+                   OhmSenderDriver.h \
                    OhmSender.h
 
 objects_receiver = $(objdir)Ohm.$(objext) \

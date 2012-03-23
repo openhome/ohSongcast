@@ -308,7 +308,7 @@ NTSTATUS CSocketOhm::InitialiseComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp,
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-void CSocketOhm::SetTtl(ULONG aValue)
+void CSocketOhm::SetTtl(TUint aValue)
 {
     UNREFERENCED_PARAMETER(aValue);
 
@@ -343,7 +343,7 @@ NTSTATUS CSocketOhm::SetTtlComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVO
 }
 
 
-void CSocketOhm::SetMulticastIf(ULONG aValue)
+void CSocketOhm::SetMulticastIf(TUint aValue)
 {
     UNREFERENCED_PARAMETER(aValue);
 
@@ -360,7 +360,7 @@ void CSocketOhm::SetMulticastIf(ULONG aValue)
         return;
     }
 
-	IoSetCompletionRoutine(irp,	SetTtlComplete, NULL, TRUE, TRUE, TRUE);
+	IoSetCompletionRoutine(irp,	SetMulticastIfComplete, NULL, TRUE, TRUE, TRUE);
 
 	SIZE_T returned;
 
@@ -377,169 +377,6 @@ NTSTATUS CSocketOhm::SetMulticastIfComplete(PDEVICE_OBJECT aDeviceObject, PIRP a
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
 
-
-/*
-void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels)
-{
-	UNREFERENCED_PARAMETER(aAddress);
-	UNREFERENCED_PARAMETER(aBuffer);
-	UNREFERENCED_PARAMETER(aBytes);
-	UNREFERENCED_PARAMETER(aHalt);
-	UNREFERENCED_PARAMETER(aSampleRate);
-	UNREFERENCED_PARAMETER(aBitRate);
-	UNREFERENCED_PARAMETER(aBitDepth);
-	UNREFERENCED_PARAMETER(aChannels);
-}
-*/
-
-/*
-
-void CSocketOhm::Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels, ULONG aLatency)
-{
-	ULONG sampleBytes = aChannels * aBitDepth / 8;
-
-	if (sampleBytes == 0) {
-		return;
-	}
-
-	KeWaitForSingleObject(&iSendSemaphore, Executive, KernelMode, false, NULL);
-
-	PIRP irp;
-
-	// Allocate an IRP
-
-	irp = IoAllocateIrp(1, FALSE);
-
-	// Check result
-
-	if (irp == NULL)
-	{
-        return;
-    }
-
-	iSendMessage = ExAllocatePoolWithTag(NonPagedPool, sizeof(OHMHEADER) + aBytes, '2ten');
-
-	if (iSendMessage == NULL)
-	{
-		IoFreeIrp(irp);
-		KeReleaseSemaphore(&iSendSemaphore, 0, 1, false);
-        return;
-	}
-
-	OHMHEADER* header = (OHMHEADER*) iSendMessage;
-
-	UCHAR* audio = (UCHAR*) (header + 1);
-
-	iSendBuf.Offset = 0;
-	iSendBuf.Length = aBytes + sizeof(OHMHEADER);
-	iSendBuf.Mdl = IoAllocateMdl(header, sizeof(OHMHEADER) + aBytes, FALSE, FALSE, NULL);
-
-	if (iSendBuf.Mdl == NULL)
-	{
-		ExFreePoolWithTag(iSendMessage, '2ten');
-		IoFreeIrp(irp);
-		KeReleaseSemaphore(&iSendSemaphore, 0, 1, false);
-        return;
-	}
-
-	MmBuildMdlForNonPagedPool(iSendBuf.Mdl);
-
-	RtlCopyMemory(&iSendAddr, aAddress, sizeof(SOCKADDR));
-
-	RtlCopyMemory(header, &iHeader, sizeof(OHMHEADER));
-
-	// Fill in multipus header
-
-	UCHAR flags = 2; // lossless, not timestamped 
-
-	if (aHalt != 0)
-	{
-		flags |= 1; // halt flag
-	}
-
-	header->iAudioFlags = flags;
-
-	USHORT samples = (USHORT)(aBytes / sampleBytes);
-
-	header->iAudioSamples = samples >> 8 & 0x00ff;
-	header->iAudioSamples += samples << 8 & 0xff00;
-
-	ULONG frame = ++iFrame;
-
-	header->iAudioFrame = frame >> 24 & 0x000000ff;
-	header->iAudioFrame += frame >> 8 & 0x0000ff00;
-	header->iAudioFrame += frame << 8 & 0x00ff0000;
-	header->iAudioFrame += frame << 24 & 0xff000000;
-
-	header->iAudioSampleRate = aSampleRate >> 24 & 0x000000ff;
-	header->iAudioSampleRate += aSampleRate >> 8 & 0x0000ff00;
-	header->iAudioSampleRate += aSampleRate << 8 & 0x00ff0000;
-	header->iAudioSampleRate += aSampleRate << 24 & 0xff000000;
-
-	header->iAudioBitRate = aBitRate >> 24 & 0x000000ff;
-	header->iAudioBitRate += aBitRate >> 8 & 0x0000ff00;
-	header->iAudioBitRate += aBitRate << 8 & 0x00ff0000;
-	header->iAudioBitRate += aBitRate << 24 & 0xff000000;
-
-	header->iAudioBitDepth = (UCHAR) aBitDepth;
-	header->iAudioChannels = (UCHAR) aChannels;
-
-	USHORT bytes = (USHORT)(sizeof(OHMHEADER) + aBytes);
-
-	header->iTotalBytes = bytes >> 8 & 0x00ff;
-	header->iTotalBytes += bytes << 8 & 0xff00;
-
-	// Create Timestamps
-
-	if (iSampleRate != aSampleRate)
-	{
-		iSampleRate = aSampleRate;
-
-		iTimestampMultiplier = 48000 * 256;
-		iLatencyMultiplier = 48000 * 32; // divide by 125 for ms (256/1000 = 32/125)
-
-		if ((iSampleRate % 441) == 0)
-		{
-			iTimestampMultiplier = 44100 * 256;
-			iLatencyMultiplier = 44100 * 32;
-		}
-	}
-
-	// set media latency
-
-	ULONG latency = aLatency * iLatencyMultiplier / 125;
-
-	iHeader.iAudioMediaLatency = latency >> 24 & 0x000000ff;
-	iHeader.iAudioMediaLatency += latency >> 8 & 0x0000ff00;
-	iHeader.iAudioMediaLatency += latency << 8 & 0x00ff0000;
-	iHeader.iAudioMediaLatency += latency << 24 & 0xff000000;
-
-	// use last timestamp for this message
-
-	ULONGLONG timestamp = iPerformanceCounter;
-
-	timestamp *= iTimestampMultiplier;
-	timestamp /= 10000000; // InterruptTime is in 100ns units
-
-	header->iAudioNetworkTimestamp = timestamp >> 24 & 0x000000ff;
-	header->iAudioNetworkTimestamp += timestamp >> 8 & 0x0000ff00;
-	header->iAudioNetworkTimestamp += timestamp << 8 & 0x00ff0000;
-	header->iAudioNetworkTimestamp += timestamp << 24 & 0xff000000;
-
-	header->iAudioMediaTimestamp = header->iAudioNetworkTimestamp;
-
-	// Copy the audio
-
-	CopyAudio(audio, aBuffer, aBytes, aBitDepth);
-
-	// Set the completion routine for the IRP
-
-	IoSetCompletionRoutine(irp,	SendComplete, this, TRUE, TRUE, TRUE);
-
-	((PWSK_PROVIDER_DATAGRAM_DISPATCH)(iSocket->Dispatch))->WskSendTo(iSocket, &iSendBuf, 0, &iSendAddr, 0, NULL, irp);
-}
-
-*/
 
 void CSocketOhm::Send(WSK_BUF* aBuffer, SOCKADDR* aAddress, PIRP aIrp)
 {

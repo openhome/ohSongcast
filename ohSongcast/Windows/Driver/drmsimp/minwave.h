@@ -15,7 +15,12 @@ Abstract:
 #ifndef _MSVAD_MINWAVE_H_
 #define _MSVAD_MINWAVE_H_
 
+#include <OpenHome/OhNetTypes.h>
+#include <OpenHome/OhmMsg.h>
+#include <OpenHome/Fifo.h>
+
 #include "basewave.h"
+#include "network.h"
 
 //=============================================================================
 // Referenced Forward
@@ -30,26 +35,84 @@ typedef CMiniportWaveCyclicStream *PCMiniportWaveCyclicStream;
 // CMiniportWaveCyclic 
 //   
 
-class CMiniportWaveCyclic : 
-    public CMiniportWaveCyclicMSVAD,
-    public IMiniportWaveCyclic,
-    public CUnknown
+class CMiniportWaveCyclic : public CMiniportWaveCyclicMSVAD,  public IMiniportWaveCyclic, public CUnknown
 {
-private:
-    BOOL                        m_fCaptureAllocated;
-    BOOL                        m_fRenderAllocated;
+    friend class CMiniportWaveCyclicStream;
+    friend class CMiniportTopologySimple;
+
+	static const TUint kMaxPipelineMessages = 16;
+	static const TUint kMaxHistoryMessages = 100;
 
 public:
     DECLARE_STD_UNKNOWN();
     DEFINE_STD_CONSTRUCTOR(CMiniportWaveCyclic);
+
+	void UpdateEndpoint(TUint aAddress, TUint aPort, TUint aAdapter);
+	void UpdateTtl(TUint aValue);
+	void UpdateActive(TUint aValue);
+	void UpdateEnabled(TUint aValue);
+	void UpdateLatency(TUint aValue);
+
+	virtual void PipelineStop();
+	virtual void PipelineSend(TByte* aBuffer, TUint aBytes);
+	virtual void SetFormat(TUint aSampleRate, TUint aBitRate, TUint aBitDepth, TUint aChannels);
+	void PipelineResend(TUint* aFrames, TUint aCount);
+
     ~CMiniportWaveCyclic();
 
     IMP_IMiniportWaveCyclic;
 
-    // Friends
-    friend class                CMiniportWaveCyclicStream;
-    friend class                CMiniportTopologySimple;
+private:
+	void UpdateLatencyLocked();
+	void SetFormatLocked(TUint aSampleRate, TUint aBitRate, TUint aBitDepth, TUint aChannels);
+	TBool PipelineQueueRemove(PMDL* aMdl, TUint* aBytes, SOCKADDR* aAddress);
+	void PipelineOutput();
+	static NTSTATUS PipelineOutputComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext);
+	NTSTATUS PipelineOutputComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp);
+	TBool PipelineQueueAddLocked(PMDL* aMdl, TUint* aBytes);
+	void PipelineSendNewLocked();
+	void PipelineCopyAudioLocked(TByte* aDestination, TByte* aSource, TUint aBytes, TUint aSampleBytes);
+	void PipelineSendAddFragmentLocked(TByte* aBuffer, TUint aBytes);
+	TBool PipelineSendLocked(TByte* aBuffer, TUint aBytes);
+	TBool PipelineStopLocked();
+	static void SocketInitialised(void* aContext);
+	void SocketInitialised();
+
+private:
+    TBool iCaptureAllocated;
+    TBool iRenderAllocated;
+	OpenHome::Net::OhmMsgFactory iFactory;
+	OpenHome::FifoLite<OpenHome::Net::OhmMsgAudio*, kMaxPipelineMessages> iPipeline;
+	OpenHome::FifoLite<OpenHome::Net::OhmMsgAudio*, kMaxHistoryMessages> iHistory;
+	KSPIN_LOCK iPipelineSpinLock;
+	TBool iPipelineSending;
+	TBool iPipelineStopped;
+	PMDL iPipelineMdl;
+	PMDL iPipelineMdlLast;
+	TUint iPipelinePacketBytes;
+	TUint iPipelineSampleBytes;
+	TUint iPipelineSampleChannelBytes;
+	WSK_BUF iPipelineOutputBuf;
+	TUint iPipelineAdapter;
+	SOCKADDR iPipelineAddress;
+	SOCKADDR iPipelineOutputAddress;
+	TUint iPipelineFrame;
+	OHMHEADER iPipelineHeader;
+	TUint iPipelineBytes;
+	TUint64 iPipelinePerformanceCounter;
+
+	TUint iEnabled;
+	TUint iActive;
+	TUint iTtl;
+	TUint iAddr;
+	TUint iPort;
+	TUint iLatency;
+
+	CWinsock* iWsk;
+	CSocketOhm* iSocket;
+	KEVENT iWskInitialisedEvent;
 };
+
 typedef CMiniportWaveCyclic *PCMiniportWaveCyclic;
 
 ///////////////////////////////////////////////////////////////////////////////

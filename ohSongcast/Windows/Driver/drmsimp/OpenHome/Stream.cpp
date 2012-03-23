@@ -120,24 +120,6 @@ Brn Srx::Snaffle()
 }
 
 
-// Srd
-
-Srd::Srd(TUint aMaxBytes, IReaderSource& aSource)
-    : Srx(aMaxBytes, aSource)
-    , iPtr(new TByte[aMaxBytes])
-{
-}
-
-TByte* Srd::Ptr()
-{
-    return (iPtr);
-}
-
-Srd::~Srd()
-{
-    delete[] iPtr;
-}
-
 // Swx
 
 Swx::Swx(TUint aMaxBytes, IWriter& aWriter)
@@ -197,24 +179,6 @@ void Swx::WriteFlush()
 {
     WriteDrain();
     iWriter.WriteFlush();
-}
-
-// Swd
-
-Swd::Swd(TUint aMaxBytes, IWriter& aWriter)
-    : Swx(aMaxBytes, aWriter)
-    , iPtr(new TByte[aMaxBytes])
-{
-}
-
-TByte* Swd::Ptr()
-{
-    return (iPtr);
-}
-
-Swd::~Swd()
-{
-    delete (iPtr);
 }
 
 // Swp (Parasite on a host read stream)
@@ -312,6 +276,8 @@ Brn ReaderBuffer::ReadUntil(TByte aSeparator)
     }
     
     THROW(ReaderError);
+
+	return (Brn(0,0));
 }
 
 void ReaderBuffer::ReadFlush()

@@ -12,6 +12,8 @@
 #pragma warning(disable:4201) // nameless struct/union
 #pragma warning(disable:4214) // bit field types other than int
 
+#include <OpenHome/OhNetTypes.h>
+
 #include <wdm.h>
 #include <wsk.h>
 
@@ -118,8 +120,8 @@ class CSocketOhm
 public:
 	CSocketOhm();
 	NTSTATUS Initialise(CWinsock& aWsk, NETWORK_CALLBACK* aCallback, void*  aContext);
-	void SetTtl(ULONG aValue);
-	void SetMulticastIf(ULONG aValue);
+	void SetTtl(TUint aValue);
+	void SetMulticastIf(TUint aValue);
 	void Send(WSK_BUF* aBuffer, SOCKADDR* aAddress, PIRP aIrp);
 	bool Initialised();
 	void Close();
@@ -140,21 +142,6 @@ private:
 	NETWORK_CALLBACK* iCallback;
 	void* iContext;
 	PWSK_SOCKET iSocket;
-	/*
-	void Send(PSOCKADDR aAddress, UCHAR* aBuffer, ULONG aBytes, UCHAR aHalt, ULONG aSampleRate, ULONG aBitRate, ULONG aBitDepth, ULONG aChannels, ULONG aLatency);
-	OHMHEADER iHeader;
-	ULONG iFrame;
-	ULONGLONG iSampleStart;
-	ULONGLONG iSamplesTotal;
-	ULONG iSampleRate;
-	ULONG iTimestampMultiplier;
-	ULONGLONG iPerformanceCounter;
-	ULONG iLatencyMultiplier;
-	KSEMAPHORE iSendSemaphore;
-	WSK_BUF iSendBuf;
-	SOCKADDR iSendAddr;
-	void* iSendMessage;
-	*/
 };
 
 #endif          // (NTDDI_VERSION >= NTDDI_VISTA)

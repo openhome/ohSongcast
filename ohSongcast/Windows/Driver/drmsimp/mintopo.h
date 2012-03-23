@@ -40,6 +40,10 @@ public:
 
 	void CreateWaveMiniport();
 	void DestroyWaveMiniport();
+	NTSTATUS PropertyHandlerWave(IN PPCPROPERTY_REQUEST PropertyRequest);
+
+private:
+	CMiniportWaveCyclic* m_pWaveMiniport;
 };
 
 typedef CMiniportTopology *PCMiniportTopology;

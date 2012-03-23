@@ -4,8 +4,6 @@
 #include <OpenHome/Standard.h>
 #include <OpenHome/Exception.h>
 
-EXCEPTION(FifoReadError);
-
 namespace OpenHome {
 
 // FifoLite provides lightweight thread unaware first in first out buffering
@@ -19,6 +17,8 @@ public:
     TUint Slots() const;
     TUint SlotsFree() const;
     TUint SlotsUsed() const;
+	void* operator new(size_t aBytes);
+	void operator delete(void* aPtr);
 protected:
     FifoLiteBase(TUint aSlots);
     TUint Write();          // return index of entry to write

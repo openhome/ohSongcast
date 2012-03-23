@@ -9,6 +9,16 @@ FifoLiteBase::FifoLiteBase(TUint aSlots) : iSlots(aSlots), iSlotsUsed(0),
 {
 }
 
+void* FifoLiteBase::operator new(size_t aBytes)
+{
+	return (ExAllocatePoolWithTag(NonPagedPool, aBytes, '2ten'));
+}
+
+void  FifoLiteBase::operator delete(void* aPtr)
+{
+	ExFreePoolWithTag(aPtr, '2ten');
+}
+
 TUint FifoLiteBase::Slots() const
 {
     return iSlots;

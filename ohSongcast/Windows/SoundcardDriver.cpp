@@ -1,4 +1,6 @@
 #include "SoundcardDriver.h"
+#include "../Songcast.h"
+
 #include "PolicyConfig.h"
 
 #include <OpenHome/Private/Arch.h>

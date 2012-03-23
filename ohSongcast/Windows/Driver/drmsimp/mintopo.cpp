@@ -23,12 +23,6 @@ Abstract:
 #include "mintopo.h"
 #include "toptable.h"
 
-extern void MpusUpdateEnabled(UINT aValue);
-extern void MpusUpdateActive(UINT aValue);
-extern void MpusUpdateTtl(UINT aValue);
-extern void MpusUpdateLatency(UINT aValue);
-extern void MpusUpdateEndpoint(UINT aAddress, UINT aPort, UINT aAdapter);
-extern void MpusResend(UINT* aFrames, UINT aCount);
 
 PHYSICALCONNECTIONTABLE TopologyPhysicalConnections =
 {
@@ -347,6 +341,8 @@ CMiniportTopology::CreateWaveMiniport()
         L"Wave",
         *pWavePort 
     );
+
+	m_pWaveMiniport = (CMiniportWaveCyclic*) pWavePort;
 }
 
 //=============================================================================
@@ -401,6 +397,8 @@ CMiniportTopology::DestroyWaveMiniport()
     );
 
 	unregisterPhysicalConnection->Release();
+
+	m_pWaveMiniport = 0;
 }
 
 //=============================================================================
@@ -531,14 +529,46 @@ Return Value:
 //=============================================================================
 NTSTATUS
 PropertyHandler_Wave
+( 
+    IN PPCPROPERTY_REQUEST      PropertyRequest 
+)
+/*++
+
+Routine Description:
+
+  Redirects property request to miniport object
+
+Arguments:
+
+  PropertyRequest - 
+
+Return Value:
+
+  NT status code.
+
+--*/
+{
+    PAGED_CODE();
+
+    ASSERT(PropertyRequest);
+
+    DPF_ENTER(("[PropertyHandler_Wave]"));
+
+    return ((PCMiniportTopology)
+        (PropertyRequest->MajorTarget))->PropertyHandlerWave
+        (
+            PropertyRequest
+        );
+} // PropertyHandler_Wave
+
+
+//=============================================================================
+NTSTATUS
+CMiniportTopology::PropertyHandlerWave
 (
     IN PPCPROPERTY_REQUEST		PropertyRequest
 )
 {
-    ASSERT(PropertyRequest);
-
-    DPF_ENTER(("[PropertyHandler_TopoFilter]"));
-
 	if (IsEqualGUIDAligned(*PropertyRequest->PropertyItem->Set, KSPROPSETID_Private))
     {
 		if (PropertyRequest->Verb & KSPROPERTY_TYPE_GET)
@@ -578,7 +608,7 @@ PropertyHandler_Wave
 					return STATUS_INVALID_PARAMETER;
 				}
 
-				MpusResend((UINT*)PropertyRequest->Value, PropertyRequest->ValueSize / 4);
+				m_pWaveMiniport->PipelineResend((TUint*)PropertyRequest->Value, PropertyRequest->ValueSize / 4);
 
 				return STATUS_SUCCESS;
 			}
@@ -589,7 +619,7 @@ PropertyHandler_Wave
 
 				UINT* enabled = (UINT*)PropertyRequest->Value;
 
-				MpusUpdateEnabled(*enabled);
+				m_pWaveMiniport->UpdateEnabled(*enabled);
 
 				return STATUS_SUCCESS;
 			}
@@ -601,7 +631,7 @@ PropertyHandler_Wave
 
 				UINT* active = (UINT*)PropertyRequest->Value;
 
-				MpusUpdateActive(*active);
+				m_pWaveMiniport->UpdateActive(*active);
 
 				return STATUS_SUCCESS;
 			}
@@ -617,7 +647,7 @@ PropertyHandler_Wave
 				UINT port = *pValue++;
 				UINT adapter = *pValue;
 
-				MpusUpdateEndpoint(addr, port, adapter);
+				m_pWaveMiniport->UpdateEndpoint(addr, port, adapter);
 
 				return STATUS_SUCCESS;
 			}
@@ -629,7 +659,7 @@ PropertyHandler_Wave
 
 				UINT* ttl = (UINT*)PropertyRequest->Value;
 
-				MpusUpdateTtl(*ttl);
+				m_pWaveMiniport->UpdateTtl(*ttl);
 
 				return STATUS_SUCCESS;
 			}
@@ -641,7 +671,7 @@ PropertyHandler_Wave
 
 				UINT* latency = (UINT*)PropertyRequest->Value;
 
-				MpusUpdateLatency(*latency);
+				m_pWaveMiniport->UpdateLatency(*latency);
 
 				return STATUS_SUCCESS;
 			}

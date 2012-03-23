@@ -4,7 +4,6 @@
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Net/Core/OhNet.h>
 
-#include "../Ohm.h"
 #include "../OhmSender.h"
 #include "../../ohNetmon/NetworkMonitor.h"
 #include "ReceiverManager3.h"

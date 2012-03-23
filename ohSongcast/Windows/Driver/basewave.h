@@ -15,6 +15,8 @@ Abstract:
 #ifndef _MSVAD_BASEWAVE_H_
 #define _MSVAD_BASEWAVE_H_
 
+#include <OpenHome/OhNetTypes.h>
+
 //=============================================================================
 // Referenced Forward
 //=============================================================================
@@ -70,6 +72,10 @@ protected:
     (
         IN  PWAVEFORMATEX       pWfx
     );
+
+	virtual void PipelineStop() = 0;
+	virtual void PipelineSend(TByte* aBuffer, TUint aBytes) = 0;
+	virtual void SetFormat(TUint aSampleRate, TUint aBitRate, TUint aBitDepth, TUint aChannels) = 0;
 
 public:
     CMiniportWaveCyclicMSVAD();

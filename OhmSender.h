@@ -1,5 +1,5 @@
-#ifndef HEADER_OHMSENDER
-#define HEADER_OHMSENDER
+#ifndef HEADER_OHM_SENDER
+#define HEADER_OHM_SENDER
 
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Buffer.h>
@@ -11,24 +11,13 @@
 
 #include "Ohm.h"
 #include "OhmMsg.h"
+#include "OhmSocket.h"
+#include "OhmSenderDriver.h"
 
 namespace OpenHome {
 namespace Net {
 
 class ProviderSender;
-
-class IOhmSenderDriver
-{
-public:
-    virtual void SetEnabled(TBool aValue) = 0;
-    virtual void SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter) = 0;
-    virtual void SetActive(TBool aValue) = 0;
-    virtual void SetTtl(TUint aValue) = 0;
-    virtual void SetLatency(TUint aValue) = 0;
-    virtual void SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal) = 0;
-	virtual void Resend(const Brx& aFrames) = 0;
-    virtual ~IOhmSenderDriver() {}
-};
 
 class OhmSenderDriver : public IOhmSenderDriver
 {
@@ -242,5 +231,5 @@ private:
 } // namespace Net
 } // namespace OpenHome
 
-#endif // HEADER_OHMSENDER
+#endif // HEADER_OHM_SENDER
 

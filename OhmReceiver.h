@@ -11,6 +11,7 @@
 
 #include "Ohm.h"
 #include "OhmMsg.h"
+#include "OhmSocket.h"
 
 namespace OpenHome {
 namespace Net {

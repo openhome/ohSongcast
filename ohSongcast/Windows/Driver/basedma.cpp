@@ -208,7 +208,7 @@ Return Value:
 {
     UNREFERENCED_PARAMETER(Destination);
 
-	MpusSend((UCHAR*)Source, ByteCount);
+	m_pMiniport->PipelineSend((TByte*)Source, ByteCount);
 } // CopyTo
 
 #pragma code_seg("PAGE")

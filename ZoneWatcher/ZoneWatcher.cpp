@@ -8,6 +8,7 @@
 #include <OpenHome/Private/Debug.h>
 
 #include "../Ohm.h"
+#include "../OhmSocket.h"
 
 #include <vector>
 #include <stdio.h>

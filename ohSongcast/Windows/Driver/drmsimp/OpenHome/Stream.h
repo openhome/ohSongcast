@@ -76,17 +76,6 @@ private:
     TByte iBuf[S];
 };
 
-class Srd : public Srx
-{
-public:
-    Srd(TUint aMaxBytes, IReaderSource& aSource);
-    virtual ~Srd();
-private:
-    virtual TByte* Ptr();
-private:
-    TByte* iPtr;
-};
-
 class Swx : public Sxx, public IWriter
 {
 public:
@@ -112,17 +101,6 @@ private:
     virtual TByte* Ptr() { return (iBuf); }
 private:
     TByte iBuf[S];
-};
-
-class Swd : public Swx
-{
-public:
-    Swd(TUint aMaxBytes, IWriter& aWriter);
-    virtual ~Swd();
-private:
-    virtual TByte* Ptr();
-private:
-    TByte* iPtr;
 };
 
 class Swp : public Swx
