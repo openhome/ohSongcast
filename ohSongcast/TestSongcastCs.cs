@@ -79,6 +79,26 @@ using OpenHome.Songcast;
             Console.WriteLine("Removed {0}:{1}:{2}:{3}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status);
         }
 
+        public void ReceiverVolumeControlChanged(IReceiver aReceiver)
+        {
+            Console.WriteLine("VolumeControlChanged {0}:{1}:{2}:{3}:{4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.HasVolumeControl);
+        }
+
+        public void ReceiverVolumeChanged(IReceiver aReceiver)
+        {
+            Console.WriteLine("ReceiverVolumeChanged {0}:{1}:{2}:{3}:{4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.Volume);
+        }
+
+        public void ReceiverMuteChanged(IReceiver aReceiver)
+        {
+            Console.WriteLine("ReceiverMuteChanged {0}:{1}:{2}:{3}:{4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.Mute);
+        }
+
+        public void ReceiverVolumeLimitChanged(IReceiver aReceiver)
+        {
+            Console.WriteLine("ReceiverVolumeLimitChanged {0}:{1}:{2}:{3}:{4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.VolumeLimit);
+        }
+
         public void SubnetAdded(ISubnet aSubnet)
         {
             Console.WriteLine("Added   {0}:{1}", aSubnet.Address, aSubnet.AdapterName);

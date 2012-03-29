@@ -125,7 +125,7 @@ EReceiverStatus STDCALL ReceiverStatus(THandle aReceiver)
 	return (((Receiver*)aReceiver)->Status());
 }
 
-uint32_t STDCALL ReceiverHasVolumeControl(THandle aReceiver)
+bool STDCALL ReceiverHasVolumeControl(THandle aReceiver)
 {
 	return (((Receiver*)aReceiver)->HasVolumeControl());
 }
@@ -135,7 +135,7 @@ uint32_t STDCALL ReceiverVolume(THandle aReceiver)
 	return (((Receiver*)aReceiver)->Volume());
 }
 
-uint32_t STDCALL ReceiverMute(THandle aReceiver)
+bool STDCALL ReceiverMute(THandle aReceiver)
 {
 	return (((Receiver*)aReceiver)->Mute());
 }
@@ -160,9 +160,9 @@ void STDCALL ReceiverVolumeDec(THandle aReceiver)
 	((Receiver*)aReceiver)->VolumeDec();
 }
 
-void STDCALL ReceiverSetMute(THandle aReceiver, uint32_t aValue)
+void STDCALL ReceiverSetMute(THandle aReceiver, bool aValue)
 {
-	((Receiver*)aReceiver)->SetMute((aValue == 0) ? false : true);
+	((Receiver*)aReceiver)->SetMute(aValue);
 }
 
 void STDCALL ReceiverPlay(THandle aReceiver)

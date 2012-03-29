@@ -41,6 +41,10 @@ namespace OpenHome.Songcast
         void ReceiverAdded(IReceiver aReceiver);
         void ReceiverChanged(IReceiver aReceiver);
         void ReceiverRemoved(IReceiver aReceiver);
+        void ReceiverVolumeControlChanged(IReceiver aReceiver);
+        void ReceiverVolumeChanged(IReceiver aReceiver);
+        void ReceiverMuteChanged(IReceiver aReceiver);
+        void ReceiverVolumeLimitChanged(IReceiver aReceiver);
     }
 
     public enum EReceiverStatus
@@ -52,6 +56,10 @@ namespace OpenHome.Songcast
 
     public interface IReceiver
     {
+        void SetVolume(uint aValue);
+        void VolumeInc();
+        void VolumeDec();
+        void SetMute(bool aValue);
         void Play();
         void Stop();
         void Standby();
@@ -60,10 +68,10 @@ namespace OpenHome.Songcast
         string Group { get; }
         string Name { get; }
         EReceiverStatus Status { get; }
-        bool HasVolumeControl() { get; }
-	    uint Volume() { get; }
-	    bool Mute() { get; }
-        uint VolumeLimit() { get; }
+        bool HasVolumeControl { get; }
+	    uint Volume { get; }
+	    bool Mute { get; }
+        uint VolumeLimit { get; }
     }
 
     internal class Receiver : IReceiver, IDisposable
@@ -78,6 +86,22 @@ namespace OpenHome.Songcast
         static extern IntPtr ReceiverName(IntPtr aHandle);
         [DllImport("ohSongcast")]
         static extern uint ReceiverStatus(IntPtr aHandle);
+        [DllImport("ohSongcast")]
+        static extern bool ReceiverHasVolumeControl(IntPtr aHandle);
+        [DllImport("ohSongcast")]
+        static extern uint ReceiverVolume(IntPtr aHandle);
+        [DllImport("ohSongcast")]
+        static extern bool ReceiverMute(IntPtr aHandle);
+        [DllImport("ohSongcast")]
+        static extern uint ReceiverVolumeLimit(IntPtr aHandle);
+        [DllImport("ohSongcast")]
+        static extern void ReceiverSetVolume(IntPtr aHandle, uint aValue);
+        [DllImport("ohSongcast")]
+        static extern void ReceiverVolumeInc(IntPtr aHandle);
+        [DllImport("ohSongcast")]
+        static extern void ReceiverVolumeDec(IntPtr aHandle);
+        [DllImport("ohSongcast")]
+        static extern void ReceiverSetMute(IntPtr aHandle, bool aValue);
         [DllImport("ohSongcast")]
         static extern void ReceiverPlay(IntPtr aHandle);
         [DllImport("ohSongcast")]
@@ -97,6 +121,10 @@ namespace OpenHome.Songcast
             iRoom = Marshal.PtrToStringAnsi(ReceiverRoom(iReceiver));
             iGroup = Marshal.PtrToStringAnsi(ReceiverGroup(iReceiver));
             iName = Marshal.PtrToStringAnsi(ReceiverName(iReceiver));
+            iHasVolumeControl = ReceiverHasVolumeControl(iReceiver);
+            iVolume = ReceiverVolume(iReceiver);
+            iMute = ReceiverMute(iReceiver);
+            iVolumeLimit = ReceiverVolumeLimit(iReceiver);
         }
 
         internal bool Owns(IntPtr aReceiver)
@@ -107,6 +135,26 @@ namespace OpenHome.Songcast
         public void Dispose()
         {
             ReceiverRemoveRef(iReceiver);
+        }
+
+        public void SetVolume(uint aValue)
+        {
+            ReceiverSetVolume(iReceiver, aValue);
+        }
+
+        public void VolumeInc()
+        {
+            ReceiverVolumeInc(iReceiver);
+        }
+
+        public void VolumeDec()
+        {
+            ReceiverVolumeDec(iReceiver);
+        }
+
+        public void SetMute(bool aValue)
+        {
+            ReceiverSetMute(iReceiver, aValue);
         }
 
         public void Play()
@@ -164,11 +212,47 @@ namespace OpenHome.Songcast
             }
         }
 
+        public bool HasVolumeControl
+        {
+            get
+            {
+                return iHasVolumeControl;
+            }
+        }
+
+        public uint Volume
+        {
+            get
+            {
+                return iVolume;
+            }
+        }
+
+        public bool Mute
+        {
+            get
+            {
+                return iMute;
+            }
+        }
+
+        public uint VolumeLimit
+        {
+            get
+            {
+                return iVolumeLimit;
+            }
+        }
+
         IntPtr iReceiver;
         string iUdn;
         string iRoom;
         string iGroup;
         string iName;
+        bool iHasVolumeControl;
+        uint iVolume;
+        bool iMute;
+        uint iVolumeLimit;
     }
 
     public interface ISubnetHandler
@@ -186,13 +270,13 @@ namespace OpenHome.Songcast
 
     internal class Subnet : ISubnet, IDisposable
     {
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern IntPtr SubnetAddress(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern IntPtr SubnetAdapterName(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void SubnetAddRef(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void SubnetRemoveRef(IntPtr aHandle);
 
         public Subnet(IntPtr aSubnet)
@@ -261,7 +345,11 @@ namespace OpenHome.Songcast
         {
             eAdded,
             eChanged,
-            eRemoved
+            eRemoved,
+            eVolumeControlChanged,
+            eVolumeChanged,
+            eMuteChanged,
+            eVolumeLimitChanged
         }
 
         private delegate void DelegateReceiverCallback(IntPtr aPtr, ECallbackType aType, IntPtr aReceiver);
@@ -269,45 +357,45 @@ namespace OpenHome.Songcast
         private delegate void DelegateConfigurationChangedCallback(IntPtr aPtr, IntPtr aSongcast);
         private unsafe delegate void DelegateFatalErrorCallback(IntPtr aPtr, char* aMessage);
 
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern unsafe IntPtr SongcastCreate(string aDomain, uint aSubnet, uint aChannel, uint aTtl, uint aLatency, bool aMulticast, bool aEnabled, uint aPreset, DelegateReceiverCallback aReceiverCallback, IntPtr aReceiverPtr, DelegateSubnetCallback aSubnetCallback, IntPtr aSubnetPtr, DelegateConfigurationChangedCallback aConfigurationChangedCallback, IntPtr aConfigurationChangedPtr, DelegateFatalErrorCallback aFatalErrorCallback, IntPtr aFatalErrorPtr, string aManufacturer, string aManufacturerUrl, string aModelUrl, byte[] aImagePtr, int aImageBytes, string aMimeType);
 
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern uint SongcastSubnet(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern uint SongcastChannel(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern uint SongcastTtl(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern uint SongcastLatency(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern bool SongcastMulticast(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern bool SongcastEnabled(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern uint SongcastPreset(IntPtr aHandle);
         
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void SongcastSetSubnet(IntPtr aHandle, uint aValue);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void SongcastSetChannel(IntPtr aHandle, uint aValue);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void SongcastSetTtl(IntPtr aHandle, uint aValue);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void SongcastSetLatency(IntPtr aHandle, uint aValue);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void SongcastSetMulticast(IntPtr aHandle, bool aValue);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void SongcastSetEnabled(IntPtr aHandle, bool aValue);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void SongcastSetPreset(IntPtr aHandle, uint aValue);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern unsafe void SongcastSetTrack(IntPtr aHandle, char* aUri, char* aMetadata, long aSamplesTotal, long aSampleStart);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern unsafe void SongcastSetMetatext(IntPtr aHandle, char* aValue);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void SongcastRefreshReceivers(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void SongcastDestroy(IntPtr aHandle);
 
         public unsafe Songcast(string aDomain, uint aSubnet, uint aChannel, uint aTtl, uint aLatency, bool aMulticast, bool aEnabled, uint aPreset, IReceiverHandler aReceiverHandler, ISubnetHandler aSubnetHandler, IConfigurationChangedHandler aConfigurationChangedHandler, string aManufacturer, string aManufacturerUrl, string aModelUrl, byte[] aImage, string aMimeType)
@@ -343,6 +431,18 @@ namespace OpenHome.Songcast
                 case ECallbackType.eRemoved:
                     ReceiverRemoved(aReceiver);
                     break;
+                case ECallbackType.eVolumeControlChanged:
+                    ReceiverVolumeControlChanged(aReceiver);
+                    break;
+                case ECallbackType.eVolumeChanged:
+                    ReceiverVolumeChanged(aReceiver);
+                    break;
+                case ECallbackType.eMuteChanged:
+                    ReceiverMuteChanged(aReceiver);
+                    break;
+                case ECallbackType.eVolumeLimitChanged:
+                    ReceiverVolumeLimitChanged(aReceiver);
+                    break;
             }
         }
 
@@ -374,6 +474,54 @@ namespace OpenHome.Songcast
                     iReceiverHandler.ReceiverRemoved(receiver);
                     receiver.Dispose();
                     iReceiverList.Remove(receiver);
+                    return;
+                }
+            }
+        }
+
+        private void ReceiverVolumeControlChanged(IntPtr aReceiver)
+        {
+            foreach (Receiver receiver in iReceiverList)
+            {
+                if (receiver.Owns(aReceiver))
+                {
+                    iReceiverHandler.ReceiverVolumeControlChanged(receiver);
+                    return;
+                }
+            }
+        }
+
+        private void ReceiverVolumeChanged(IntPtr aReceiver)
+        {
+            foreach (Receiver receiver in iReceiverList)
+            {
+                if (receiver.Owns(aReceiver))
+                {
+                    iReceiverHandler.ReceiverVolumeChanged(receiver);
+                    return;
+                }
+            }
+        }
+
+        private void ReceiverMuteChanged(IntPtr aReceiver)
+        {
+            foreach (Receiver receiver in iReceiverList)
+            {
+                if (receiver.Owns(aReceiver))
+                {
+                    iReceiverHandler.ReceiverMuteChanged(receiver);
+                    return;
+                }
+            }
+        }
+
+        private void ReceiverVolumeLimitChanged(IntPtr aReceiver)
+        {
+            foreach (Receiver receiver in iReceiverList)
+            {
+                if (receiver.Owns(aReceiver))
+                {
+                    iReceiverHandler.ReceiverVolumeLimitChanged(receiver);
                     return;
                 }
             }
