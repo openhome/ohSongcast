@@ -22,6 +22,9 @@ Abstract:
 #include <msvad.h>
 #include "common.h"
 #include "drmsimp\drmsimp.h"
+#include "drmsimp\mintopo.h"
+#include "drmsimp\minwave.h"
+
 
 //-----------------------------------------------------------------------------
 // Defines                                                                    
@@ -196,6 +199,7 @@ InstallSubdevice
     __in        REFGUID                 PortInterfaceId,
     __out_opt   PUNKNOWN *              OutPortInterface,
     __out_opt   PUNKNOWN *              OutPortUnknown,
+    __out_opt   PUNKNOWN *              OutMiniportUnknown,
 	__in        BOOL                    Register
 )
 {
@@ -331,6 +335,11 @@ Return Value:
             );
         }
 
+        if (OutMiniportUnknown)
+        {
+			*OutMiniportUnknown = miniport;
+        }
+
         port->Release();
 	}
 
@@ -377,11 +386,13 @@ Return Value:
     ASSERT(Irp);
     ASSERT(ResourceList);
 
-    NTSTATUS                    ntStatus        = STATUS_SUCCESS;
-    PUNKNOWN                    unknownTopology = NULL;
-    PUNKNOWN                    unknownWave     = NULL;
-    PUNKNOWN                    pUnknownCommon  = NULL;
-    PADAPTERCOMMON              pAdapterCommon  = NULL;
+    NTSTATUS                    ntStatus         = STATUS_SUCCESS;
+    PUNKNOWN                    unknownTopology  = NULL;
+    PUNKNOWN                    miniportTopology = NULL;
+    PUNKNOWN                    unknownWave      = NULL;
+    PUNKNOWN                    miniportWave     = NULL;
+    PUNKNOWN                    pUnknownCommon   = NULL;
+    PADAPTERCOMMON              pAdapterCommon   = NULL;
 
     DPF_ENTER(("[StartDevice]"));
 
@@ -433,6 +444,7 @@ Return Value:
 			IID_IPortTopology,
 			NULL,
 			&unknownTopology,
+			&miniportTopology,
 			true
 		);
     }
@@ -453,22 +465,28 @@ Return Value:
 			IID_IPortWaveCyclic,
 			pAdapterCommon->WavePortDriverDest(),
 			&unknownWave,
+			&miniportWave,
 			true // do register because we are no longer having this as a dynamic device
 		);
 	}
 
-	PcRegisterPhysicalConnection ( 
-        DeviceObject,
-        unknownWave,
-        KSPIN_WAVE_RENDER_SOURCE,
-        unknownTopology,
-        KSPIN_TOPO_WAVEOUT_SOURCE
-    );
+	if (NT_SUCCESS(ntStatus))
+    {
+		PcRegisterPhysicalConnection ( 
+			DeviceObject,
+			unknownWave,
+			KSPIN_WAVE_RENDER_SOURCE,
+			unknownTopology,
+			KSPIN_TOPO_WAVEOUT_SOURCE
+		);
+	}
+
+	((CMiniportTopology*)miniportTopology)->SetMiniportWave((CMiniportWaveCyclic*)miniportWave);
 
 	// Release the adapter common object.  It either has other references,
     // or we need to delete it anyway.
-    //
-    if (pAdapterCommon)
+
+	if (pAdapterCommon)
     {
         pAdapterCommon->Release();
     }

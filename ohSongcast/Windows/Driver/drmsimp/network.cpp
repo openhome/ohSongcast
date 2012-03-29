@@ -46,8 +46,8 @@ CWinsock* CWinsock::Create()
 {
 	CWinsock* winsock = (CWinsock*) ExAllocatePoolWithTag(NonPagedPool, sizeof(CWinsock), '1ten');
 
-	if (winsock == NULL) {
-		return (NULL);
+	if (winsock == 0) {
+		return (0);
 	}
 
 	KeInitializeEvent(&winsock->iInitialised, SynchronizationEvent, false);
@@ -83,6 +83,8 @@ CWinsock* CWinsock::Create()
 
 			status = KeWaitForSingleObject(&winsock->iInitialised, Executive, KernelMode, false, &timeout);
 
+			ZwClose(handle);
+
 			if(status == STATUS_SUCCESS)
 			{
 				return (winsock);
@@ -94,7 +96,7 @@ CWinsock* CWinsock::Create()
 
 	ExFreePoolWithTag(winsock, '1ten');
 
-	return (NULL);
+	return (0);
 }
 
 void CWinsock::Init(void* aContext)
@@ -107,14 +109,12 @@ void CWinsock::Init(void* aContext)
 
 	status = WskCaptureProviderNPI(&(winsock->iRegistration), WSK_INFINITE_WAIT, &(winsock->iProviderNpi));
 
-	if (status != STATUS_SUCCESS)
+	if (status == STATUS_SUCCESS)
 	{
-		return;
+		// Indicate that we are initialised
+
+		KeSetEvent(&winsock->iInitialised, 0, false);
 	}
-
-	// Indicate that we are initialised
-
-	KeSetEvent(&winsock->iInitialised, 0, false);
 }
 
 void CWinsock::Close()
@@ -128,54 +128,17 @@ void CWinsock::Close()
 
 // CSocketOhm
 
-CSocketOhm::CSocketOhm()
+CSocketOhm* CSocketOhm::Create(CWinsock& aWsk)
 {
-	iInitialised = false;
+	CSocketOhm* socket = (CSocketOhm*) ExAllocatePoolWithTag(NonPagedPool, sizeof(CSocketOhm), '1ten');
 
-	KeInitializeSpinLock(&iSpinLock);
+	if (socket == 0) {
+		return (0);
+	}
 
-	/*
-	KeInitializeSemaphore(&iSendSemaphore, 1, 1);
+	socket->iWsk = &aWsk;
 
-	iHeader.iMagic[0] = 'O';
-	iHeader.iMagic[1] = 'h';
-	iHeader.iMagic[2] = 'm';
-	iHeader.iMagic[3] = ' ';
-
-	iHeader.iMajorVersion = 1;
-	iHeader.iMsgType = 3;
-	iHeader.iAudioHeaderBytes = 50;
-	iHeader.iAudioNetworkTimestamp = 0;
-	iHeader.iAudioMediaLatency = 0;
-	iHeader.iAudioMediaTimestamp = 0;
-	iHeader.iAudioSampleStartHi = 0;
-	iHeader.iAudioSampleStartLo = 0;
-	iHeader.iAudioSamplesTotalHi = 0;
-	iHeader.iAudioSamplesTotalLo = 0;
-	iHeader.iAudioVolumeOffset = 0;
-	iHeader.iReserved = 0;
-	iHeader.iCodecNameBytes = 6;  // 3
-	iHeader.iCodecName[0] = 'P';
-	iHeader.iCodecName[1] = 'C';
-	iHeader.iCodecName[2] = 'M';
-	iHeader.iCodecName[3] = ' ';
-	iHeader.iCodecName[4] = ' ';
-	iHeader.iCodecName[5] = ' ';
-
-	iFrame = 0;
-	iSampleStart = 0;
-	iSamplesTotal = 0;
-	iSampleRate = 0;
-
-    iPerformanceCounter = KeQueryInterruptTime();
-	*/
-}
-
-NTSTATUS CSocketOhm::Initialise(CWinsock& aWsk, NETWORK_CALLBACK aCallback, void* aContext)
-{
-	iWsk = &aWsk;
-	iCallback = aCallback;
-	iContext = aContext;
+	KeInitializeEvent(&socket->iInitialised, SynchronizationEvent, false);
 
 	// Create the socket
 
@@ -188,22 +151,23 @@ NTSTATUS CSocketOhm::Initialise(CWinsock& aWsk, NETWORK_CALLBACK aCallback, void
 
 	// Check result
 
-	if (irp == NULL) {
-        return STATUS_INSUFFICIENT_RESOURCES;
+	if (irp == 0) {
+		ExFreePoolWithTag(socket, '1ten');
+        return 0;
     }
 
 	// Set the completion routine for the IRP
-	IoSetCompletionRoutine(irp,	CreateComplete, this, TRUE, TRUE, TRUE);
+	IoSetCompletionRoutine(irp,	CreateComplete, socket, TRUE, TRUE, TRUE);
 
 	// Initiate the creation of the socket
 
-	status = iWsk->iProviderNpi.Dispatch->WskSocket(
-		  iWsk->iProviderNpi.Client,
+	status = aWsk.iProviderNpi.Dispatch->WskSocket(
+		  aWsk.iProviderNpi.Client,
 		  AF_INET,
 		  SOCK_DGRAM,
 		  IPPROTO_UDP,
 		  WSK_FLAG_DATAGRAM_SOCKET,
-		  NULL,
+		  socket,
 		  NULL,
 		  NULL,
 		  NULL,
@@ -211,7 +175,23 @@ NTSTATUS CSocketOhm::Initialise(CWinsock& aWsk, NETWORK_CALLBACK aCallback, void
 		  irp
 		  );
 
-	return (status);
+	if (status == STATUS_SUCCESS || status == STATUS_PENDING)
+	{
+		LARGE_INTEGER timeout;
+
+		timeout.QuadPart = -1200000000; // 120 seconds in 100nS units
+
+		status = KeWaitForSingleObject(&socket->iInitialised, Executive, KernelMode, false, &timeout);
+
+		if (status == STATUS_SUCCESS)
+		{
+			return (socket);
+		}
+	}
+
+	ExFreePoolWithTag(socket, '1ten');
+
+	return (0);
 }
 
 NTSTATUS CSocketOhm::CreateComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext)
@@ -258,46 +238,8 @@ NTSTATUS CSocketOhm::BindComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID
 	{
 		CSocketOhm* socket = (CSocketOhm*)aContext;
 
-		// Reuse the Irp
-		IoReuseIrp(aIrp, STATUS_SUCCESS);
-
-		// Set the completion routine for the IRP
-		IoSetCompletionRoutine(aIrp, InitialiseComplete, socket, TRUE, TRUE, TRUE);
-
-		// Set the TTL
-
-		ULONG ttl = 4;
-
-		((PWSK_PROVIDER_BASIC_DISPATCH)(socket->iSocket->Dispatch))->WskControlSocket(socket->iSocket, WskSetOption, IP_MULTICAST_TTL, IPPROTO_IP, sizeof(ttl), &ttl, 0, NULL, NULL, aIrp);
+		KeSetEvent(&socket->iInitialised, 0, false);
 	}
-	else
-	{
-		IoFreeIrp(aIrp);
-	}
-
-	// Always return STATUS_MORE_PROCESSING_REQUIRED to
-	// terminate the completion processing of the IRP.
-	return STATUS_MORE_PROCESSING_REQUIRED;
-}
-
-NTSTATUS CSocketOhm::InitialiseComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext)
-{
-	UNREFERENCED_PARAMETER(aDeviceObject);
-
-	CSocketOhm* socket = (CSocketOhm*)aContext;
-
-	if (aIrp->IoStatus.Status == STATUS_SUCCESS)
-	{
-		KIRQL oldIrql;
-
-		KeAcquireSpinLock (&(socket->iSpinLock), &oldIrql);
-
-		socket->iInitialised = true;
-
-		KeReleaseSpinLock (&(socket->iSpinLock), oldIrql);
-	}
-
-	(*(socket->iCallback))(socket->iContext);
 
 	// Free the IRP
 
@@ -329,7 +271,7 @@ void CSocketOhm::SetTtl(TUint aValue)
 
 	SIZE_T returned;
 
-	((PWSK_PROVIDER_BASIC_DISPATCH)(iSocket->Dispatch))->WskControlSocket(iSocket, WskSetOption, IP_MULTICAST_TTL, IPPROTO_IP, 1, &aValue, 0, NULL, &returned, irp);
+	((PWSK_PROVIDER_DATAGRAM_DISPATCH)(iSocket->Dispatch))->Basic.WskControlSocket(iSocket, WskSetOption, IP_MULTICAST_TTL, IPPROTO_IP, 1, &aValue, 0, NULL, &returned, irp);
 }
 
 NTSTATUS CSocketOhm::SetTtlComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext)
@@ -364,7 +306,7 @@ void CSocketOhm::SetMulticastIf(TUint aValue)
 
 	SIZE_T returned;
 
-	((PWSK_PROVIDER_BASIC_DISPATCH)(iSocket->Dispatch))->WskControlSocket(iSocket, WskSetOption, IP_MULTICAST_IF, IPPROTO_IP, 4, &aValue, 0, NULL, &returned, irp);
+	((PWSK_PROVIDER_DATAGRAM_DISPATCH)(iSocket->Dispatch))->Basic.WskControlSocket(iSocket, WskSetOption, IP_MULTICAST_IF, IPPROTO_IP, 4, &aValue, 0, NULL, &returned, irp);
 }
 
 NTSTATUS CSocketOhm::SetMulticastIfComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext)
@@ -393,7 +335,7 @@ void CSocketOhm::Close()
 
 	// Check result
 
-	if (irp == NULL)
+	if (irp == 0)
 	{
         return;
     }
@@ -406,7 +348,7 @@ void CSocketOhm::Close()
 
 	IoSetCompletionRoutine(irp,	CloseComplete, &closed, TRUE, TRUE, TRUE);
 
-	((PWSK_PROVIDER_BASIC_DISPATCH)(iSocket->Dispatch))->WskCloseSocket(iSocket, irp);
+	((PWSK_PROVIDER_DATAGRAM_DISPATCH)(iSocket->Dispatch))->Basic.WskCloseSocket(iSocket, irp);
 
 	KeWaitForSingleObject(&closed, Executive, KernelMode, false, NULL); // null = wait forever (no timeout)
 }
@@ -425,19 +367,6 @@ NTSTATUS CSocketOhm::CloseComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOI
 	// terminate the completion processing of the IRP.
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
-}
-
-bool CSocketOhm::Initialised()
-{
-	KIRQL oldIrql;
-
-	KeAcquireSpinLock (&iSpinLock, &oldIrql);
-
-	bool initialised = iInitialised;
-
-	KeReleaseSpinLock (&iSpinLock, oldIrql);
-
-	return initialised;
 }
 
 #endif

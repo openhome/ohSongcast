@@ -17,6 +17,7 @@ Abstract:
 
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/OhmMsg.h>
+#include <OpenHome/Buffer.h>
 #include <OpenHome/Fifo.h>
 
 #include "basewave.h"
@@ -56,7 +57,7 @@ public:
 	virtual void PipelineStop();
 	virtual void PipelineSend(TByte* aBuffer, TUint aBytes);
 	virtual void SetFormat(TUint aSampleRate, TUint aBitRate, TUint aBitDepth, TUint aChannels);
-	void PipelineResend(TUint* aFrames, TUint aCount);
+	void PipelineResend(const OpenHome::Brx& aFrames);
 
     ~CMiniportWaveCyclic();
 
@@ -65,7 +66,7 @@ public:
 private:
 	void UpdateLatencyLocked();
 	void SetFormatLocked(TUint aSampleRate, TUint aBitRate, TUint aBitDepth, TUint aChannels);
-	TBool PipelineQueueRemove(PMDL* aMdl, TUint* aBytes, SOCKADDR* aAddress);
+	OpenHome::Net::OhmMsgAudio* PipelineQueueRemove(SOCKADDR* aAddress);
 	void PipelineOutput();
 	static NTSTATUS PipelineOutputComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext);
 	NTSTATUS PipelineOutputComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp);
@@ -75,8 +76,7 @@ private:
 	void PipelineSendAddFragmentLocked(TByte* aBuffer, TUint aBytes);
 	TBool PipelineSendLocked(TByte* aBuffer, TUint aBytes);
 	TBool PipelineStopLocked();
-	static void SocketInitialised(void* aContext);
-	void SocketInitialised();
+	void ResendLocked(OpenHome::Net::OhmMsgAudio& aMsg);
 
 private:
     TBool iCaptureAllocated;
@@ -92,6 +92,7 @@ private:
 	TUint iPipelinePacketBytes;
 	TUint iPipelineSampleBytes;
 	TUint iPipelineSampleChannelBytes;
+	OpenHome::Net::OhmMsgAudio* iPipelineOutputMsg;
 	WSK_BUF iPipelineOutputBuf;
 	TUint iPipelineAdapter;
 	SOCKADDR iPipelineAddress;
@@ -110,7 +111,6 @@ private:
 
 	CWinsock* iWsk;
 	CSocketOhm* iSocket;
-	KEVENT iWskInitialisedEvent;
 };
 
 typedef CMiniportWaveCyclic *PCMiniportWaveCyclic;

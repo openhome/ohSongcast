@@ -35,6 +35,7 @@ void OhmMsg::AddRef()
 void OhmMsg::RemoveRef()
 {
 	if (--iRefCount == 0) {
+		Destroy();
 		iFactory->Destroy(*this);
 	}
 }
@@ -90,6 +91,10 @@ void OhmMsg::Create()
 	iTxTimestamped = false;
 	iRxTimestamped = false;
 }
+
+void OhmMsg::Destroy()
+{
+}
 	
 // OhmMsgAudio
 
@@ -115,6 +120,30 @@ TUint OhmMsgAudio::Bytes() const
 	return (iBytes);
 }
 
+TUint OhmMsgAudio::Frame() const
+{
+	OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(iMdl);
+	return (header->iAudioFrame);
+}
+
+TBool OhmMsgAudio::Resent() const
+{
+	OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(iMdl);
+	return ((header->iAudioFlags & 0x08) != 0);
+}
+
+void OhmMsgAudio::SetResent(TBool aValue)
+{
+	OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(iMdl);
+
+	if (aValue) {
+		header->iAudioFlags |= 0x08;
+	}
+	else {
+		header->iAudioFlags &= 0xf7;
+	}
+}
+
 void OhmMsgAudio::Process(IOhmMsgProcessor& aProcessor)
 {
 	aProcessor.Process(*this);
@@ -122,6 +151,19 @@ void OhmMsgAudio::Process(IOhmMsgProcessor& aProcessor)
 
 void OhmMsgAudio::Externalise(IWriter& /*aWriter*/)
 {
+}
+
+void OhmMsgAudio::Destroy()
+{
+	PMDL mdl = iMdl;
+
+	while (mdl != NULL)
+	{
+		ExFreePoolWithTag(MmGetMdlVirtualAddress(mdl), '2ten');
+		PMDL next = mdl->Next;
+		IoFreeMdl(mdl);
+		mdl = next;
+	}
 }
 
 
@@ -254,6 +296,7 @@ void  OhmMsgFactory::operator delete(void* aPtr)
 
 OhmMsgAudio& OhmMsgFactory::CreateAudio(PMDL aMdl, TUint aBytes)
 {
+	ASSERT(iFifoAudio.SlotsUsed() > 0);
 	OhmMsgAudio* msg = iFifoAudio.Read();
 	msg->Create(aMdl, aBytes);
 	return (*msg);
@@ -261,6 +304,7 @@ OhmMsgAudio& OhmMsgFactory::CreateAudio(PMDL aMdl, TUint aBytes)
 
 OhmMsgTrack& OhmMsgFactory::CreateTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata)
 {
+	ASSERT(iFifoTrack.SlotsUsed() > 0);
 	OhmMsgTrack* msg = iFifoTrack.Read();
 	msg->Create(aSequence, aUri, aMetadata);
 	return (*msg);
@@ -268,6 +312,7 @@ OhmMsgTrack& OhmMsgFactory::CreateTrack(TUint aSequence, const Brx& aUri, const 
 
 OhmMsgMetatext& OhmMsgFactory::CreateMetatext(TUint aSequence, const Brx& aMetatext)
 {
+	ASSERT(iFifoMetatext.SlotsUsed() > 0);
 	OhmMsgMetatext* msg = iFifoMetatext.Read();
 	msg->Create(aSequence, aMetatext);
 	return (*msg);

@@ -448,9 +448,12 @@ void OhmSenderDriverWindows::Resend(const Brx& aFrames)
     prop.Id = KSPROPERTY_OHSOUNDCARD_RESEND;
     prop.Flags = KSPROPERTY_TYPE_SET;
 
-    DWORD bytes;
+    DWORD returned;
 
-    DeviceIoControl(iHandle, IOCTL_KS_PROPERTY, &prop, sizeof(KSPROPERTY), (LPVOID) aFrames.Ptr(), aFrames.Bytes(), &bytes, 0);
+	LPVOID ptr = (LPVOID) aFrames.Ptr();
+	DWORD bytes = aFrames.Bytes();
+
+    DeviceIoControl(iHandle, IOCTL_KS_PROPERTY, &prop, sizeof(KSPROPERTY), ptr, bytes, &returned, 0);
 }
 
 ULONG STDCALL OhmSenderDriverWindows::AddRef()

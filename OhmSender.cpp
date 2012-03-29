@@ -240,6 +240,8 @@ void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
 	writer.Flush();
 	msg.Externalise(writer);
 
+	msg.SetResent(true);
+
 	iFifoHistory.Write(&msg);
 
     try {

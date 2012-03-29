@@ -276,6 +276,11 @@ const Brx& OhmMsgAudio::Audio() const
 	return (iAudio);
 }
 
+void OhmMsgAudio::SetResent(TBool aValue)
+{
+	iResent = aValue;
+}
+
 void OhmMsgAudio::Process(IOhmMsgProcessor& aProcessor)
 {
 	aProcessor.Process(*this);
