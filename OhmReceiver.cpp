@@ -807,6 +807,10 @@ void OhmReceiver::Add(OhmMsg& aMsg)
 	iMutexTransport.Signal();
 }
 
+void OhmReceiver::ResendSeen()
+{
+}
+
 // IOhmMsgProcessor
 
 void OhmReceiver::Process(OhmMsgAudio& aMsg)

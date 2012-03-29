@@ -55,6 +55,7 @@ class IOhmReceiver
 {
 public:
 	virtual void Add(OhmMsg& aMsg) = 0;
+	virtual void ResendSeen() = 0;
 	virtual ~IOhmReceiver() {}
 };
 
@@ -184,6 +185,7 @@ private:
 	
 	// IOhmReceiver
 	virtual void Add(OhmMsg& aMsg);
+	virtual void ResendSeen();
 
 	// IOhmMsgProcessor
 	virtual void Process(OhmMsgAudio& aMsg);

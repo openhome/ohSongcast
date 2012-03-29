@@ -95,7 +95,6 @@ void OhmProtocolMulticast::Play(TIpAddress aInterface, TUint aTtl, const Endpoin
 				case OhmHeader::kMsgTypeListen:
 				case OhmHeader::kMsgTypeLeave:
 				case OhmHeader::kMsgTypeSlave:
-				case OhmHeader::kMsgTypeResend:
 					break;
 				case OhmHeader::kMsgTypeAudio:
 					iReceiver->Add(iFactory->CreateAudio(iReadBuffer, header));
@@ -109,6 +108,9 @@ void OhmProtocolMulticast::Play(TIpAddress aInterface, TUint aTtl, const Endpoin
 					iReceiver->Add(iFactory->CreateMetatext(iReadBuffer, header));
 					receivedMetatext = true;
 					joinComplete = receivedTrack;
+					break;
+				case OhmHeader::kMsgTypeResend:
+					iReceiver->ResendSeen();
 					break;
 				}
 
@@ -132,7 +134,6 @@ void OhmProtocolMulticast::Play(TIpAddress aInterface, TUint aTtl, const Endpoin
 				case OhmHeader::kMsgTypeJoin:
 				case OhmHeader::kMsgTypeLeave:
 				case OhmHeader::kMsgTypeSlave:
-				case OhmHeader::kMsgTypeResend:
 					break;
 				case OhmHeader::kMsgTypeListen:
                     iTimerListen.FireIn((kTimerListenTimeoutMs >> 1) - Random(kTimerListenTimeoutMs >> 3)); // listen secondary timeout
@@ -145,6 +146,9 @@ void OhmProtocolMulticast::Play(TIpAddress aInterface, TUint aTtl, const Endpoin
 					break;
 				case OhmHeader::kMsgTypeMetatext:
 					iReceiver->Add(iFactory->CreateMetatext(iReadBuffer, header));
+					break;
+				case OhmHeader::kMsgTypeResend:
+					iReceiver->ResendSeen();
 					break;
 				}
 

@@ -23,6 +23,7 @@ Abstract:
 #include "mintopo.h"
 #include "toptable.h"
 
+using namespace OpenHome;
 
 PHYSICALCONNECTIONTABLE TopologyPhysicalConnections =
 {
@@ -302,7 +303,7 @@ Return Value:
 
 //=============================================================================
 // called with the fast mutex locked
-
+/*
 void
 CMiniportTopology::CreateWaveMiniport()
 { 
@@ -341,8 +342,6 @@ CMiniportTopology::CreateWaveMiniport()
         L"Wave",
         *pWavePort 
     );
-
-	m_pWaveMiniport = (CMiniportWaveCyclic*) pWavePort;
 }
 
 //=============================================================================
@@ -397,9 +396,8 @@ CMiniportTopology::DestroyWaveMiniport()
     );
 
 	unregisterPhysicalConnection->Release();
-
-	m_pWaveMiniport = 0;
 }
+*/
 
 //=============================================================================
 NTSTATUS
@@ -608,7 +606,7 @@ CMiniportTopology::PropertyHandlerWave
 					return STATUS_INVALID_PARAMETER;
 				}
 
-				m_pWaveMiniport->PipelineResend((TUint*)PropertyRequest->Value, PropertyRequest->ValueSize / 4);
+				iMiniportWave->PipelineResend(Brn((TByte*)PropertyRequest->Value, PropertyRequest->ValueSize));
 
 				return STATUS_SUCCESS;
 			}
@@ -619,7 +617,7 @@ CMiniportTopology::PropertyHandlerWave
 
 				UINT* enabled = (UINT*)PropertyRequest->Value;
 
-				m_pWaveMiniport->UpdateEnabled(*enabled);
+				iMiniportWave->UpdateEnabled(*enabled);
 
 				return STATUS_SUCCESS;
 			}
@@ -631,7 +629,7 @@ CMiniportTopology::PropertyHandlerWave
 
 				UINT* active = (UINT*)PropertyRequest->Value;
 
-				m_pWaveMiniport->UpdateActive(*active);
+				iMiniportWave->UpdateActive(*active);
 
 				return STATUS_SUCCESS;
 			}
@@ -647,7 +645,7 @@ CMiniportTopology::PropertyHandlerWave
 				UINT port = *pValue++;
 				UINT adapter = *pValue;
 
-				m_pWaveMiniport->UpdateEndpoint(addr, port, adapter);
+				iMiniportWave->UpdateEndpoint(addr, port, adapter);
 
 				return STATUS_SUCCESS;
 			}
@@ -659,7 +657,7 @@ CMiniportTopology::PropertyHandlerWave
 
 				UINT* ttl = (UINT*)PropertyRequest->Value;
 
-				m_pWaveMiniport->UpdateTtl(*ttl);
+				iMiniportWave->UpdateTtl(*ttl);
 
 				return STATUS_SUCCESS;
 			}
@@ -671,7 +669,7 @@ CMiniportTopology::PropertyHandlerWave
 
 				UINT* latency = (UINT*)PropertyRequest->Value;
 
-				m_pWaveMiniport->UpdateLatency(*latency);
+				iMiniportWave->UpdateLatency(*latency);
 
 				return STATUS_SUCCESS;
 			}

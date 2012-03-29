@@ -130,7 +130,6 @@ void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint&
 				case OhmHeader::kMsgTypeJoin:
 				case OhmHeader::kMsgTypeListen:
 				case OhmHeader::kMsgTypeLeave:
-				case OhmHeader::kMsgTypeResend:
 					break;
 				case OhmHeader::kMsgTypeAudio:
 					HandleAudio(header);
@@ -147,6 +146,9 @@ void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint&
 					break;
 				case OhmHeader::kMsgTypeSlave:
 					HandleSlave(header);
+					break;
+				case OhmHeader::kMsgTypeResend:
+					iReceiver->ResendSeen();
 					break;
 				}
 
@@ -169,7 +171,6 @@ void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint&
 				switch(header.MsgType()) {
 				case OhmHeader::kMsgTypeJoin:
 				case OhmHeader::kMsgTypeLeave:
-				case OhmHeader::kMsgTypeResend:
 					break;
 				case OhmHeader::kMsgTypeListen:
                     iTimerListen.FireIn((kTimerListenTimeoutMs >> 1) - Random(kTimerListenTimeoutMs >> 3)); // listen secondary timeout
@@ -185,6 +186,9 @@ void OhmProtocolUnicast::Play(TIpAddress aInterface, TUint aTtl, const Endpoint&
 					break;
 				case OhmHeader::kMsgTypeSlave:
 					HandleSlave(header);
+					break;
+				case OhmHeader::kMsgTypeResend:
+					iReceiver->ResendSeen();
 					break;
 				}
 

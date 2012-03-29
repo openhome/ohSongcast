@@ -26,6 +26,8 @@ Abstract:
 // CMiniportTopology 
 //   
 
+class CMiniportWaveCyclic;
+
 class CMiniportTopology : 
     public CMiniportTopologyMSVAD,
     public IMiniportTopology,
@@ -41,9 +43,9 @@ public:
 	void CreateWaveMiniport();
 	void DestroyWaveMiniport();
 	NTSTATUS PropertyHandlerWave(IN PPCPROPERTY_REQUEST PropertyRequest);
-
+	void SetMiniportWave(CMiniportWaveCyclic* aMiniportWave) {iMiniportWave = aMiniportWave;}
 private:
-	CMiniportWaveCyclic* m_pWaveMiniport;
+	CMiniportWaveCyclic* iMiniportWave;
 };
 
 typedef CMiniportTopology *PCMiniportTopology;

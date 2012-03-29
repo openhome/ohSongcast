@@ -27,64 +27,6 @@ Abstract:
 using namespace OpenHome;
 using namespace OpenHome::Net;
 
-/*
-KSPIN_LOCK MpusSpinLock;
-
-UINT MpusEnabled;
-UINT MpusActive;
-UINT MpusTtl;
-UINT MpusAddr;
-UINT MpusPort;
-UINT MpusLatency;
-
-UINT MpusPacketBytes;
-UINT MpusSampleBytes;
-UINT MpusSampleChannelBytes;
-
-bool MpusSending;
-bool MpusStopped;
-
-PMDL MpusMdl;
-PMDL MpusMdlLast;
-
-UINT MpusAdapter;
-SOCKADDR MpusAddress;
-SOCKADDR MpusOutputAddress;
-
-UINT MpusFrame;
-
-ULONGLONG MpusPerformanceCounter;
-
-WSK_BUF MpusSendBuf;
-
-KEVENT WskInitialisedEvent;
-
-OHMHEADER MpusHeader;
-
-ULONG MpusBytes;
-
-CWinsock* Wsk;
-CSocketOhm* Socket;
-
-void SocketInitialised(void* aContext);
-
-void MpusOutput();
-void MpusSetFormatLocked(UINT aSampleRate, UINT aBitRate, UINT aBitDepth, UINT aChannels);
-
-struct MpusQueueEntry
-{
-	PMDL iMdl;
-	ULONG iBytes;
-	SOCKADDR iAddress;
-};
-
-ULONG MpusQueueCount;
-ULONG MpusQueueIndexRead;
-ULONG MpusQueueIndexWrite;
-
-MpusQueueEntry MpusQueue[16];
-*/
-
 #pragma code_seg("PAGE")
 
 //=============================================================================
@@ -332,6 +274,9 @@ Return Value:
         iRenderAllocated = false;
     }
 
+	iWsk = 0;
+	iSocket = 0;
+
 	iEnabled = 0;
 	iActive = 0;
 	iTtl = 0;
@@ -388,36 +333,25 @@ Return Value:
 
 	SetFormatLocked(44100, 1411200, 16, 2);
 
-	iWsk = 0;
-	iSocket = 0;
-
 	CWinsock::Initialise(&iPipelineAddress, iAddr, iPort);
-
-	KeInitializeEvent(&iWskInitialisedEvent, SynchronizationEvent, false);
 
 	iWsk = CWinsock::Create();
 
 	if (iWsk == 0)
 	{
+		(*(TUint*)0) = 0;
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-	iSocket = new (NonPagedPool, OHSOUNDCARD_POOLTAG) CSocketOhm();
+	iSocket = CSocketOhm::Create(*iWsk);
 
-	iSocket->Initialise(*iWsk, SocketInitialised, this);
-
-	LARGE_INTEGER timeout;
-
-	timeout.QuadPart = -1200000000; // 120 seconds
-
-	ntStatus = KeWaitForSingleObject(&iWskInitialisedEvent, Executive, KernelMode, false, &timeout);
-
-	if(ntStatus != STATUS_SUCCESS)
+	if (iSocket == 0)
 	{
+		(*(TUint*)0) = 0;
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
-    return ntStatus;
+    return STATUS_SUCCESS;
 }
 
 //=============================================================================
@@ -821,22 +755,6 @@ Return Value:
 #pragma code_seg()
 
 //=============================================================================
-// SocketInitialised
-//=============================================================================
-
-void CMiniportWaveCyclic::SocketInitialised(void* aContext)
-{
-	CMiniportWaveCyclic* miniport = (CMiniportWaveCyclic*) aContext;
-	miniport->SocketInitialised();
-}
-
-
-void CMiniportWaveCyclic::SocketInitialised()
-{
-	KeSetEvent(&iWskInitialisedEvent, 0, false);
-}
-
-//=============================================================================
 // UpdateEndpoint
 //=============================================================================
 
@@ -882,8 +800,6 @@ void CMiniportWaveCyclic::UpdateEnabled(TUint aValue)
 	if (enabled != 0) {
 		enabled = 1;
 	}
-
-	// PCMiniportTopology  pMiniport = (PCMiniportTopology)PropertyRequest->MajorTarget;
 
 	KIRQL oldIrql;
 
@@ -1056,49 +972,6 @@ void CMiniportWaveCyclic::SetFormat(TUint aSampleRate, TUint aBitRate, TUint aBi
 }
 
 //=============================================================================
-// MpusQueueAddLocked
-//=============================================================================
-
-/*
-bool MpusQueueAddLocked(PMDL* aMdl, ULONG* aBytes, SOCKADDR* aAddress)
-{
-	if (++MpusQueueCount > 16)
-	{
-		--MpusQueueCount;
-
-		PMDL mdl = *aMdl;
-
-		*aMdl = NULL;
-		*aBytes = 0;
-
-		while (mdl != NULL)
-		{
-			ExFreePoolWithTag(MmGetMdlVirtualAddress(mdl), '2ten');
-			PMDL next = mdl->Next;
-			IoFreeMdl(mdl);
-			mdl = next;
-		}
-
-		return (false);
-	}
-
-	MpusQueue[MpusQueueIndexWrite].iMdl = *aMdl;
-	MpusQueue[MpusQueueIndexWrite].iBytes = *aBytes;
-	RtlCopyMemory(&(MpusQueue[MpusQueueIndexWrite].iAddress), aAddress, sizeof(SOCKADDR));
-
-	if (++MpusQueueIndexWrite >= 16)
-	{
-		MpusQueueIndexWrite = 0;
-	}
-
-	*aMdl = NULL;
-	*aBytes = 0;
-
-	return (true);
-}
-*/
-
-//=============================================================================
 // PipelineQueueAddLocked
 //=============================================================================
 
@@ -1134,45 +1007,10 @@ TBool CMiniportWaveCyclic::PipelineQueueAddLocked(PMDL* aMdl, TUint* aBytes)
 }
 
 //=============================================================================
-// MpusQueueRemove
-//=============================================================================
-
-/*
-bool MpusQueueRemove(PMDL* aMdl, ULONG* aBytes, SOCKADDR* aAddress)
-{
-	KIRQL oldIrql;
-
-	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
-
-	if (MpusQueueCount == 0)
-	{
-		MpusSending = false;
-		KeReleaseSpinLock(&MpusSpinLock, oldIrql);
-		return (false);
-	}
-
-	*aMdl = MpusQueue[MpusQueueIndexRead].iMdl;
-	*aBytes = MpusQueue[MpusQueueIndexRead].iBytes;
-	RtlCopyMemory(aAddress, &(MpusQueue[MpusQueueIndexRead].iAddress), sizeof(SOCKADDR));
-
-	if (++MpusQueueIndexRead >= 16)
-	{
-		MpusQueueIndexRead = 0;
-	}
-
-	MpusQueueCount--;
-
-	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
-
-	return (true);
-}
-*/
-
-//=============================================================================
 // PipelineQueueRemove
 //=============================================================================
 
-TBool CMiniportWaveCyclic::PipelineQueueRemove(PMDL* aMdl, TUint* aBytes, SOCKADDR* aAddress)
+OhmMsgAudio* CMiniportWaveCyclic::PipelineQueueRemove(SOCKADDR* aAddress)
 {
 	KIRQL oldIrql;
 
@@ -1184,98 +1022,27 @@ TBool CMiniportWaveCyclic::PipelineQueueRemove(PMDL* aMdl, TUint* aBytes, SOCKAD
 
 		KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
 
-		return (false);
+		return (0);
 	}
 
 	OhmMsgAudio* msg = iPipeline.Read();
 
-	*aMdl = msg->Mdl();
-	
-	*aBytes = msg->Bytes();
+	if (!msg->Resent()) {
+		if (iHistory.SlotsUsed() == kMaxPipelineMessages) {
+			iHistory.Read()->RemoveRef(); // discard
+		}
+
+		iHistory.Write(msg);
+
+		msg->AddRef();
+	}
 
 	RtlCopyMemory(aAddress, &iPipelineAddress, sizeof(SOCKADDR));
 
 	KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
 
-	return (true);
+	return (msg);
 }
-
-//=============================================================================
-// MpusOutput
-//=============================================================================
-
-/*
-void MpusOutput()
-{
-	ULONG bytes;
-
-	if (!MpusQueueRemove(&MpusSendBuf.Mdl, &bytes, &MpusOutputAddress))
-	{
-		return;
-	}
-
-	MpusSendBuf.Length = bytes;
-
-	// Fill in multipus header
-
-	OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(MpusSendBuf.Mdl);
-
-	// samples
-
-	ULONG audioBytes = bytes - sizeof(OHMHEADER);
-
-	ULONG sampleBytes = header->iAudioChannels * header->iAudioBitDepth / 8;
-
-	USHORT samples = (USHORT)(audioBytes / sampleBytes);
-
-	header->iAudioSamples = samples >> 8 & 0x00ff;
-	header->iAudioSamples += samples << 8 & 0xff00;
-
-	// frame
-
-	ULONG frame = ++MpusFrame;
-
-	header->iAudioFrame = frame >> 24 & 0x000000ff;
-	header->iAudioFrame += frame >> 8 & 0x0000ff00;
-	header->iAudioFrame += frame << 8 & 0x00ff0000;
-	header->iAudioFrame += frame << 24 & 0xff000000;
-
-	// bytes
-
-	header->iTotalBytes = bytes >> 8 & 0x00ff;
-	header->iTotalBytes += bytes << 8 & 0xff00;
-
-	// Create Timestamps
-
-	ULONG multiplier = 48000 * 256;
-
-	if ((header->iAudioSampleRate % 441) == 0)
-	{
-		multiplier = 44100 * 256;
-	}
-
-	// use last timestamp for this message
-
-	ULONGLONG timestamp = MpusPerformanceCounter;
-
-	timestamp *= multiplier;
-	timestamp /= 10000000; // InterruptTime is in 100ns units
-
-	header->iAudioNetworkTimestamp = timestamp >> 24 & 0x000000ff;
-	header->iAudioNetworkTimestamp += timestamp >> 8 & 0x0000ff00;
-	header->iAudioNetworkTimestamp += timestamp << 8 & 0x00ff0000;
-	header->iAudioNetworkTimestamp += timestamp << 24 & 0xff000000;
-
-	header->iAudioMediaTimestamp = header->iAudioNetworkTimestamp;
-
-	PIRP irp = IoAllocateIrp(1, FALSE);
-	
-	IoSetCompletionRoutine(irp, MpusOutputComplete, NULL, TRUE, TRUE, TRUE);
-
-	Socket->Send(&MpusSendBuf, &MpusOutputAddress, irp);
-}
-
-*/
 
 //=============================================================================
 // PipelineOutput
@@ -1283,66 +1050,79 @@ void MpusOutput()
 
 void CMiniportWaveCyclic::PipelineOutput()
 {
-	TUint bytes;
+	iPipelineOutputMsg = PipelineQueueRemove(&iPipelineOutputAddress);
 
-	if (!PipelineQueueRemove(&iPipelineOutputBuf.Mdl, &bytes, &iPipelineOutputAddress))
+	if (iPipelineOutputMsg == 0)
 	{
 		return;
 	}
 
-	iPipelineOutputBuf.Length = bytes;
+	if (!iPipelineOutputMsg->Resent()) {
+		TUint bytes = iPipelineOutputMsg->Bytes();
 
-	// Fill in multipus header
+		// Fill in multipus header
 
-	OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(iPipelineOutputBuf.Mdl);
+		OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(iPipelineOutputMsg->Mdl());
 
-	// samples
+		// samples
 
-	ULONG audioBytes = bytes - sizeof(OHMHEADER);
+		TUint audioBytes = bytes - sizeof(OHMHEADER);
 
-	ULONG sampleBytes = header->iAudioChannels * header->iAudioBitDepth / 8;
+		TUint sampleBytes = header->iAudioChannels * header->iAudioBitDepth / 8;
 
-	USHORT samples = (USHORT)(audioBytes / sampleBytes);
+		TUint samples = audioBytes / sampleBytes;
 
-	header->iAudioSamples = samples >> 8 & 0x00ff;
-	header->iAudioSamples += samples << 8 & 0xff00;
+		header->iAudioSamples = samples >> 8 & 0x00ff;
+		header->iAudioSamples += samples << 8 & 0xff00;
 
-	// frame
+		// frame
 
-	TUint frame = ++iPipelineFrame;
+		TUint frame = ++iPipelineFrame;
 
-	header->iAudioFrame = frame >> 24 & 0x000000ff;
-	header->iAudioFrame += frame >> 8 & 0x0000ff00;
-	header->iAudioFrame += frame << 8 & 0x00ff0000;
-	header->iAudioFrame += frame << 24 & 0xff000000;
+		header->iAudioFrame = frame >> 24 & 0x000000ff;
+		header->iAudioFrame += frame >> 8 & 0x0000ff00;
+		header->iAudioFrame += frame << 8 & 0x00ff0000;
+		header->iAudioFrame += frame << 24 & 0xff000000;
 
-	// bytes
+		// bytes
 
-	header->iTotalBytes = bytes >> 8 & 0x00ff;
-	header->iTotalBytes += bytes << 8 & 0xff00;
+		header->iTotalBytes = bytes >> 8 & 0x00ff;
+		header->iTotalBytes += bytes << 8 & 0xff00;
 
-	// Create Timestamps
+		// Create Timestamps
 
-	ULONG multiplier = 48000 * 256;
+		TUint multiplier = 48000 * 256;
 
-	if ((header->iAudioSampleRate % 441) == 0)
-	{
-		multiplier = 44100 * 256;
+		if ((header->iAudioSampleRate % 441) == 0)
+		{
+			multiplier = 44100 * 256;
+		}
+
+		// use last timestamp for this message
+
+		TUint64 timestamp = iPipelinePerformanceCounter;
+
+		timestamp *= multiplier;
+		timestamp /= 10000000; // InterruptTime is in 100ns units
+
+		header->iAudioNetworkTimestamp = timestamp >> 24 & 0x000000ff;
+		header->iAudioNetworkTimestamp += timestamp >> 8 & 0x0000ff00;
+		header->iAudioNetworkTimestamp += timestamp << 8 & 0x00ff0000;
+		header->iAudioNetworkTimestamp += timestamp << 24 & 0xff000000;
+
+		header->iAudioMediaTimestamp = header->iAudioNetworkTimestamp;
+
+		if (frame % 10 == 7) // miss sending 1 in 10 messages
+		{
+			iPipelineOutputMsg->SetResent(true);
+			iPipelineOutputMsg->RemoveRef();
+			PipelineOutput();
+			return;
+		}
 	}
 
-	// use last timestamp for this message
-
-	ULONGLONG timestamp = iPipelinePerformanceCounter;
-
-	timestamp *= multiplier;
-	timestamp /= 10000000; // InterruptTime is in 100ns units
-
-	header->iAudioNetworkTimestamp = timestamp >> 24 & 0x000000ff;
-	header->iAudioNetworkTimestamp += timestamp >> 8 & 0x0000ff00;
-	header->iAudioNetworkTimestamp += timestamp << 8 & 0x00ff0000;
-	header->iAudioNetworkTimestamp += timestamp << 24 & 0xff000000;
-
-	header->iAudioMediaTimestamp = header->iAudioNetworkTimestamp;
+	iPipelineOutputBuf.Mdl = iPipelineOutputMsg->Mdl();
+	iPipelineOutputBuf.Length = iPipelineOutputMsg->Bytes();
 
 	PIRP irp = IoAllocateIrp(1, FALSE);
 	
@@ -1350,40 +1130,6 @@ void CMiniportWaveCyclic::PipelineOutput()
 
 	iSocket->Send(&iPipelineOutputBuf, &iPipelineOutputAddress, irp);
 }
-
-//=============================================================================
-// MpusOutputComplete
-//=============================================================================
-/*
-NTSTATUS MpusOutputComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext)
-{
-    UNREFERENCED_PARAMETER(aDeviceObject);
-    UNREFERENCED_PARAMETER(aContext);
-
-	// get timestamp for next message
-
-    MpusPerformanceCounter = KeQueryInterruptTime();
-
-	PMDL mdl = MpusSendBuf.Mdl;
-
-	while (mdl != NULL)
-	{
-		ExFreePoolWithTag(MmGetMdlVirtualAddress(mdl), '2ten');
-		PMDL next = mdl->Next;
-		IoFreeMdl(mdl);
-		mdl = next;
-	}
-
-	IoFreeIrp(aIrp);
-
-	MpusOutput(); // send the next message if there is one
-
-	// Always return STATUS_MORE_PROCESSING_REQUIRED to
-	// terminate the completion processing of the IRP.
-
-	return STATUS_MORE_PROCESSING_REQUIRED;
-}
-*/
 
 //=============================================================================
 // PipelineOutputComplete
@@ -1403,15 +1149,8 @@ NTSTATUS CMiniportWaveCyclic::PipelineOutputComplete(PDEVICE_OBJECT aDeviceObjec
 
     iPipelinePerformanceCounter = KeQueryInterruptTime();
 
-	PMDL mdl = iPipelineOutputBuf.Mdl;
-
-	while (mdl != NULL)
-	{
-		ExFreePoolWithTag(MmGetMdlVirtualAddress(mdl), '2ten');
-		PMDL next = mdl->Next;
-		IoFreeMdl(mdl);
-		mdl = next;
-	}
+	iPipelineOutputMsg->SetResent(true);
+	iPipelineOutputMsg->RemoveRef();
 
 	IoFreeIrp(aIrp);
 
@@ -1422,28 +1161,6 @@ NTSTATUS CMiniportWaveCyclic::PipelineOutputComplete(PDEVICE_OBJECT aDeviceObjec
 
 	return STATUS_MORE_PROCESSING_REQUIRED;
 }
-
-
-//=============================================================================
-// MpusSendNewLocked
-//=============================================================================
-/*
-void MpusSendNewLocked()
-{
-	void* header = ExAllocatePoolWithTag(NonPagedPool, sizeof(OHMHEADER), '2ten');
-
-	RtlCopyMemory(header, &MpusHeader, sizeof(OHMHEADER));
-	
-	PMDL mdl = IoAllocateMdl(header, sizeof(OHMHEADER), FALSE, FALSE, NULL);
-
-	MmBuildMdlForNonPagedPool(mdl);
-
-	MpusMdl = mdl;
-	MpusMdlLast = mdl;
-
-	MpusBytes = sizeof(OHMHEADER);
-}
-*/
 
 //=============================================================================
 // PipelineSendNewLocked
@@ -1464,32 +1181,6 @@ void CMiniportWaveCyclic::PipelineSendNewLocked()
 
 	iPipelineBytes = sizeof(OHMHEADER);
 }
-
-//=============================================================================
-// MpusCopyAudioLocked
-//=============================================================================
-/*
-void MpusCopyAudioLocked(UCHAR* aDestination, UCHAR* aSource, UINT aBytes, UINT aSampleBytes)
-{
-	UCHAR* dst = aDestination;
-	UCHAR* src = aSource;
-	UINT bytes = aBytes;
-	UINT sb = aSampleBytes;
-
-	while (bytes > 0)
-	{
-		UCHAR* s = src + sb;
-
-		while (s > src)
-		{
-			*dst++ = *--s;
-		}
-
-		src += sb;
-		bytes -= sb;
-	}
-}
-*/
 
 //=============================================================================
 // PipelineCopyAudioLocked
@@ -1517,29 +1208,6 @@ void CMiniportWaveCyclic::PipelineCopyAudioLocked(TByte* aDestination, TByte* aS
 }
 
 //=============================================================================
-// MpusSendAddFragmentLocked
-//=============================================================================
-/*
-void MpusSendAddFragmentLocked(UCHAR* aBuffer, UINT aBytes)
-{
-	UCHAR* buffer = (UCHAR*) ExAllocatePoolWithTag(NonPagedPool, aBytes, '2ten');
-
-	PMDL mdl = IoAllocateMdl(buffer, aBytes, FALSE, FALSE, NULL);
-
-	MmBuildMdlForNonPagedPool(mdl);
-
-	MpusMdlLast->Next = mdl;
-	MpusMdlLast = mdl;
-
-	MpusBytes += aBytes;
-
-	// copy audio
-
-	MpusCopyAudioLocked(buffer, aBuffer, aBytes, MpusSampleChannelBytes);
-}
-*/
-
-//=============================================================================
 // PipelineSendAddFragmentLocked
 //=============================================================================
 
@@ -1558,52 +1226,6 @@ void CMiniportWaveCyclic::PipelineSendAddFragmentLocked(TByte* aBuffer, TUint aB
 
 	PipelineCopyAudioLocked(buffer, aBuffer, aBytes, iPipelineSampleChannelBytes);
 }
-
-//=============================================================================
-// MpusSendLocked
-//=============================================================================
-
-// returns true if a message was added to the queue
-
-/*
-bool MpusSendLocked(UCHAR* aBuffer, UINT aBytes)
-{
-	MpusStopped = false;
-
-	if (MpusMdl == NULL)
-	{
-		MpusSendNewLocked();
-	}
-
-	UINT combined = MpusBytes + aBytes;
-
-	if (combined < MpusPacketBytes)
-	{
-		MpusSendAddFragmentLocked(aBuffer, aBytes);
-
-		return (false);
-	}
-
-	UINT first = MpusPacketBytes - MpusBytes;
-
-	MpusSendAddFragmentLocked(aBuffer, first);
-
-	bool result = MpusQueueAddLocked(&MpusMdl, &MpusBytes, &MpusAddress);
-
-	UINT remaining = combined - MpusPacketBytes;
-
-	if (remaining == 0)
-	{
-		return (true);
-	}
-
-	MpusSendNewLocked();
-
-	MpusSendAddFragmentLocked(aBuffer + first, remaining);
-
-	return (result);
-}
-*/
 
 //=============================================================================
 // PipelineSendLocked
@@ -1649,38 +1271,6 @@ TBool CMiniportWaveCyclic::PipelineSendLocked(TByte* aBuffer, TUint aBytes)
 }
 
 //=============================================================================
-// MpusSend
-//=============================================================================
-
-/*
-void MpusSend(UCHAR* aBuffer, UINT aBytes)
-{
-	KIRQL oldIrql;
-
-	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
-
-	if (MpusActive && MpusEnabled)
-	{
-		if (MpusSendLocked(aBuffer, aBytes))
-		{
-			if (!MpusSending)
-			{
-				MpusSending = true;
-
-				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
-
-				MpusOutput();
-
-				return;
-			}
-		}
-	}
-
-	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
-}
-*/
-
-//=============================================================================
 // PipelineSend
 //=============================================================================
 
@@ -1711,34 +1301,6 @@ void CMiniportWaveCyclic::PipelineSend(TByte* aBuffer, TUint aBytes)
 }
 
 //=============================================================================
-// MpusStopLocked
-//=============================================================================
-
-// return true if MpusOutput has to be called to send this stop message
-
-/*
-bool MpusStopLocked()
-{
-	MpusStopped = true;
-
-	if (MpusMdl == NULL)
-	{
-		MpusSendNewLocked();
-
-		UCHAR silence[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-
-		MpusSendAddFragmentLocked(silence, MpusSampleBytes);
-	}
-
-	OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(MpusMdl);
-
-	header->iAudioFlags = 3; // lossless + halt
-
-	return (MpusQueueAddLocked(&MpusMdl, &MpusBytes, &MpusAddress));
-}
-*/
-
-//=============================================================================
 // PipelineStopLocked
 //=============================================================================
 
@@ -1763,37 +1325,6 @@ TBool CMiniportWaveCyclic::PipelineStopLocked()
 
 	return (PipelineQueueAddLocked(&iPipelineMdl, &iPipelineBytes));
 }
-
-//=============================================================================
-// MpusStop
-//=============================================================================
-/*
-void MpusStop()
-{
-	KIRQL oldIrql;
-
-	KeAcquireSpinLock(&MpusSpinLock, &oldIrql);
-
-	if (MpusActive && MpusEnabled && !MpusStopped)
-	{
-		if (MpusStopLocked())
-		{
-			if (!MpusSending)
-			{
-				MpusSending = true;
-
-				KeReleaseSpinLock(&MpusSpinLock, oldIrql);
-
-				MpusOutput();
-
-				return;
-			}
-		}
-	}
-
-	KeReleaseSpinLock(&MpusSpinLock, oldIrql);
-}
-*/
 
 //=============================================================================
 // PipelineStop
@@ -1826,10 +1357,85 @@ void CMiniportWaveCyclic::PipelineStop()
 }
 
 //=============================================================================
+// Resend
+//=============================================================================
+
+void CMiniportWaveCyclic::ResendLocked(OhmMsgAudio& aMsg)
+{
+	if (iPipeline.SlotsUsed() != kMaxPipelineMessages) {
+		iPipeline.Write(&aMsg);
+	}
+}
+
+//=============================================================================
 // PipelineResend
 //=============================================================================
 
-void CMiniportWaveCyclic::PipelineResend(TUint* /*aFrames*/, TUint /*aCount*/)
+void CMiniportWaveCyclic::PipelineResend(const Brx& aFrames)
 {
+	KIRQL oldIrql;
+
+	KeAcquireSpinLock(&iPipelineSpinLock, &oldIrql);
+
+	ReaderBuffer buffer(aFrames);
+	ReaderBinary reader(buffer);
+
+	TUint frames = aFrames.Bytes() / 4;
+
+	TUint frame = reader.ReadUintBe(4);
+
+	frames--;
+
+	TBool found = false;
+
+	TUint count = iHistory.SlotsUsed();
+
+	for (TUint i = 0; i < count; i++) {
+		OhmMsgAudio* msg = iHistory.Read();
+
+		if (!found) {
+			TInt diff = frame - msg->Frame();
+
+			if (diff == 0) {
+				ResendLocked(*msg);
+				if (frames-- > 0) {
+					frame = reader.ReadUintBe(4);
+				}
+				else {
+					found = true;
+				}
+			}
+			else {
+				while (diff < 0) {
+					if (frames-- > 0) {
+						frame = reader.ReadUintBe(4);
+					}
+					else {
+						found = true;
+						break;
+					}
+
+					diff = frame - msg->Frame();
+
+					if (diff == 0) {
+						ResendLocked(*msg);
+
+						if (frames-- > 0) {
+							frame = reader.ReadUintBe(4);
+						}
+						else {
+							found = true;
+						}
+
+						break;
+					}
+				}
+			}
+		}
+
+		iHistory.Write(msg);
+	}
+
+	KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
 }
 

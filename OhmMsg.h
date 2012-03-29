@@ -92,6 +92,8 @@ public:
     const Brx& Codec() const;
 	const Brx& Audio() const;
 
+	void SetResent(TBool aValue);
+
 	virtual void Process(IOhmMsgProcessor& aProcessor);
 	virtual void Externalise(IWriter& aWriter);
 
