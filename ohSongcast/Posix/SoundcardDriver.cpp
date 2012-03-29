@@ -75,7 +75,7 @@ void OhmSenderDriverPosix::SetTrackPosition(TUint64 aSampleStart, TUint64 aSampl
 
 void OhmSenderDriverPosix::Resend(const Brx& aFrames)
 {
-    printf("OhmSenderDriverPosix: Resend", aFrame);
+    printf("OhmSenderDriverPosix: Resend");
 
 	ReaderBuffer buffer(aFrames);
 	ReaderBinary reader(buffer);
