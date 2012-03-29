@@ -157,6 +157,22 @@ namespace OpenHome.Songcast
             iDispatcher.BeginInvoke(new DelegateReceiverList(Removed), new object[] { aReceiver });
         }
 
+        public void ReceiverMuteChanged(IReceiver aReceiver)
+        {
+        }
+
+        public void ReceiverVolumeChanged(IReceiver aReceiver)
+        {
+        }
+
+        public void ReceiverVolumeControlChanged(IReceiver aReceiver)
+        {
+        }
+
+        public void ReceiverVolumeLimitChanged(IReceiver aReceiver)
+        {
+        }
+
         internal void Removed(IReceiver aReceiver)
         {
             int index = 0;
