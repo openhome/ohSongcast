@@ -60,29 +60,33 @@ namespace OpenHome.Songcast
         string Group { get; }
         string Name { get; }
         EReceiverStatus Status { get; }
+        bool HasVolumeControl() { get; }
+	    uint Volume() { get; }
+	    bool Mute() { get; }
+        uint VolumeLimit() { get; }
     }
 
     internal class Receiver : IReceiver, IDisposable
     {
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern IntPtr ReceiverUdn(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern IntPtr ReceiverRoom(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern IntPtr ReceiverGroup(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern IntPtr ReceiverName(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern uint ReceiverStatus(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void ReceiverPlay(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void ReceiverStop(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void ReceiverStandby(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void ReceiverAddRef(IntPtr aHandle);
-        [DllImport("ohSongcast.dll")]
+        [DllImport("ohSongcast")]
         static extern void ReceiverRemoveRef(IntPtr aHandle);
 
         internal Receiver(IntPtr aReceiver)

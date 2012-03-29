@@ -50,6 +50,10 @@ ReceiverManager2Receiver::ReceiverManager2Receiver(IReceiverManager2Handler& aHa
 	, iMutex("RM2R")
 	, iRefCount(1)
 	, iUserData(0)
+	, iHasVolumeControl(false)
+	, iVolume(0)
+	, iMute(false)
+	, iVolumeLimit(0)
 {
 	iReceiver.AddRef();
 
@@ -127,7 +131,64 @@ void ReceiverManager2Receiver::SenderMetadata(Bwx& aValue) const
 	iMutex.Signal();
 }
 
+TBool ReceiverManager2Receiver::HasVolumeControl() const
+{
+	iMutex.Wait();
+	TBool hasVolumeControl = iHasVolumeControl;
+	iMutex.Signal();
+
+	return hasVolumeControl;
+}
+
+TUint ReceiverManager2Receiver::Volume() const
+{
+	iMutex.Wait();
+	TUint volume = iVolume;
+	iMutex.Signal();
+
+	return volume;
+}
+
+TBool ReceiverManager2Receiver::Mute() const
+{
+	iMutex.Wait();
+	TBool mute = iMute;
+	iMutex.Signal();
+
+	return mute;
+}
+
+TUint ReceiverManager2Receiver::VolumeLimit() const
+{
+	iMutex.Wait();
+	TUint volumeLimit = iVolumeLimit;
+	iMutex.Signal();
+
+	return volumeLimit;
+}
+	
+
 // Actions
+
+void ReceiverManager2Receiver::SetVolume(TUint aValue)
+{
+	iReceiver.SetVolume(aValue);
+}
+
+void ReceiverManager2Receiver::VolumeInc()
+{
+	iReceiver.VolumeInc();
+}
+
+void ReceiverManager2Receiver::VolumeDec()
+{
+	iReceiver.VolumeDec();
+}
+
+void ReceiverManager2Receiver::SetMute(TBool aValue)
+{
+	iReceiver.SetMute(aValue);
+}
 
 void ReceiverManager2Receiver::Play()
 {
@@ -180,9 +241,14 @@ void ReceiverManager2Receiver::EventReceiverInitialEvent()
 
 	iMutex.Wait();
 	iActive = true;
+	TBool hasVolumeControl = iHasVolumeControl;
 	iMutex.Signal();
 
 	iHandler.ReceiverAdded(*this);
+	if(hasVolumeControl)
+	{
+		iHandler.ReceiverVolumeControlChanged(*this);
+	}
 }
 
 void ReceiverManager2Receiver::EventReceiverTransportStateChanged()
@@ -239,6 +305,73 @@ void ReceiverManager2Receiver::Removed()
 
 
 	RemoveRef();
+}
+
+void ReceiverManager2Receiver::VolumeControlChanged()
+{
+	iMutex.Wait();
+
+	iHasVolumeControl = iReceiver.HasVolumeControl();
+	iVolume = iReceiver.Volume();
+	iMute = iReceiver.Mute();
+	iVolumeLimit = iReceiver.VolumeLimit();
+	
+	if (iActive) {
+		iMutex.Signal();
+		iHandler.ReceiverVolumeControlChanged(*this);
+	}
+	else
+	{
+		iMutex.Signal();
+	}
+}
+
+void ReceiverManager2Receiver::VolumeChanged()
+{
+	iMutex.Wait();
+
+	iVolume = iReceiver.Volume();
+	
+	if (iActive) {
+		iMutex.Signal();
+		iHandler.ReceiverVolumeChanged(*this);
+	}
+	else
+	{
+		iMutex.Signal();
+	}
+}
+
+void ReceiverManager2Receiver::MuteChanged()
+{
+	iMutex.Wait();
+
+	iMute = iReceiver.Mute();
+	
+	if (iActive) {
+		iMutex.Signal();
+		iHandler.ReceiverMuteChanged(*this);
+	}
+	else
+	{
+		iMutex.Signal();
+	}
+}
+
+void ReceiverManager2Receiver::VolumeLimitChanged()
+{
+	iMutex.Wait();
+
+	iVolumeLimit = iReceiver.VolumeLimit();
+	
+	if (iActive) {
+		iMutex.Signal();
+		iHandler.ReceiverVolumeLimitChanged(*this);
+	}
+	else
+	{
+		iMutex.Signal();
+	}
 }
 
 // Public API
@@ -334,6 +467,34 @@ void ReceiverManager2::ReceiverRemoved(ReceiverManager1Receiver& aReceiver)
 	receiver->Removed();
 }
 
+void ReceiverManager2::ReceiverVolumeControlChanged(ReceiverManager1Receiver& aReceiver)
+{
+	ReceiverManager2Receiver* receiver = (ReceiverManager2Receiver*)(aReceiver.UserData());
+	ASSERT(receiver);
+	receiver->VolumeControlChanged();
+}
+
+void ReceiverManager2::ReceiverVolumeChanged(ReceiverManager1Receiver& aReceiver)
+{
+	ReceiverManager2Receiver* receiver = (ReceiverManager2Receiver*)(aReceiver.UserData());
+	ASSERT(receiver);
+	receiver->VolumeChanged();
+}
+
+void ReceiverManager2::ReceiverMuteChanged(ReceiverManager1Receiver& aReceiver)
+{
+	ReceiverManager2Receiver* receiver = (ReceiverManager2Receiver*)(aReceiver.UserData());
+	ASSERT(receiver);
+	receiver->MuteChanged();
+}
+
+void ReceiverManager2::ReceiverVolumeLimitChanged(ReceiverManager1Receiver& aReceiver)
+{
+	ReceiverManager2Receiver* receiver = (ReceiverManager2Receiver*)(aReceiver.UserData());
+	ASSERT(receiver);
+	receiver->VolumeLimitChanged();
+}
+
 // IReceiverManager2Handler
 
 void ReceiverManager2::ReceiverAdded(ReceiverManager2Receiver& aReceiver)
@@ -372,6 +533,60 @@ void ReceiverManager2::ReceiverRemoved(ReceiverManager2Receiver& aReceiver)
 
 	ReceiverManager2Job* job = iFree.Read();
 	job->Set(aReceiver, &IReceiverManager2Handler::ReceiverRemoved);
+	iReady.Write(job);
+}
+
+void ReceiverManager2::ReceiverVolumeControlChanged(ReceiverManager2Receiver& aReceiver)
+{
+	LOG(kTopology, "ReceiverManager2::ReceiverVolumeControlChanged ");
+    LOG(kTopology, aReceiver.Room());
+    LOG(kTopology, ":");
+    LOG(kTopology, aReceiver.Group());
+	LOG(kTopology, ":");
+    LOG(kTopology, aReceiver.HasVolumeControl() ? Brn("Yes") : Brn("No"));
+    LOG(kTopology, "\n");
+
+	ReceiverManager2Job* job = iFree.Read();
+	job->Set(aReceiver, &IReceiverManager2Handler::ReceiverVolumeControlChanged);
+	iReady.Write(job);
+}
+
+void ReceiverManager2::ReceiverVolumeChanged(ReceiverManager2Receiver& aReceiver)
+{
+	LOG(kTopology, "ReceiverManager2::ReceiverVolumeChanged ");
+    LOG(kTopology, aReceiver.Room());
+    LOG(kTopology, ":");
+    LOG(kTopology, aReceiver.Group());
+    LOG(kTopology, "\n");
+
+	ReceiverManager2Job* job = iFree.Read();
+	job->Set(aReceiver, &IReceiverManager2Handler::ReceiverVolumeChanged);
+	iReady.Write(job);
+}
+
+void ReceiverManager2::ReceiverMuteChanged(ReceiverManager2Receiver& aReceiver)
+{
+	LOG(kTopology, "ReceiverManager2::ReceiverMuteChanged ");
+    LOG(kTopology, aReceiver.Room());
+    LOG(kTopology, ":");
+    LOG(kTopology, aReceiver.Group());
+    LOG(kTopology, "\n");
+
+	ReceiverManager2Job* job = iFree.Read();
+	job->Set(aReceiver, &IReceiverManager2Handler::ReceiverMuteChanged);
+	iReady.Write(job);
+}
+
+void ReceiverManager2::ReceiverVolumeLimitChanged(ReceiverManager2Receiver& aReceiver)
+{
+	LOG(kTopology, "ReceiverManager2::ReceiverVolumeLimitChanged ");
+    LOG(kTopology, aReceiver.Room());
+    LOG(kTopology, ":");
+    LOG(kTopology, aReceiver.Group());
+    LOG(kTopology, "\n");
+
+	ReceiverManager2Job* job = iFree.Read();
+	job->Set(aReceiver, &IReceiverManager2Handler::ReceiverVolumeLimitChanged);
 	iReady.Write(job);
 }
 

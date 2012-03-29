@@ -19,6 +19,10 @@ public:
 	virtual void ReceiverAdded(ReceiverManager1Receiver& aReceiver) = 0;
 	virtual void ReceiverChanged(ReceiverManager1Receiver& aReceiver) = 0;
 	virtual void ReceiverRemoved(ReceiverManager1Receiver& aReceiver) = 0;
+	virtual void ReceiverVolumeControlChanged(ReceiverManager1Receiver& aReceiver) = 0;
+	virtual void ReceiverVolumeChanged(ReceiverManager1Receiver& aReceiver) = 0;
+	virtual void ReceiverMuteChanged(ReceiverManager1Receiver& aReceiver) = 0;
+	virtual void ReceiverVolumeLimitChanged(ReceiverManager1Receiver& aReceiver) = 0;
 	~IReceiverManager1Handler() {}
 };
 
@@ -38,6 +42,15 @@ public:
 	const Brx& Name() const;
 	TUint SourceIndex() const;
 	CpDevice& Device() const;
+
+	TBool HasVolumeControl() const;
+	TUint Volume() const;
+	TBool Mute() const;
+	TUint VolumeLimit() const;
+	void SetVolume(TUint aValue);
+	void VolumeInc();
+	void VolumeDec();
+	void SetMute(TBool aValue);
 
 	void SetSourceIndex(TUint aValue);
 
@@ -76,6 +89,18 @@ public:
 	void SourceChanged();
 	void Changed();
 	void Removed();
+	void VolumeControlChanged();
+	void VolumeChanged();
+	void MuteChanged();
+	void VolumeLimitChanged();
+	TBool HasVolumeControl() const;
+	TUint Volume() const;
+	TBool Mute() const;
+	TUint VolumeLimit() const;
+	void SetVolume(TUint aValue);
+	void VolumeInc();
+	void VolumeDec();
+	void SetMute(TBool aValue);
 	void Standby();
 	void Select(const ReceiverManager1Receiver& aReceiver);
 	TBool Selected(const ReceiverManager1Receiver& aReceiver);
@@ -107,6 +132,9 @@ private:
     virtual void RoomStandbyChanged(IRoom& aRoom);
     virtual void RoomSourceChanged(IRoom& aRoom);
     virtual void RoomVolumeControlChanged(IRoom& aRoom);
+	virtual void RoomVolumeChanged(IRoom& aRoom);
+	virtual void RoomMuteChanged(IRoom& aRoom);
+	virtual void RoomVolumeLimitChanged(IRoom& aRoom);
 
 private:
 	IReceiverManager1Handler& iHandler;

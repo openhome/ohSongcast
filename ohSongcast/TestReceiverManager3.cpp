@@ -31,6 +31,10 @@ namespace Net {
 		virtual void ReceiverAdded(ReceiverManager3Receiver& aReceiver);
 		virtual void ReceiverChanged(ReceiverManager3Receiver& aReceiver);
 		virtual void ReceiverRemoved(ReceiverManager3Receiver& aReceiver);
+		virtual void ReceiverVolumeControlChanged(ReceiverManager3Receiver& aReceiver);
+		virtual void ReceiverVolumeChanged(ReceiverManager3Receiver& aReceiver);
+		virtual void ReceiverMuteChanged(ReceiverManager3Receiver& aReceiver);
+		virtual void ReceiverVolumeLimitChanged(ReceiverManager3Receiver& aReceiver);
 		~ReceiverManager3Logger();
 	private:
 		ReceiverManager3* iReceiverManager;
@@ -108,6 +112,73 @@ void ReceiverManager3Logger::ReceiverRemoved(ReceiverManager3Receiver& aReceiver
     Print("(");
     Print(aReceiver.Group());
     Print(")");
+    Print("\n");
+}
+
+void ReceiverManager3Logger::ReceiverVolumeControlChanged(ReceiverManager3Receiver& aReceiver)
+{
+	Print("Vol Control Changed ");
+	Print(aReceiver.Room());
+	Print("(");
+	Print(aReceiver.Group());
+	Print("): ");
+    aReceiver.HasVolumeControl() ? printf("Yes\n") : printf("No\n");
+	if(aReceiver.HasVolumeControl())
+	{
+		Print("Vol      ");
+		Bws<Ascii::kMaxUintStringBytes> bufferVol;
+		Ascii::AppendDec(bufferVol, aReceiver.Volume());
+		Print(bufferVol);
+		Print("\n");
+		Print("Mute      ");
+		Bws<Ascii::kMaxUintStringBytes> bufferMute;
+		Ascii::AppendDec(bufferMute, aReceiver.Mute());
+		Print(bufferMute);
+		Print("\n");
+		Print("Vol Limit      ");
+		Bws<Ascii::kMaxUintStringBytes> bufferVolLim;
+		Ascii::AppendDec(bufferVolLim, aReceiver.VolumeLimit());
+		Print(bufferVolLim);
+		Print("\n");
+	}
+}
+
+void ReceiverManager3Logger::ReceiverVolumeChanged(ReceiverManager3Receiver& aReceiver)
+{
+	Print("Vol Changed ");
+	Print(aReceiver.Room());
+	Print("(");
+	Print(aReceiver.Group());
+	Print("): ");
+	Bws<Ascii::kMaxUintStringBytes> buffer;
+	Ascii::AppendDec(buffer, aReceiver.Volume());
+    Print(buffer);
+    Print("\n");
+}
+
+void ReceiverManager3Logger::ReceiverMuteChanged(ReceiverManager3Receiver& aReceiver)
+{
+	Print("Mute Changed ");
+	Print(aReceiver.Room());
+	Print("(");
+	Print(aReceiver.Group());
+	Print("): ");
+	Bws<Ascii::kMaxUintStringBytes> buffer;
+	Ascii::AppendDec(buffer, aReceiver.Mute());
+    Print(buffer);
+    Print("\n");
+}
+
+void ReceiverManager3Logger::ReceiverVolumeLimitChanged(ReceiverManager3Receiver& aReceiver)
+{
+	Print("Vol Limit Changed ");
+	Print(aReceiver.Room());
+	Print("(");
+	Print(aReceiver.Group());
+	Print("): ");
+	Bws<Ascii::kMaxUintStringBytes> buffer;
+	Ascii::AppendDec(buffer, aReceiver.VolumeLimit());
+    Print(buffer);
     Print("\n");
 }
 

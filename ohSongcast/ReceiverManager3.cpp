@@ -63,6 +63,46 @@ ReceiverManager3Receiver::EStatus ReceiverManager3Receiver::Status() const
 	return (iStatus);
 }
 
+TBool ReceiverManager3Receiver::HasVolumeControl() const
+{
+	return iReceiver.HasVolumeControl();
+}
+
+TUint ReceiverManager3Receiver::Volume() const
+{
+	return iReceiver.Volume();
+}
+
+TBool ReceiverManager3Receiver::Mute() const
+{
+	return iReceiver.Mute();
+}
+
+TUint ReceiverManager3Receiver::VolumeLimit() const
+{
+	return iReceiver.VolumeLimit();
+}
+
+void ReceiverManager3Receiver::SetVolume(TUint aValue)
+{
+	iManager.SetVolume(iReceiver, aValue);
+}
+
+void ReceiverManager3Receiver::VolumeInc()
+{
+	iManager.VolumeInc(iReceiver);
+}
+
+void ReceiverManager3Receiver::VolumeDec()
+{
+	iManager.VolumeDec(iReceiver);
+}
+
+void ReceiverManager3Receiver::SetMute(TBool aValue)
+{
+	iManager.SetMute(iReceiver, aValue);
+}
+
 void ReceiverManager3Receiver::Play()
 {
 	iManager.Play(iReceiver);
@@ -114,6 +154,26 @@ void ReceiverManager3Receiver::Removed()
 {
 	iHandler.ReceiverRemoved(*this);
 	RemoveRef();
+}
+
+void ReceiverManager3Receiver::VolumeControlChanged()
+{
+	iHandler.ReceiverVolumeControlChanged(*this);
+}
+
+void ReceiverManager3Receiver::VolumeChanged()
+{
+	iHandler.ReceiverVolumeChanged(*this);
+}
+
+void ReceiverManager3Receiver::MuteChanged()
+{
+	iHandler.ReceiverMuteChanged(*this);
+}
+
+void ReceiverManager3Receiver::VolumeLimitChanged()
+{
+	iHandler.ReceiverVolumeLimitChanged(*this);
 }
 
 ReceiverManager3Receiver::~ReceiverManager3Receiver()
@@ -168,6 +228,26 @@ ReceiverManager3Receiver::EStatus ReceiverManager3::Status(ReceiverManager2Recei
 	return (ReceiverManager3Receiver::eConnected);
 }
 
+void ReceiverManager3::SetVolume(ReceiverManager2Receiver& aReceiver, TUint aValue)
+{
+	aReceiver.SetVolume(aValue);
+}
+
+void ReceiverManager3::VolumeInc(ReceiverManager2Receiver& aReceiver)
+{
+	aReceiver.VolumeInc();
+}
+
+void ReceiverManager3::VolumeDec(ReceiverManager2Receiver& aReceiver)
+{
+	aReceiver.VolumeDec();
+}
+
+void ReceiverManager3::SetMute(ReceiverManager2Receiver& aReceiver, TBool aValue)
+{
+	aReceiver.SetMute(aValue);
+}
+
 void ReceiverManager3::Play(ReceiverManager2Receiver& aReceiver)
 {
 	aReceiver.SetSender(iUri, iMetadata);
@@ -215,4 +295,44 @@ void ReceiverManager3::ReceiverRemoved(ReceiverManager2Receiver& aReceiver)
 	ASSERT(receiver);
 	ASSERT(receiver->IsAttachedTo(aReceiver));
 	receiver->Removed();
+}
+
+void ReceiverManager3::ReceiverVolumeControlChanged(ReceiverManager2Receiver& aReceiver)
+{
+    LOG(kTopology, "ReceiverManager3::ReceiverVolumeControlChanged\n");
+	ReceiverManager3Receiver* receiver = (ReceiverManager3Receiver*)(aReceiver.UserData());
+    LOG(kTopology, "ReceiverManager3::~ReceiverVolumeControlChanged %x\n", receiver);
+	ASSERT(receiver);
+	ASSERT(receiver->IsAttachedTo(aReceiver));
+	receiver->VolumeControlChanged();
+}
+
+void ReceiverManager3::ReceiverVolumeChanged(ReceiverManager2Receiver& aReceiver)
+{
+    LOG(kTopology, "ReceiverManager3::ReceiverVolumeChanged\n");
+	ReceiverManager3Receiver* receiver = (ReceiverManager3Receiver*)(aReceiver.UserData());
+    LOG(kTopology, "ReceiverManager3::~ReceiverVolumeChanged %x\n", receiver);
+	ASSERT(receiver);
+	ASSERT(receiver->IsAttachedTo(aReceiver));
+	receiver->VolumeChanged();
+}
+
+void ReceiverManager3::ReceiverMuteChanged(ReceiverManager2Receiver& aReceiver)
+{
+    LOG(kTopology, "ReceiverManager3::ReceiverMuteChanged\n");
+	ReceiverManager3Receiver* receiver = (ReceiverManager3Receiver*)(aReceiver.UserData());
+    LOG(kTopology, "ReceiverManager3::~ReceiverMuteChanged %x\n", receiver);
+	ASSERT(receiver);
+	ASSERT(receiver->IsAttachedTo(aReceiver));
+	receiver->MuteChanged();
+}
+
+void ReceiverManager3::ReceiverVolumeLimitChanged(ReceiverManager2Receiver& aReceiver)
+{
+    LOG(kTopology, "ReceiverManager3::ReceiverVolumeLimitChanged\n");
+	ReceiverManager3Receiver* receiver = (ReceiverManager3Receiver*)(aReceiver.UserData());
+    LOG(kTopology, "ReceiverManager3::~ReceiverVolumeLimitChanged %x\n", receiver);
+	ASSERT(receiver);
+	ASSERT(receiver->IsAttachedTo(aReceiver));
+	receiver->VolumeLimitChanged();
 }

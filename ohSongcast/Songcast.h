@@ -18,7 +18,11 @@ extern "C" {
 enum ECallbackType {
 	eAdded,
 	eChanged,
-	eRemoved
+	eRemoved,
+	eVolumeControlChanged,
+	eVolumeChanged,
+	eMuteChanged,
+	eVolumeLimitChanged
 };
 
 enum EReceiverStatus {
@@ -70,6 +74,14 @@ DllExport const char* STDCALL ReceiverRoom(THandle aReceiver);
 DllExport const char* STDCALL ReceiverGroup(THandle aReceiver);
 DllExport const char* STDCALL ReceiverName(THandle aReceiver);
 DllExport EReceiverStatus STDCALL ReceiverStatus(THandle aReceiver);
+DllExport uint32_t STDCALL ReceiverHasVolumeControl(THandle aReceiver);
+DllExport uint32_t STDCALL ReceiverVolume(THandle aReceiver);
+DllExport uint32_t STDCALL ReceiverMute(THandle aReceiver);
+DllExport uint32_t STDCALL ReceiverVolumeLimit(THandle aReceiver);
+DllExport void STDCALL ReceiverSetVolume(THandle aReceiver, uint32_t aValue);
+DllExport void STDCALL ReceiverVolumeInc(THandle aReceiver);
+DllExport void STDCALL ReceiverVolumeDec(THandle aReceiver);
+DllExport void STDCALL ReceiverSetMute(THandle aReceiver, uint32_t aValue);
 DllExport void STDCALL ReceiverPlay(THandle aReceiver);
 DllExport void STDCALL ReceiverStop(THandle aReceiver);
 DllExport void STDCALL ReceiverStandby(THandle aReceiver);
@@ -102,7 +114,15 @@ public:
 	const TChar* Group() const;
 	const TChar* Name() const;
 	EReceiverStatus Status() const;
+	TBool HasVolumeControl() const;
+	TUint Volume() const;
+	TBool Mute() const;
+	TUint VolumeLimit() const;
 
+	void SetVolume(TUint aValue);
+	void VolumeInc();
+	void VolumeDec();
+	void SetMute(TBool aValue);
 	void Play();
 	void Stop();
 	void Standby();
@@ -187,6 +207,10 @@ private:
 	virtual void ReceiverAdded(ReceiverManager3Receiver& aReceiver);
 	virtual void ReceiverChanged(ReceiverManager3Receiver& aReceiver);
 	virtual void ReceiverRemoved(ReceiverManager3Receiver& aReceiver);
+	virtual void ReceiverVolumeControlChanged(ReceiverManager3Receiver& aReceiver);
+	virtual void ReceiverVolumeChanged(ReceiverManager3Receiver& aReceiver);
+	virtual void ReceiverMuteChanged(ReceiverManager3Receiver& aReceiver);
+	virtual void ReceiverVolumeLimitChanged(ReceiverManager3Receiver& aReceiver);
 
 private:
 	TIpAddress iSubnet;

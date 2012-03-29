@@ -20,6 +20,10 @@ public:
 	virtual void ReceiverAdded(ReceiverManager3Receiver& aReceiver) = 0;
 	virtual void ReceiverChanged(ReceiverManager3Receiver& aReceiver) = 0;
 	virtual void ReceiverRemoved(ReceiverManager3Receiver& aReceiver) = 0;
+	virtual void ReceiverVolumeControlChanged(ReceiverManager3Receiver& aReceiver) = 0;
+	virtual void ReceiverVolumeChanged(ReceiverManager3Receiver& aReceiver) = 0;
+	virtual void ReceiverMuteChanged(ReceiverManager3Receiver& aReceiver) = 0;
+	virtual void ReceiverVolumeLimitChanged(ReceiverManager3Receiver& aReceiver) = 0;
 	~IReceiverManager3Handler() {}
 };
 
@@ -42,7 +46,15 @@ public:
 	const Brx& Group() const;
 	const Brx& Name() const;
 	EStatus Status() const;
+	TBool HasVolumeControl() const;
+	TUint Volume() const;
+	TBool Mute() const;
+	TUint VolumeLimit() const;
 
+	void SetVolume(TUint aValue);
+	void VolumeInc();
+	void VolumeDec();
+	void SetMute(TBool aValue);
 	void Play();
 	void Stop();
 	void Standby();
@@ -57,6 +69,11 @@ private:
 
 	void Changed();
 	void Removed();
+
+	void VolumeControlChanged();
+	void VolumeChanged();
+	void MuteChanged();
+	void VolumeLimitChanged();
 
 	EStatus EvaluateStatus();
 
@@ -93,8 +110,16 @@ private:
 	virtual void ReceiverAdded(ReceiverManager2Receiver& aReceiver);
 	virtual void ReceiverChanged(ReceiverManager2Receiver& aReceiver);
 	virtual void ReceiverRemoved(ReceiverManager2Receiver& aReceiver);
+	virtual void ReceiverVolumeControlChanged(ReceiverManager2Receiver& aReceiver);
+	virtual void ReceiverVolumeChanged(ReceiverManager2Receiver& aReceiver);
+	virtual void ReceiverMuteChanged(ReceiverManager2Receiver& aReceiver);
+	virtual void ReceiverVolumeLimitChanged(ReceiverManager2Receiver& aReceiver);
 
 	ReceiverManager3Receiver::EStatus Status(ReceiverManager2Receiver& aReceiver);
+	void SetVolume(ReceiverManager2Receiver& aReceiver, TUint aValue);
+	void VolumeInc(ReceiverManager2Receiver& aReceiver);
+	void VolumeDec(ReceiverManager2Receiver& aReceiver);
+	void SetMute(ReceiverManager2Receiver& aReceiver, TBool aValue);
 	void Play(ReceiverManager2Receiver& aReceiver);
 	void Stop(ReceiverManager2Receiver& aReceiver);
 	void Standby(ReceiverManager2Receiver& aReceiver);

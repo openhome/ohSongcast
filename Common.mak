@@ -48,6 +48,7 @@ objects_topology = $(ohnetdir)CpTopology.$(objext) \
                    $(ohnetdir)CpTopology1.$(objext) \
                    $(ohnetdir)CpTopology2.$(objext) \
                    $(ohnetdir)CpTopology3.$(objext) \
+                   $(ohnetdir)CpTopology4.$(objext) \
                    $(ohnetdir)CpAvOpenhomeOrgProduct1.$(objext) \
                    $(ohnetdir)CpAvOpenhomeOrgVolume1.$(objext) \
                    $(ohnetdir)CpAvOpenhomeOrgReceiver1.$(objext) \

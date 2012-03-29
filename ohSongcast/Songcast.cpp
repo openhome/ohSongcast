@@ -125,6 +125,46 @@ EReceiverStatus STDCALL ReceiverStatus(THandle aReceiver)
 	return (((Receiver*)aReceiver)->Status());
 }
 
+uint32_t STDCALL ReceiverHasVolumeControl(THandle aReceiver)
+{
+	return (((Receiver*)aReceiver)->HasVolumeControl());
+}
+
+uint32_t STDCALL ReceiverVolume(THandle aReceiver)
+{
+	return (((Receiver*)aReceiver)->Volume());
+}
+
+uint32_t STDCALL ReceiverMute(THandle aReceiver)
+{
+	return (((Receiver*)aReceiver)->Mute());
+}
+
+uint32_t STDCALL ReceiverVolumeLimit(THandle aReceiver)
+{
+	return (((Receiver*)aReceiver)->VolumeLimit());
+}
+
+void STDCALL ReceiverSetVolume(THandle aReceiver, uint32_t aValue)
+{
+	((Receiver*)aReceiver)->SetVolume(aValue);
+}
+
+void STDCALL ReceiverVolumeInc(THandle aReceiver)
+{
+	((Receiver*)aReceiver)->VolumeInc();
+}
+
+void STDCALL ReceiverVolumeDec(THandle aReceiver)
+{
+	((Receiver*)aReceiver)->VolumeDec();
+}
+
+void STDCALL ReceiverSetMute(THandle aReceiver, uint32_t aValue)
+{
+	((Receiver*)aReceiver)->SetMute((aValue == 0) ? false : true);
+}
+
 void STDCALL ReceiverPlay(THandle aReceiver)
 {
 	((Receiver*)aReceiver)->Play();
@@ -209,6 +249,46 @@ EReceiverStatus Receiver::Status() const
 	return (EReceiverStatus)iReceiver.Status();
 }
 
+TBool Receiver::HasVolumeControl() const
+{
+	return iReceiver.HasVolumeControl();
+}
+
+TUint Receiver::Volume() const
+{
+	return iReceiver.Volume();
+}
+
+TBool Receiver::Mute() const
+{
+	return iReceiver.Mute();
+}
+
+TUint Receiver::VolumeLimit() const
+{
+	return iReceiver.VolumeLimit();
+}
+
+
+void Receiver::SetVolume(TUint aValue)
+{
+	iReceiver.SetVolume(aValue);
+}
+
+void Receiver::VolumeInc()
+{
+	iReceiver.VolumeInc();
+}
+
+void Receiver::VolumeDec()
+{
+	iReceiver.VolumeDec();
+}
+
+void Receiver::SetMute(TBool aValue)
+{
+	iReceiver.SetMute(aValue);
+}
 
 void Receiver::Play()
 {
@@ -849,3 +929,37 @@ void Songcast::ReceiverRemoved(ReceiverManager3Receiver& aReceiver)
 	(*iReceiverCallback)(iReceiverPtr, eRemoved, (THandle)receiver);
 	receiver->RemoveRef();
 }
+
+void Songcast::ReceiverVolumeControlChanged(ReceiverManager3Receiver& aReceiver)
+{
+	Receiver* receiver = (Receiver*)(aReceiver.UserData());
+	ASSERT(receiver);
+	(*iReceiverCallback)(iReceiverPtr, eVolumeControlChanged, (THandle)receiver);
+	receiver->RemoveRef();
+}
+
+void Songcast::ReceiverVolumeChanged(ReceiverManager3Receiver& aReceiver)
+{
+	Receiver* receiver = (Receiver*)(aReceiver.UserData());
+	ASSERT(receiver);
+	(*iReceiverCallback)(iReceiverPtr, eVolumeChanged, (THandle)receiver);
+	receiver->RemoveRef();
+}
+
+void Songcast::ReceiverMuteChanged(ReceiverManager3Receiver& aReceiver)
+{
+	Receiver* receiver = (Receiver*)(aReceiver.UserData());
+	ASSERT(receiver);
+	(*iReceiverCallback)(iReceiverPtr, eMuteChanged, (THandle)receiver);
+	receiver->RemoveRef();
+}
+
+void Songcast::ReceiverVolumeLimitChanged(ReceiverManager3Receiver& aReceiver)
+{
+	Receiver* receiver = (Receiver*)(aReceiver.UserData());
+	ASSERT(receiver);
+	(*iReceiverCallback)(iReceiverPtr, eVolumeLimitChanged, (THandle)receiver);
+	receiver->RemoveRef();
+}
+
+

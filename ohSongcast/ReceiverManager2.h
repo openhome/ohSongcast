@@ -23,6 +23,10 @@ public:
 	virtual void ReceiverAdded(ReceiverManager2Receiver& aReceiver) = 0;
 	virtual void ReceiverChanged(ReceiverManager2Receiver& aReceiver) = 0;
 	virtual void ReceiverRemoved(ReceiverManager2Receiver& aReceiver) = 0;
+	virtual void ReceiverVolumeControlChanged(ReceiverManager2Receiver& aReceiver) = 0;
+	virtual void ReceiverVolumeChanged(ReceiverManager2Receiver& aReceiver) = 0;
+	virtual void ReceiverMuteChanged(ReceiverManager2Receiver& aReceiver) = 0;
+	virtual void ReceiverVolumeLimitChanged(ReceiverManager2Receiver& aReceiver) = 0;
 	~IReceiverManager2Handler() {}
 };
 
@@ -54,7 +58,15 @@ public:
 	void TransportState(Bwx& aValue) const;
 	void SenderUri(Bwx& aValue) const;
 	void SenderMetadata(Bwx& aValue) const;
+	TBool HasVolumeControl() const;
+	TUint Volume() const;
+	TBool Mute() const;
+	TUint VolumeLimit() const;
 
+	void SetVolume(TUint aValue);
+	void VolumeInc();
+	void VolumeDec();
+	void SetMute(TBool aValue);
 	void SetSender(const Brx& aUri, const Brx& aMetadata);
 	void Play();
 	void Stop();
@@ -67,6 +79,11 @@ public:
 
 	void ChangedSelected(); 
 	void Removed();
+
+	void VolumeControlChanged();
+	void VolumeChanged();
+	void MuteChanged();
+	void VolumeLimitChanged();
 
 	void CallbackPlay(IAsync& aAsync);		
 	void CallbackStop(IAsync& aAsync);		
@@ -92,6 +109,10 @@ private:
 	Brhz iTransportState;
 	Brhz iUri;
 	Brhz iMetadata;
+	TBool iHasVolumeControl;
+	TUint iVolume;
+	TBool iMute;
+	TUint iVolumeLimit;
 };
 
 class ReceiverManager2 : public IReceiverManager1Handler, public IReceiverManager2Handler
@@ -108,11 +129,19 @@ private:
 	virtual void ReceiverAdded(ReceiverManager1Receiver& aReceiver);
 	virtual void ReceiverChanged(ReceiverManager1Receiver& aReceiver);
 	virtual void ReceiverRemoved(ReceiverManager1Receiver& aReceiver);
+	virtual void ReceiverVolumeControlChanged(ReceiverManager1Receiver& aReceiver);
+	virtual void ReceiverVolumeChanged(ReceiverManager1Receiver& aReceiver);
+	virtual void ReceiverMuteChanged(ReceiverManager1Receiver& aReceiver);
+	virtual void ReceiverVolumeLimitChanged(ReceiverManager1Receiver& aReceiver);
 
 	// IReceiverManager2Handler
 	virtual void ReceiverAdded(ReceiverManager2Receiver& aReceiver);
 	virtual void ReceiverChanged(ReceiverManager2Receiver& aReceiver);
 	virtual void ReceiverRemoved(ReceiverManager2Receiver& aReceiver);
+	virtual void ReceiverVolumeControlChanged(ReceiverManager2Receiver& aReceiver);
+	virtual void ReceiverVolumeChanged(ReceiverManager2Receiver& aReceiver);
+	virtual void ReceiverMuteChanged(ReceiverManager2Receiver& aReceiver);
+	virtual void ReceiverVolumeLimitChanged(ReceiverManager2Receiver& aReceiver);
 
 	void Run();
 

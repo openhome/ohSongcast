@@ -211,6 +211,90 @@ void ReceiverManager1Room::Removed()
 	RemoveRef();
 }
 
+void ReceiverManager1Room::VolumeControlChanged()
+{
+	std::vector<ReceiverManager1Receiver*>::iterator it = iReceiverList.begin();
+
+	while (it != iReceiverList.end()) {
+		ReceiverManager1Receiver* receiver = *it;
+		iHandler.ReceiverVolumeControlChanged(*receiver);
+		it++;
+	}
+}
+
+void ReceiverManager1Room::VolumeChanged()
+{
+	std::vector<ReceiverManager1Receiver*>::iterator it = iReceiverList.begin();
+
+	while (it != iReceiverList.end()) {
+		ReceiverManager1Receiver* receiver = *it;
+		iHandler.ReceiverVolumeChanged(*receiver);
+		it++;
+	}
+}
+
+void ReceiverManager1Room::MuteChanged()
+{
+	std::vector<ReceiverManager1Receiver*>::iterator it = iReceiverList.begin();
+
+	while (it != iReceiverList.end()) {
+		ReceiverManager1Receiver* receiver = *it;
+		iHandler.ReceiverMuteChanged(*receiver);
+		it++;
+	}
+}
+
+void ReceiverManager1Room::VolumeLimitChanged()
+{
+	std::vector<ReceiverManager1Receiver*>::iterator it = iReceiverList.begin();
+
+	while (it != iReceiverList.end()) {
+		ReceiverManager1Receiver* receiver = *it;
+		iHandler.ReceiverVolumeLimitChanged(*receiver);
+		it++;
+	}
+}
+
+TBool ReceiverManager1Room::HasVolumeControl() const
+{
+	return iRoom.HasVolumeControl();
+}
+
+TUint ReceiverManager1Room::Volume() const
+{
+	return iRoom.Volume();
+}
+
+TBool ReceiverManager1Room::Mute() const
+{
+	return iRoom.Mute();
+}
+
+TUint ReceiverManager1Room::VolumeLimit() const
+{
+	return iRoom.VolumeLimit();
+}
+
+void ReceiverManager1Room::SetVolume(TUint aValue)
+{
+	iRoom.SetVolume(aValue);
+}
+
+void ReceiverManager1Room::VolumeInc()
+{
+	iRoom.VolumeInc();
+}
+
+void ReceiverManager1Room::VolumeDec()
+{
+	iRoom.VolumeDec();
+}
+
+void ReceiverManager1Room::SetMute(TBool aValue)
+{
+	iRoom.SetMute(aValue);
+}
+
 TBool ReceiverManager1Room::Selected(const ReceiverManager1Receiver& aReceiver)
 {
 	return (iSelected == &aReceiver);
@@ -303,6 +387,46 @@ void ReceiverManager1Receiver::RemoveRef()
     }
 }
 
+TBool ReceiverManager1Receiver::HasVolumeControl() const
+{
+	return iRoom.HasVolumeControl();
+}
+
+TUint ReceiverManager1Receiver::Volume() const
+{
+	return iRoom.Volume();
+}
+
+TBool ReceiverManager1Receiver::Mute() const
+{
+	return iRoom.Mute();
+}
+
+TUint ReceiverManager1Receiver::VolumeLimit() const
+{
+	return iRoom.VolumeLimit();
+}
+
+void ReceiverManager1Receiver::SetVolume(TUint aValue)
+{
+	iRoom.SetVolume(aValue);
+}
+
+void ReceiverManager1Receiver::VolumeInc()
+{
+	iRoom.VolumeInc();
+}
+
+void ReceiverManager1Receiver::VolumeDec()
+{
+	iRoom.VolumeDec();
+}
+
+void ReceiverManager1Receiver::SetMute(TBool aValue)
+{
+	iRoom.SetMute(aValue);
+}
+
 TUint ReceiverManager1Receiver::SourceIndex() const
 {
 	return (iSourceIndex);
@@ -369,7 +493,31 @@ void ReceiverManager1::RoomSourceChanged(IRoom& aRoom)
 	room->SourceChanged();
 }
 
-void ReceiverManager1::RoomVolumeControlChanged(IRoom& /* aRoom */)
+void ReceiverManager1::RoomVolumeControlChanged(IRoom& aRoom)
 {
+	ReceiverManager1Room* room = (ReceiverManager1Room*)(aRoom.UserData());
+	ASSERT(room);
+	room->VolumeControlChanged();
+}
+
+void ReceiverManager1::RoomVolumeChanged(IRoom& aRoom)
+{
+	ReceiverManager1Room* room = (ReceiverManager1Room*)(aRoom.UserData());
+	ASSERT(room);
+	room->VolumeChanged();
+}
+
+void ReceiverManager1::RoomMuteChanged(IRoom& aRoom)
+{
+	ReceiverManager1Room* room = (ReceiverManager1Room*)(aRoom.UserData());
+	ASSERT(room);
+	room->MuteChanged();
+}
+
+void ReceiverManager1::RoomVolumeLimitChanged(IRoom& aRoom)
+{
+	ReceiverManager1Room* room = (ReceiverManager1Room*)(aRoom.UserData());
+	ASSERT(room);
+	room->VolumeLimitChanged();
 }
 
