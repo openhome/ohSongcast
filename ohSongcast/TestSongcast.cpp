@@ -59,6 +59,10 @@ void STDCALL loggerReceiver(void* /* aPtr */, ECallbackType aType, THandle aRece
 	const char* group = ReceiverGroup(aReceiver);
 	const char* name = ReceiverName(aReceiver);
 	EReceiverStatus status = ReceiverStatus(aReceiver);
+	TBool hasVolumeControl = ReceiverHasVolumeControl(aReceiver);
+	TUint volume = ReceiverVolume(aReceiver);
+	TBool mute = ReceiverMute(aReceiver);
+	TUint volumeLimit = ReceiverVolumeLimit(aReceiver);
 
 	switch (aType) {
 	case eAdded:
@@ -69,6 +73,18 @@ void STDCALL loggerReceiver(void* /* aPtr */, ECallbackType aType, THandle aRece
 		break;
 	case eRemoved:
 		printf("Removed %s %s %s %d\n", room, group, name, status);
+		break;
+	case eVolumeControlChanged:
+		printf("VolumeControlChanged %s %s %s %d\n", room, group, name, hasVolumeControl);
+		break;
+	case eVolumeChanged:
+		printf("VolumeChanged %s %s %s %d\n", room, group, name, volume);
+		break;
+	case eMuteChanged:
+		printf("MuteChanged %s %s %s %d\n", room, group, name, mute);
+		break;
+	case eVolumeLimitChanged:
+		printf("VolumeLimitChanged %s %s %s %d\n", room, group, name, volumeLimit);
 		break;
 	}
 }
@@ -88,6 +104,11 @@ void STDCALL loggerSubnet(void* /* aPtr */, ECallbackType aType, THandle aSubnet
 	case eRemoved:
 		printf("Removed %x %s \n", address, name);
 		break;
+	case eVolumeControlChanged:
+	case eVolumeChanged:
+	case eMuteChanged:
+	case eVolumeLimitChanged:
+		ASSERTS();
 	}
 }
 
