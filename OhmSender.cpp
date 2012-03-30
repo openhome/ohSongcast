@@ -806,6 +806,10 @@ OhmSender::~OhmSender()
     delete iThreadMulticast;
 
     LOG(kMedia, "OhmSender::~OhmSender deleted multicast thread\n");
+
+	delete iProvider;
+
+	LOG(kMedia, "OhmSender::~OhmSender deleted provider\n");
 }
 
 //  This runs a little state machine where the current state is reflected by:
