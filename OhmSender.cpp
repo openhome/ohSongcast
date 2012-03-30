@@ -446,6 +446,7 @@ OhmSender::OhmSender(DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aN
     , iTtl(aTtl)
 	, iLatency(aLatency)
     , iMulticast(aMulticast)
+	, iEnabled(false)
 	, iImage(aImage)
 	, iMimeType(aMimeType)
     , iRxBuffer(iSocketOhm)
