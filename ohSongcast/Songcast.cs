@@ -121,10 +121,6 @@ namespace OpenHome.Songcast
             iRoom = Marshal.PtrToStringAnsi(ReceiverRoom(iReceiver));
             iGroup = Marshal.PtrToStringAnsi(ReceiverGroup(iReceiver));
             iName = Marshal.PtrToStringAnsi(ReceiverName(iReceiver));
-            iHasVolumeControl = ReceiverHasVolumeControl(iReceiver);
-            iVolume = ReceiverVolume(iReceiver);
-            iMute = ReceiverMute(iReceiver);
-            iVolumeLimit = ReceiverVolumeLimit(iReceiver);
         }
 
         internal bool Owns(IntPtr aReceiver)
@@ -216,7 +212,7 @@ namespace OpenHome.Songcast
         {
             get
             {
-                return iHasVolumeControl;
+                return ReceiverHasVolumeControl(iReceiver);
             }
         }
 
@@ -224,7 +220,7 @@ namespace OpenHome.Songcast
         {
             get
             {
-                return iVolume;
+                return ReceiverVolume(iReceiver);
             }
         }
 
@@ -232,7 +228,7 @@ namespace OpenHome.Songcast
         {
             get
             {
-                return iMute;
+                return ReceiverMute(iReceiver);
             }
         }
 
@@ -240,7 +236,7 @@ namespace OpenHome.Songcast
         {
             get
             {
-                return iVolumeLimit;
+                return ReceiverVolumeLimit(iReceiver);
             }
         }
 
@@ -249,10 +245,6 @@ namespace OpenHome.Songcast
         string iRoom;
         string iGroup;
         string iName;
-        bool iHasVolumeControl;
-        uint iVolume;
-        bool iMute;
-        uint iVolumeLimit;
     }
 
     public interface ISubnetHandler

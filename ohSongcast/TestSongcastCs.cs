@@ -18,7 +18,7 @@ using OpenHome.Songcast;
 
             try
             {
-                Songcast songcast = new Songcast("av.openhome.org", 522, 1, 1, 100, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org", new byte[] {}, String.Empty);
+                Songcast songcast = new Songcast("av.openhome.org", 522, 1, 1, 100, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org", new byte[] { }, String.Empty);
 
                 while (true)
                 {
@@ -81,22 +81,22 @@ using OpenHome.Songcast;
 
         public void ReceiverVolumeControlChanged(IReceiver aReceiver)
         {
-            Console.WriteLine("VolumeControlChanged {0}:{1}:{2}:{3}:{4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.HasVolumeControl);
+            Console.WriteLine("VolumeControlChanged {0}:{1}:{2} {3} {4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.HasVolumeControl);
         }
 
         public void ReceiverVolumeChanged(IReceiver aReceiver)
         {
-            Console.WriteLine("ReceiverVolumeChanged {0}:{1}:{2}:{3}:{4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.Volume);
+            Console.WriteLine("ReceiverVolumeChanged {0}:{1}:{2} {3} {4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.Volume);
         }
 
         public void ReceiverMuteChanged(IReceiver aReceiver)
         {
-            Console.WriteLine("ReceiverMuteChanged {0}:{1}:{2}:{3}:{4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.Mute);
+            Console.WriteLine("ReceiverMuteChanged {0}:{1}:{2} {3} {4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.Mute);
         }
 
         public void ReceiverVolumeLimitChanged(IReceiver aReceiver)
         {
-            Console.WriteLine("ReceiverVolumeLimitChanged {0}:{1}:{2}:{3}:{4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.VolumeLimit);
+            Console.WriteLine("ReceiverVolumeLimitChanged {0}:{1}:{2} {3} {4}", aReceiver.Room, aReceiver.Group, aReceiver.Name, aReceiver.Status, aReceiver.VolumeLimit);
         }
 
         public void SubnetAdded(ISubnet aSubnet)
