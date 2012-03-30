@@ -1,4 +1,5 @@
 #include "OhmMsg.h"
+#include <OpenHome/Arch.h>
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
@@ -123,7 +124,7 @@ TUint OhmMsgAudio::Bytes() const
 TUint OhmMsgAudio::Frame() const
 {
 	OHMHEADER* header = (OHMHEADER*) MmGetMdlVirtualAddress(iMdl);
-	return (header->iAudioFrame);
+	return (Arch::BigEndian4(header->iAudioFrame));
 }
 
 TBool OhmMsgAudio::Resent() const

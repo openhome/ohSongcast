@@ -601,8 +601,7 @@ CMiniportTopology::PropertyHandlerWave
 		else if (PropertyRequest->Verb & KSPROPERTY_TYPE_SET)
 		{
 			if (PropertyRequest->PropertyItem->Id == KSPROPERTY_OHSOUNDCARD_RESEND) {
-
-				if (PropertyRequest->ValueSize != sizeof (UINT)) {
+				if (PropertyRequest->ValueSize < 4) {
 					return STATUS_INVALID_PARAMETER;
 				}
 

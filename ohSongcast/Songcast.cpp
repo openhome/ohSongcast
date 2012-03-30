@@ -494,7 +494,7 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 	
 	iDevice->SetEnabled();
 
-	iReceiverManager = new ReceiverManager3(*this, iSender->SenderUri(), iSender->SenderMetadata());
+	//iReceiverManager = new ReceiverManager3(*this, iSender->SenderUri(), iSender->SenderMetadata());
 }
 
 
@@ -874,7 +874,7 @@ Songcast::~Songcast()
 
     LOG(kMedia, "Songcast::~Songcast registered closing\n");
 
-	delete (iReceiverManager);
+	// delete (iReceiverManager);
 
     LOG(kMedia, "Songcast::~Songcast receiver manager destroyed\n");
 

@@ -76,7 +76,7 @@ private:
 	void PipelineSendAddFragmentLocked(TByte* aBuffer, TUint aBytes);
 	TBool PipelineSendLocked(TByte* aBuffer, TUint aBytes);
 	TBool PipelineStopLocked();
-	void ResendLocked(OpenHome::Net::OhmMsgAudio& aMsg);
+	TBool ResendLocked(OpenHome::Net::OhmMsgAudio& aMsg);
 
 private:
     TBool iCaptureAllocated;

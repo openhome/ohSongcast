@@ -339,7 +339,6 @@ Return Value:
 
 	if (iWsk == 0)
 	{
-		(*(TUint*)0) = 0;
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
@@ -347,7 +346,6 @@ Return Value:
 
 	if (iSocket == 0)
 	{
-		(*(TUint*)0) = 0;
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
 
@@ -1360,11 +1358,15 @@ void CMiniportWaveCyclic::PipelineStop()
 // Resend
 //=============================================================================
 
-void CMiniportWaveCyclic::ResendLocked(OhmMsgAudio& aMsg)
+TBool CMiniportWaveCyclic::ResendLocked(OhmMsgAudio& aMsg)
 {
 	if (iPipeline.SlotsUsed() != kMaxPipelineMessages) {
+		aMsg.AddRef();
 		iPipeline.Write(&aMsg);
+		return (true);
 	}
+
+	return (false);
 }
 
 //=============================================================================
@@ -1373,6 +1375,8 @@ void CMiniportWaveCyclic::ResendLocked(OhmMsgAudio& aMsg)
 
 void CMiniportWaveCyclic::PipelineResend(const Brx& aFrames)
 {
+	TUint resent = 0;
+
 	KIRQL oldIrql;
 
 	KeAcquireSpinLock(&iPipelineSpinLock, &oldIrql);
@@ -1397,7 +1401,9 @@ void CMiniportWaveCyclic::PipelineResend(const Brx& aFrames)
 			TInt diff = frame - msg->Frame();
 
 			if (diff == 0) {
-				ResendLocked(*msg);
+				if (ResendLocked(*msg)) {
+					resent++;
+				}
 				if (frames-- > 0) {
 					frame = reader.ReadUintBe(4);
 				}
@@ -1418,8 +1424,9 @@ void CMiniportWaveCyclic::PipelineResend(const Brx& aFrames)
 					diff = frame - msg->Frame();
 
 					if (diff == 0) {
-						ResendLocked(*msg);
-
+						if (ResendLocked(*msg)) {
+							resent++;
+						}
 						if (frames-- > 0) {
 							frame = reader.ReadUintBe(4);
 						}
@@ -1434,6 +1441,19 @@ void CMiniportWaveCyclic::PipelineResend(const Brx& aFrames)
 		}
 
 		iHistory.Write(msg);
+	}
+
+	if (resent > 0) {
+		if (!iPipelineSending)
+		{
+			iPipelineSending = true;
+
+			KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
+
+			PipelineOutput();
+
+			return;
+		}
 	}
 
 	KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
