@@ -878,6 +878,10 @@ Songcast::~Songcast()
 
     LOG(kMedia, "Songcast::~Songcast receiver manager destroyed\n");
 
+	delete (iNetworkMonitor);
+
+	LOG(kMedia, "Songcast::~Songcast network monitor destroyed\n");
+
 	delete (iSender);
 
     LOG(kMedia, "Songcast::~Songcast sender destroyed\n");
