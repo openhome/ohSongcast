@@ -46,7 +46,7 @@ linkoutput = -o
 dllprefix = lib
 dllext = so
 link_dll = ${CROSS_COMPILE}g++ -lpthread $(platform_linkflags) $(platform_dllflags) -shared -shared-libgcc
-csharp = gmcs /nologo
+csharp = dmcs /nologo
 dirsep = /
 
 
