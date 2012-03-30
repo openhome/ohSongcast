@@ -494,7 +494,7 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 	
 	iDevice->SetEnabled();
 
-	//iReceiverManager = new ReceiverManager3(*this, iSender->SenderUri(), iSender->SenderMetadata());
+	iReceiverManager = new ReceiverManager3(*this, iSender->SenderUri(), iSender->SenderMetadata());
 }
 
 
@@ -874,7 +874,7 @@ Songcast::~Songcast()
 
     LOG(kMedia, "Songcast::~Songcast registered closing\n");
 
-	// delete (iReceiverManager);
+	delete (iReceiverManager);
 
     LOG(kMedia, "Songcast::~Songcast receiver manager destroyed\n");
 
@@ -935,7 +935,6 @@ void Songcast::ReceiverVolumeControlChanged(ReceiverManager3Receiver& aReceiver)
 	Receiver* receiver = (Receiver*)(aReceiver.UserData());
 	ASSERT(receiver);
 	(*iReceiverCallback)(iReceiverPtr, eVolumeControlChanged, (THandle)receiver);
-	receiver->RemoveRef();
 }
 
 void Songcast::ReceiverVolumeChanged(ReceiverManager3Receiver& aReceiver)
@@ -943,7 +942,6 @@ void Songcast::ReceiverVolumeChanged(ReceiverManager3Receiver& aReceiver)
 	Receiver* receiver = (Receiver*)(aReceiver.UserData());
 	ASSERT(receiver);
 	(*iReceiverCallback)(iReceiverPtr, eVolumeChanged, (THandle)receiver);
-	receiver->RemoveRef();
 }
 
 void Songcast::ReceiverMuteChanged(ReceiverManager3Receiver& aReceiver)
@@ -951,7 +949,6 @@ void Songcast::ReceiverMuteChanged(ReceiverManager3Receiver& aReceiver)
 	Receiver* receiver = (Receiver*)(aReceiver.UserData());
 	ASSERT(receiver);
 	(*iReceiverCallback)(iReceiverPtr, eMuteChanged, (THandle)receiver);
-	receiver->RemoveRef();
 }
 
 void Songcast::ReceiverVolumeLimitChanged(ReceiverManager3Receiver& aReceiver)
@@ -959,7 +956,6 @@ void Songcast::ReceiverVolumeLimitChanged(ReceiverManager3Receiver& aReceiver)
 	Receiver* receiver = (Receiver*)(aReceiver.UserData());
 	ASSERT(receiver);
 	(*iReceiverCallback)(iReceiverPtr, eVolumeLimitChanged, (THandle)receiver);
-	receiver->RemoveRef();
 }
 
 
