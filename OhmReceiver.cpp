@@ -510,7 +510,7 @@ TBool OhmReceiver::RepairBegin(OhmMsgAudio& aMsg)
 {
 	iRepairFirst = &aMsg;
 
-    iTimerRepair.FireIn(Random((iLatency >> 2) + (iLatency >> 3))); // request repair randomly across 3/8 of the audio latency
+    iTimerRepair.FireIn(Random(kInitialRepairTimeoutMs)); 
 
 	return (true);
 }
@@ -788,7 +788,7 @@ void OhmReceiver::TimerRepairExpired()
 			break;
 		}
 
-	    iTimerRepair.FireIn(Random((iLatency >> 2) + (iLatency >> 3))); // request repair randomly across 3/8 of the audio latency
+		iTimerRepair.FireIn(Random(iLatency >> 2)); // check again a random time 1/4 of the audio latency
 	}
 
 	iMutexTransport.Signal();
@@ -809,6 +809,13 @@ void OhmReceiver::Add(OhmMsg& aMsg)
 
 void OhmReceiver::ResendSeen()
 {
+	iMutexTransport.Wait();
+
+	if (iRepairing) {
+		iTimerRepair.FireIn(Random(iLatency >> 2)); // check again a random time 1/4 of the audio latency
+	}
+
+	iMutexTransport.Signal();
 }
 
 // IOhmMsgProcessor
