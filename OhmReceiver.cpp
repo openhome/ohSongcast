@@ -535,7 +535,7 @@ TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 
 	TUint frame = aMsg.Frame();
 
-	LOG(kMedia, "GOT %d", frame);
+	LOG(kMedia, "GOT %d\n", frame);
 
 	// get difference between this and the last frame send down the pipeline
 
