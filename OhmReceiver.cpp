@@ -788,7 +788,7 @@ void OhmReceiver::TimerRepairExpired()
 			break;
 		}
 
-		iTimerRepair.FireIn(Random(iLatency >> 2)); // check again a random time 1/4 of the audio latency
+		iTimerRepair.FireIn(Random(iLatency >> 1)); // check again a random time 1/2 of the audio latency
 	}
 
 	iMutexTransport.Signal();
@@ -812,7 +812,7 @@ void OhmReceiver::ResendSeen()
 	iMutexTransport.Wait();
 
 	if (iRepairing) {
-		iTimerRepair.FireIn(Random(iLatency >> 2)); // check again a random time 1/4 of the audio latency
+		iTimerRepair.FireIn(Random(iLatency >> 2)); // delay repair timer by a random time between 0 and 1/4 of the audio latency
 	}
 
 	iMutexTransport.Signal();
