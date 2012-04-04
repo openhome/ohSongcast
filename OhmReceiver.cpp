@@ -535,6 +535,8 @@ TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 
 	TUint frame = aMsg.Frame();
 
+	LOG(kMedia, "GOT %d", frame);
+
 	// get difference between this and the last frame send down the pipeline
 
 	TInt diff = frame - iFrame;
