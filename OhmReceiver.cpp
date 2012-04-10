@@ -796,7 +796,8 @@ void OhmReceiver::TimerRepairExpired()
 			break;
 		}
 
-		iTimerRepair.FireIn(Random(iLatency >> 1)); // check again a random time 1/2 of the audio latency
+		// iTimerRepair.FireIn(Random(iLatency >> 1)); // check again a random time 1/2 of the audio latency
+		iTimerRepair.FireIn(kSubsequentRepairTimeoutMs); // check again a random time 1/2 of the audio latency
 	}
 
 	iMutexTransport.Signal();
