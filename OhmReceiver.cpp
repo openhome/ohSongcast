@@ -533,6 +533,7 @@ void  OhmReceiver::RepairReset()
 	iDriver->Disconnected();
 }
 
+
 TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 {
 	// get the incoming frame number
@@ -571,7 +572,174 @@ TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 				return (false);
 			}
 
-			// ... yes, so update the current fist waiting frame and continue testing to see if this can also be sent
+			// ... yes, so update the current first waiting frame and continue testing to see if this can also be sent
+
+			iRepairFirst = iFifoRepair.Read();
+		}
+
+		// ... we're done
+
+		return (true);
+	}
+
+	if (diff < 1) {
+		// incoming frames is equal to or earlier than the last frame sent down the pipeline
+		// in other words, it's a duplicate, so so discard it and continue
+
+		aMsg.RemoveRef();
+
+		return (true);
+	}
+
+	// Ok, its a frame that needs to be put into the backlog, but where?
+
+	diff = frame - iRepairFirst->Frame();
+
+	if (diff < 0) {
+		// it's earlier than the current first waiting message, but it's not the first
+		// one we are looking for, so reset
+
+		RepairReset();
+
+		return (false);
+	}
+
+	if (diff == 0) {
+		// it's equal to the currently first waiting frame, so discard it - it's a duplicate
+
+		aMsg.RemoveRef();
+
+		return (true);
+	}
+
+	// ok, it's after the currently first waiting frame, so it needs to go into the backlog
+
+	// first check if the backlog is empty
+
+	if (iFifoRepair.SlotsUsed() == 0) {
+		// ... yes, so just inject it
+
+		iFifoRepair.Write(&aMsg);
+
+		// ... and always keep track of the latest frame in the backlog
+		iRepairLast = frame;
+
+		return (true);
+	}
+
+	// ok, so the backlog is not empty
+
+	// is the incoming frame later than the last one currently in the backlog?
+
+	diff = frame - iRepairLast;
+
+	if (diff > 0) {
+		// ... yes, so, again, just inject it (if there is space)
+
+		TUint count = iFifoRepair.SlotsUsed();
+
+		if (count == kMaxRepairBacklogFrames) {
+			// can't put another frame into the backlog
+			RepairReset();
+
+			return (false);
+		}
+
+		iFifoRepair.Write(&aMsg);
+
+		// ... and update the record of the last frame in the backlog
+
+		iRepairLast = frame;
+
+		return (true);
+	}
+
+	// is it a duplicate of the last frame in the backlog?
+
+	if (diff == 0) {
+		// ... yes, so discard
+		aMsg.RemoveRef();
+
+		return (true);
+	}
+
+	// ... no, so it has to go somewhere in the middle of the backlog, so iterate through and check for duplicates
+
+	TUint count = iFifoRepair.SlotsUsed();
+
+	TBool found = false;
+
+	for (TUint i = 0; i < count; i++) {
+		OhmMsgAudio* msg = iFifoRepair.Read();
+					
+		if (!found) {
+			diff = frame - msg->Frame();
+
+			if (diff < 0) {
+				// not a duplicate, so reset
+				RepairReset();
+				return (false);
+			}
+			else if (diff == 0) {
+				aMsg.RemoveRef();
+				iFifoRepair.Write(msg);
+				found = true;
+			}
+		}
+
+		iFifoRepair.Write(msg);
+	}
+
+	return (true);
+}
+
+
+/* 
+	This version attempts to collect resent messages in any order. This approach abandonded because
+	it is then difficult to detect messages that are never going to be resent because they have been
+	removed from the sender's history. This is now detected by assuming that iff we reseceive a resent
+	message later thn the first one we are looking for, then we are never going to get the first one
+	we are looking for and may as well reset.
+
+TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
+{
+	// get the incoming frame number
+
+	TUint frame = aMsg.Frame();
+
+	LOG(kMedia, "GOT %d\n", frame);
+
+	// get difference between this and the last frame send down the pipeline
+
+	TInt diff = frame - iFrame;
+
+	if (diff == 1) {
+		// incoming frame is one greater than the last frame sent down the pipeline, so send this ...
+
+		iFrame++;
+
+		iDriver->Add(aMsg);
+
+		// ... and see if the current first waiting frame is now also ready to be sent
+
+		while (iRepairFirst->Frame() == iFrame + 1) {
+			// ... yes, it is, so send it
+
+			iFrame++;
+
+			iDriver->Add(*iRepairFirst);
+
+			// ... and see if there are further messages waiting in the fifo
+
+			if (iFifoRepair.SlotsUsed() == 0) {
+				// ... no, so we have completed the repair
+
+				LOG(kMedia, "END\n");
+
+				return (false);
+			}
+
+			// ... yes, so update the current first waiting frame and continue testing to see if this can also be sent
 
 			iRepairFirst = iFifoRepair.Read();
 		}
@@ -721,6 +889,8 @@ TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 
 	return (true);
 }
+
+*/
 
 void OhmReceiver::TimerRepairExpired()
 {
