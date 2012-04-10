@@ -641,16 +641,7 @@ TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 	// first check if the backlog is empty
 
 	if (iFifoRepair.SlotsUsed() == 0) {
-		// ... yes, so just inject it ( if there is space )
-
-		TUint count = iFifoRepair.SlotsUsed();
-
-		if (count == kMaxRepairBacklogFrames) {
-			// can't put another frame into the backlog
-			RepairReset();
-
-			return (false);
-		}
+		// ... yes, so just inject it
 
 		iFifoRepair.Write(&aMsg);
 
@@ -698,30 +689,24 @@ TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 
 	// ... no, so it has to go somewhere in the middle of the backlog, so iterate through and inject it at the right place (if there is space)
 
-	TBool found = false;
 	TUint count = iFifoRepair.SlotsUsed();
+
+	TBool found = false;
 
 	for (TUint i = 0; i < count; i++) {
 		OhmMsgAudio* msg = iFifoRepair.Read();
 					
-		if (found) {
-			iFifoRepair.Write(msg);
-		}
-		else {
+		if (!found) {
 			diff = frame - msg->Frame();
 
 			if (diff < 0) {
-				TUint count = iFifoRepair.SlotsUsed();
-
 				if (count == kMaxRepairBacklogFrames) {
 					// can't put another frame into the backlog
 					RepairReset();
-
 					return (false);
 				}
 
 				iFifoRepair.Write(&aMsg);
-				iFifoRepair.Write(msg);
 				found = true;
 			}
 			else if (diff == 0) {
@@ -730,6 +715,8 @@ TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 				found = true;
 			}
 		}
+
+		iFifoRepair.Write(msg);
 	}
 
 	return (true);
