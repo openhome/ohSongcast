@@ -508,6 +508,8 @@ void OhmReceiver::Reset()
 
 TBool OhmReceiver::RepairBegin(OhmMsgAudio& aMsg)
 {
+	LOG(kMedia, "BEGIN ON %d\n", aMsg.Frame());
+
 	iRepairFirst = &aMsg;
 
     iTimerRepair.FireIn(Random(kInitialRepairTimeoutMs)); 
@@ -517,6 +519,8 @@ TBool OhmReceiver::RepairBegin(OhmMsgAudio& aMsg)
 
 void  OhmReceiver::RepairReset()
 {
+	LOG(kMedia, "RESET\n");
+
 	iLatency = 0;
 
 	iTimerRepair.Cancel();
@@ -561,6 +565,8 @@ TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 
 			if (iFifoRepair.SlotsUsed() == 0) {
 				// ... no, so we have completed the repair
+
+				LOG(kMedia, "END\n");
 
 				return (false);
 			}
