@@ -9,9 +9,16 @@ libohSongcast = ../../../Build/Obj/Mac/Debug/libohSongcast.so
 endif
 
 
-arch_flags = -arch x86_64
-arch_linkflags = -arch x86_64
-outputdir = $(objdir)x86_64/App/
+ifeq ($(mac-64),1)
+    arch_flags = -arch x86_64
+    arch_linkflags = -arch x86_64
+    outputdir = $(objdir)x86_64/App/
+else
+    arch_flags = -m32
+    arch_linkflags = -m32
+    outputdir = $(objdir)i386/App/
+endif
+
 contentsdir = $(outputdir)$(product_name).app/Contents/
 macosdir = $(outputdir)$(product_name).app/Contents/MacOS/
 resourcedir = $(outputdir)$(product_name).app/Contents/Resources/
