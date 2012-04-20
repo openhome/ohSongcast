@@ -1109,14 +1109,6 @@ void CMiniportWaveCyclic::PipelineOutput()
 		header->iAudioNetworkTimestamp += timestamp << 24 & 0xff000000;
 
 		header->iAudioMediaTimestamp = header->iAudioNetworkTimestamp;
-
-		if (frame % 10 == 7) // miss sending 1 in 10 messages
-		{
-			iPipelineOutputMsg->SetResent(true);
-			iPipelineOutputMsg->RemoveRef();
-			PipelineOutput();
-			return;
-		}
 	}
 
 	iPipelineOutputBuf.Mdl = iPipelineOutputMsg->Mdl();

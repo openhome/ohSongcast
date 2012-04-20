@@ -245,12 +245,9 @@ void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
 	iFifoHistory.Write(&msg);
 
     try {
-		if (Random(99) > 49) {
-			iSocket.Send(iBuffer, iEndpoint);
-		}
+		iSocket.Send(iBuffer, iEndpoint);
     }
     catch (NetworkError&) {
-        ASSERTS();
     }
         
     iSampleStart += samples;
@@ -345,7 +342,6 @@ void OhmSenderDriver::Resend(OhmMsgAudio& aMsg)
 		iSocket.Send(iBuffer, iEndpoint);
 	}
 	catch (NetworkError&) {
-		ASSERTS();
 	}
 
 }
@@ -1217,7 +1213,6 @@ void OhmSender::TimerExpiryExpired()
         iSocketOhm.Send(buffer, iSocketOhm.This());
     }
     catch (NetworkError&) {
-        ASSERTS();
     }
 
     iMutexActive.Signal();
@@ -1312,7 +1307,6 @@ void OhmSender::Send()
         iSocketOhm.Send(iTxBuffer, iTargetEndpoint);
     }
     catch (NetworkError&) {
-        ASSERTS();
     }
 }
 
@@ -1393,7 +1387,6 @@ void OhmSender::SendListen(const Endpoint& aEndpoint)
         iSocketOhm.Send(iTxBuffer, aEndpoint);
     }
     catch (NetworkError&) {
-        ASSERTS();
     }
 }
 
@@ -1412,7 +1405,6 @@ void OhmSender::SendLeave(const Endpoint& aEndpoint)
         iSocketOhm.Send(iTxBuffer, aEndpoint);
     }
     catch (NetworkError&) {
-        ASSERTS();
     }
 }
 
