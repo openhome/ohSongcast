@@ -17,6 +17,7 @@ public:
     static IOReturn SetEndpoint(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
     static IOReturn SetTtl(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
     static IOReturn SetLatencyMs(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
+    static IOReturn Resend(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs);
 };
 
 
@@ -47,6 +48,10 @@ const IOExternalMethodDispatch AudioUserClientDispatcher::iMethods[eNumDriverMet
     // eSetLatencyMs
     {
         (IOExternalMethodAction)&AudioUserClientDispatcher::SetLatencyMs, 1, 0, 0, 0
+    },
+    // eResend
+    {
+        (IOExternalMethodAction)&AudioUserClientDispatcher::Resend, 1, ResendMaxBytes, 0, 0
     }
 };
 
@@ -81,6 +86,11 @@ IOReturn AudioUserClientDispatcher::SetTtl(AudioUserClient* aTarget, void* aRefe
 IOReturn AudioUserClientDispatcher::SetLatencyMs(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
 {
     return aTarget->SetLatencyMs(aArgs->scalarInput[0]);
+}
+
+IOReturn AudioUserClientDispatcher::Resend(AudioUserClient* aTarget, void* aReference, IOExternalMethodArguments* aArgs)
+{
+    return aTarget->Resend(aArgs->scalarInput[0], (const uint32_t*)aArgs->structureInput);
 }
 
 
@@ -267,7 +277,27 @@ IOReturn AudioUserClient::SetLatencyMs(uint64_t aLatencyMs)
 }
 
 
+// eResend
 
+IOReturn AudioUserClient::Resend(uint64_t aFrameCount, const uint32_t* aFrames)
+{
+    IOReturn ret = DeviceOk();
+    if (ret == kIOReturnSuccess)
+    {
+        IOLog("Songcast AudioUserClient[%p]::Resend(%llu, [", this, aFrameCount, ret);
+
+        for (uint64_t i=0 ; i<aFrameCount ; i++)
+        {
+            uint32_t frame = OSSwapBigToHostInt32(*(aFrames + i));
+            IOLog("%u,", frame);
+        }
+        IOLog("])\n");
+    }
+    else {
+        IOLog("Songcast AudioUserClient[%p]::Resend(%llu) returns %x\n", this, aFrameCount, ret);
+    }
+    return ret;
+}
 
 
 

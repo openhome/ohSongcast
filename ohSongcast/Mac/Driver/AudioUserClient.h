@@ -28,6 +28,7 @@ private:
     IOReturn SetEndpoint(uint64_t aIpAddress, uint64_t aPort, uint64_t aAdapter);
     IOReturn SetTtl(uint64_t aTtl);
     IOReturn SetLatencyMs(uint64_t aLatencyMs);
+    IOReturn Resend(uint64_t aFrameCount, const uint32_t* aFrames);
 
     friend class AudioUserClientDispatcher;
     AudioDevice* iDevice;
