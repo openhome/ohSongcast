@@ -2,6 +2,7 @@
 #include "Songcast.h"
 #include "AudioDeviceInterface.h"
 #include <IOKit/IOLib.h>
+#include <IOKit/IOCommandGate.h>
 
 
 // Declaration of private dispatcher class
@@ -117,21 +118,59 @@ bool AudioUserClient::start(IOService* aProvider)
 {
     IOLog("Songcast AudioUserClient[%p]::start(%p) ...\n", this, aProvider);
 
+    iDevice = 0;
+    iWorkLoop = 0;
+    iCommandGate = 0;
+
     // set the device that this user client is to talk to
     iDevice = OSDynamicCast(AudioDevice, aProvider);
     if (!iDevice) {
         IOLog("Songcast AudioUserClient[%p]::start(%p) null device failure\n", this, aProvider);
-        return false;
+        goto Error;
     }
+
+    // get the work loop from the device
+    iWorkLoop = iDevice->getWorkLoop();
+    if (!iWorkLoop) {
+        IOLog("Songcast AudioUserClient[%p]::start(%p) null work group failure\n", this, aProvider);
+        goto Error;
+    }
+    iWorkLoop->retain();
+
+    // create the command gate
+    iCommandGate = IOCommandGate::commandGate(this);
+    if (!iCommandGate) {
+        IOLog("Songcast AudioUserClient[%p]::start(%p) null command gate failure\n", this, aProvider);
+        goto Error;
+    }
+
+    // add the command gate to the work loop
+    if (iWorkLoop->addEventSource(iCommandGate) != kIOReturnSuccess) {
+        IOLog("Songcast AudioUserClient[%p]::start(%p) failed to add command gate to work loop\n", this, aProvider);
+        goto Error;
+    };
 
     // make sure base class start is called after all other things that can fail
     if (!IOUserClient::start(aProvider)) {
         IOLog("Songcast AudioUserClient[%p]::start(%p) base class start failed\n", this, aProvider);
-        return false;
+        iWorkLoop->removeEventSource(iCommandGate);
+        goto Error;
     }
 
     IOLog("Songcast AudioUserClient[%p]::start(%p) ok\n", this, aProvider);
     return true;
+
+Error:
+    if (iCommandGate) {
+        iCommandGate->release();
+        iCommandGate = 0;
+    }
+    if (iWorkLoop) {
+        iWorkLoop->release();
+        iWorkLoop = 0;
+    }
+    iDevice = 0;
+    return false;
 }
 
 
@@ -139,6 +178,15 @@ void AudioUserClient::stop(IOService* aProvider)
 {
     IOLog("Songcast AudioUserClient[%p]::stop(%p)\n", this, aProvider);
     IOUserClient::stop(aProvider);
+
+    if (iCommandGate) {
+        iWorkLoop->removeEventSource(iCommandGate);
+        iCommandGate->release();
+        iCommandGate = 0;
+        iWorkLoop->release();
+        iWorkLoop = 0;
+        iDevice = 0;
+    }
 }
 
 
@@ -182,6 +230,42 @@ IOReturn AudioUserClient::DeviceOk()
 }
 
 
+IOReturn AudioUserClient::RunAction(Action aAction, void* aArg1, void* aArg2, void* aArg3)
+{
+    // run the action using the command gate - this means the code in aAction will be run
+    // when the driver's work loop gate is closed i.e. provides single threaded access
+    if (iCommandGate) {
+        return iCommandGate->runAction(ActionCommandGate, (void*)aAction, aArg1, aArg2, aArg3);
+    }
+    else {
+        return kIOReturnNotAttached;
+    }
+}
+
+
+IOReturn AudioUserClient::ActionCommandGate(OSObject* aOwner, void* aArg1, void* aArg2, void* aArg3, void* aArg4)
+{
+    if (!aOwner) {
+        return kIOReturnBadArgument;
+    }
+
+    AudioUserClient* client = OSDynamicCast(AudioUserClient, aOwner);
+    if (!client) {
+        return kIOReturnBadArgument;
+    }
+
+    Action action = (Action)aArg1;
+    if (!action) {
+        return kIOReturnBadArgument;
+    }
+
+    return (*action)(client, aArg2, aArg3, aArg4);
+}
+
+
+#define ARG_UINT64(arg) *((uint64_t*)(arg))
+
+
 // eOpen
 
 IOReturn AudioUserClient::Open()
@@ -220,6 +304,16 @@ IOReturn AudioUserClient::Close()
 
 IOReturn AudioUserClient::SetActive(uint64_t aActive)
 {
+    return RunAction(ActionSetActive, &aActive);
+}
+
+IOReturn AudioUserClient::ActionSetActive(AudioUserClient* aClient, void* aArg1, void* aArg2, void* aArg3)
+{
+    return aClient->DoSetActive(ARG_UINT64(aArg1));
+}
+
+IOReturn AudioUserClient::DoSetActive(uint64_t aActive)
+{
     IOReturn ret = DeviceOk();
     if (ret == kIOReturnSuccess) {
         iDevice->Socket().SetActive(aActive);
@@ -234,6 +328,16 @@ IOReturn AudioUserClient::SetActive(uint64_t aActive)
 // eSetEndpoint
 
 IOReturn AudioUserClient::SetEndpoint(uint64_t aIpAddress, uint64_t aPort, uint64_t aAdapter)
+{
+    return RunAction(ActionSetEndpoint, &aIpAddress, &aPort, &aAdapter);
+}
+
+IOReturn AudioUserClient::ActionSetEndpoint(AudioUserClient* aClient, void* aArg1, void* aArg2, void* aArg3)
+{
+    return aClient->DoSetEndpoint(ARG_UINT64(aArg1), ARG_UINT64(aArg2), ARG_UINT64(aArg3));
+}
+
+IOReturn AudioUserClient::DoSetEndpoint(uint64_t aIpAddress, uint64_t aPort, uint64_t aAdapter)
 {
     IOReturn ret = DeviceOk();
     if (ret == kIOReturnSuccess) {
@@ -251,6 +355,16 @@ IOReturn AudioUserClient::SetEndpoint(uint64_t aIpAddress, uint64_t aPort, uint6
 
 IOReturn AudioUserClient::SetTtl(uint64_t aTtl)
 {
+    return RunAction(ActionSetTtl, &aTtl);
+}
+
+IOReturn AudioUserClient::ActionSetTtl(AudioUserClient* aClient, void* aArg1, void* aArg2, void* aArg3)
+{
+    return aClient->DoSetTtl(ARG_UINT64(aArg1));
+}
+
+IOReturn AudioUserClient::DoSetTtl(uint64_t aTtl)
+{
     IOReturn ret = DeviceOk();
     if (ret == kIOReturnSuccess) {
         iDevice->Socket().SetTtl(aTtl);
@@ -266,6 +380,16 @@ IOReturn AudioUserClient::SetTtl(uint64_t aTtl)
 
 IOReturn AudioUserClient::SetLatencyMs(uint64_t aLatencyMs)
 {
+    return RunAction(ActionSetLatencyMs, &aLatencyMs);
+}
+
+IOReturn AudioUserClient::ActionSetLatencyMs(AudioUserClient* aClient, void* aArg1, void* aArg2, void* aArg3)
+{
+    return aClient->DoSetLatencyMs(ARG_UINT64(aArg1));
+}
+
+IOReturn AudioUserClient::DoSetLatencyMs(uint64_t aLatencyMs)
+{
     IOReturn ret = DeviceOk();
     if (ret == kIOReturnSuccess) {
         iDevice->Engine().SetLatencyMs(aLatencyMs);
@@ -280,6 +404,16 @@ IOReturn AudioUserClient::SetLatencyMs(uint64_t aLatencyMs)
 // eResend
 
 IOReturn AudioUserClient::Resend(uint64_t aFrameCount, const uint32_t* aFrames)
+{
+    return RunAction(ActionResend, &aFrameCount, (void*)aFrames);
+}
+
+IOReturn AudioUserClient::ActionResend(AudioUserClient* aClient, void* aArg1, void* aArg2, void* aArg3)
+{
+    return aClient->DoResend(ARG_UINT64(aArg1), (const uint32_t*)aArg2);
+}
+
+IOReturn AudioUserClient::DoResend(uint64_t aFrameCount, const uint32_t* aFrames)
 {
     IOReturn ret = DeviceOk();
     if (ret == kIOReturnSuccess)
