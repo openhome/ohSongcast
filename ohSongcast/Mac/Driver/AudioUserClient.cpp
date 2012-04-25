@@ -270,6 +270,16 @@ IOReturn AudioUserClient::ActionCommandGate(OSObject* aOwner, void* aArg1, void*
 
 IOReturn AudioUserClient::Open()
 {
+    return RunAction(ActionOpen);
+}
+
+IOReturn AudioUserClient::ActionOpen(AudioUserClient* aClient, void* aArg1, void* aArg2, void* aArg3)
+{
+    return aClient->DoOpen();
+}
+
+IOReturn AudioUserClient::DoOpen()
+{
     if (iDevice == 0 || isInactive()) {
         IOLog("Songcast AudioUserClient[%p]::Open() not attached\n", this);
         return kIOReturnNotAttached;
@@ -287,6 +297,16 @@ IOReturn AudioUserClient::Open()
 // eClose
 
 IOReturn AudioUserClient::Close()
+{
+    return RunAction(ActionClose);
+}
+
+IOReturn AudioUserClient::ActionClose(AudioUserClient* aClient, void* aArg1, void* aArg2, void* aArg3)
+{
+    return aClient->DoClose();
+}
+
+IOReturn AudioUserClient::DoClose()
 {
     IOReturn ret = DeviceOk();
     if (ret != kIOReturnSuccess) {
