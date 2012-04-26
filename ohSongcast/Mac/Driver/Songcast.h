@@ -68,13 +68,6 @@ private:
 
 
 // Class representing the songcast socket
-class ISongcastSocket
-{
-public:
-    virtual ~ISongcastSocket() {}
-    virtual void Send(SongcastAudioMessage& aMsg) = 0;
-};
-
 enum ESongcastState
 {
     eSongcastStateInactive,
@@ -82,17 +75,14 @@ enum ESongcastState
     eSongcastStatePendingInactive
 };
 
-class SongcastSocket : public ISongcastSocket
+class SongcastSocket
 {
 public:
     SongcastSocket();
     ~SongcastSocket();
     
-    void Open(uint32_t aIpAddress, uint16_t aPort, uint32_t aAdapter);
-    void Close();
+    void SetEndpoint(uint32_t aIpAddress, uint16_t aPort, uint32_t aAdapter);
     void Send(SongcastAudioMessage& aMsg);
-    
-    void SetActive(uint64_t aActive);
     void SetTtl(uint64_t aTtl);
     
 private:
@@ -100,7 +90,6 @@ private:
 
     socket_t iSocket;
     uint8_t iTtl;
-    ESongcastState iState;
 };
 
 
@@ -121,6 +110,7 @@ public:
 
 private:
     SongcastSocket iSocket;
+    ESongcastState iState;
 };
 
 
