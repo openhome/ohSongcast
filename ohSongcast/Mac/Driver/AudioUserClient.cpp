@@ -208,7 +208,7 @@ IOReturn AudioUserClient::clientDied()
     // the user space application has crashed - get the driver to stop sending audio
     if (DeviceOk() == kIOReturnSuccess)
     {
-        iDevice->Socket().SetActive(false);
+        iDevice->GetSongcast().SetActive(false);
     }
     
     // base class calls clientClose()
@@ -336,7 +336,7 @@ IOReturn AudioUserClient::DoSetActive(uint64_t aActive)
 {
     IOReturn ret = DeviceOk();
     if (ret == kIOReturnSuccess) {
-        iDevice->Socket().SetActive(aActive);
+        iDevice->GetSongcast().SetActive(aActive);
     }
     else {
         IOLog("Songcast AudioUserClient[%p]::SetActive(%llu) returns %x\n", this, aActive, ret);
@@ -361,8 +361,7 @@ IOReturn AudioUserClient::DoSetEndpoint(uint64_t aIpAddress, uint64_t aPort, uin
 {
     IOReturn ret = DeviceOk();
     if (ret == kIOReturnSuccess) {
-        iDevice->Socket().Close();
-        iDevice->Socket().Open(aIpAddress, aPort, aAdapter);
+        iDevice->GetSongcast().SetEndpoint(aIpAddress, aPort, aAdapter);
     }
     else {
         IOLog("Songcast AudioUserClient[%p]::SetEndpoint(%llu, %llu, %llu) returns %x\n", this, aIpAddress, aPort, aAdapter, ret);
@@ -387,7 +386,7 @@ IOReturn AudioUserClient::DoSetTtl(uint64_t aTtl)
 {
     IOReturn ret = DeviceOk();
     if (ret == kIOReturnSuccess) {
-        iDevice->Socket().SetTtl(aTtl);
+        iDevice->GetSongcast().SetTtl(aTtl);
     }
     else {
         IOLog("Songcast AudioUserClient[%p]::SetTtl(%llu) returns %x\n", this, aTtl, ret);

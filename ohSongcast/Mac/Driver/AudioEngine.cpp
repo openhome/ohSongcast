@@ -162,9 +162,9 @@ void AudioEngine::free()
 }
 
 
-void AudioEngine::SetSocket(ISongcastSocket& aSocket)
+void AudioEngine::SetSongcast(Songcast& aSongcast)
 {
-    iSocket = &aSocket;
+    iSongcast = &aSongcast;
 }
 
 
@@ -325,7 +325,7 @@ void AudioEngine::TimerFired()
     absolutetime_to_nanoseconds(currTimeAbs, &iTimestamp);
 
     // send the data
-    iSocket->Send(*iAudioMsg);
+    iSongcast->Send(*iAudioMsg);
 }
 
 

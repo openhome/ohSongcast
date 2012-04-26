@@ -45,7 +45,7 @@ public:
     virtual bool init(OSDictionary* aProperties);
     virtual void free();
     
-    void SetSocket(ISongcastSocket& aSocket);
+    void SetSongcast(Songcast& aSongcast);
     void SetDescription(const char* aDescription);
     void SetLatencyMs(uint64_t aLatencyMs);
 
@@ -77,7 +77,7 @@ private:
     
     BlockBuffer* iBuffer;
     SongcastAudioMessage* iAudioMsg;
-    ISongcastSocket* iSocket;
+    Songcast* iSongcast;
 };
 
 

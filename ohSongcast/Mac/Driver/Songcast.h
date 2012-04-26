@@ -105,6 +105,26 @@ private:
 
 
 
+// Class defining the interface between the audio driver code and the songcast code
+class Songcast
+{
+public:
+    Songcast();
+    ~Songcast();
+
+    void SetActive(uint64_t aActive);
+    void SetEndpoint(uint32_t aIpAddress, uint16_t aPort, uint32_t aAdapter);
+    void SetTtl(uint64_t aTtl);
+    void SetLatencyMs(uint64_t aLatencyMs);
+
+    void Send(SongcastAudioMessage& aMsg);
+
+private:
+    SongcastSocket iSocket;
+};
+
+
+
 #endif // HEADER_SONGCAST
 
 

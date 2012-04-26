@@ -19,6 +19,50 @@ typedef struct SocketAddress
 
 
 
+// Implementation of main Songcast class
+Songcast::Songcast()
+    : iSocket()
+{
+}
+
+
+Songcast::~Songcast()
+{
+    iSocket.Close();
+}
+
+
+void Songcast::SetActive(uint64_t aActive)
+{
+    iSocket.SetActive(aActive);
+}
+
+
+void Songcast::SetEndpoint(uint32_t aIpAddress, uint16_t aPort, uint32_t aAdapter)
+{
+    iSocket.Close();
+    iSocket.Open(aIpAddress, aPort, aAdapter);
+}
+
+
+void Songcast::SetTtl(uint64_t aTtl)
+{
+    iSocket.SetTtl(aTtl);
+}
+
+
+void Songcast::SetLatencyMs(uint64_t aLatencyMs)
+{
+}
+
+
+void Songcast::Send(SongcastAudioMessage& aMsg)
+{
+    iSocket.Send(aMsg);
+}
+
+
+
 // implementation of SongcastSocket class
 SongcastSocket::SongcastSocket()
 : iSocket(0)
