@@ -961,5 +961,3 @@ void Songcast::ReceiverVolumeLimitChanged(ReceiverManager3Receiver& aReceiver)
 	ASSERT(receiver);
 	(*iReceiverCallback)(iReceiverPtr, eVolumeLimitChanged, (THandle)receiver);
 }
-
-
