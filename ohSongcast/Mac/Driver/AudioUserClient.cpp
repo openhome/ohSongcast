@@ -411,7 +411,7 @@ IOReturn AudioUserClient::DoSetLatencyMs(uint64_t aLatencyMs)
 {
     IOReturn ret = DeviceOk();
     if (ret == kIOReturnSuccess) {
-        iDevice->Engine().SetLatencyMs(aLatencyMs);
+        iDevice->GetSongcast().SetLatencyMs(aLatencyMs);
     }
     else {
         IOLog("Songcast AudioUserClient[%p]::SetLatencyMs(%llu) returns %x\n", this, aLatencyMs, ret);

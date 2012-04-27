@@ -17,7 +17,6 @@ class AudioDevice : public IOAudioDevice
 
 public:
     Songcast& GetSongcast() { return *iSongcast; }
-    AudioEngine& Engine() { return *iEngine; }
 
 private:
     virtual bool initHardware(IOService* aProvider);

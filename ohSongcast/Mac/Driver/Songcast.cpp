@@ -31,6 +31,7 @@ Songcast::Songcast()
     : iSocket()
     , iState(eSongcastStateInactive)
     , iAudioMsg(0)
+    , iLatencyMs(100)
 {
     // calculate the maximum songcast audio data size
     uint32_t maxBytes = 0;
@@ -88,10 +89,12 @@ void Songcast::SetTtl(uint64_t aTtl)
 
 void Songcast::SetLatencyMs(uint64_t aLatencyMs)
 {
+    IOLog("Songcast Songcast[%p]::SetLatencyMs(%llu)\n", this, aLatencyMs);
+    iLatencyMs = aLatencyMs;
 }
 
 
-void Songcast::Send(const SongcastFormat& aFormat, uint32_t aFrameNumber, uint64_t aTimestampNs, uint64_t aLatencyMs, bool aHalt, void* aData, uint32_t aBytes)
+void Songcast::Send(const SongcastFormat& aFormat, uint32_t aFrameNumber, uint64_t aTimestampNs, bool aHalt, void* aData, uint32_t aBytes)
 {
     // don't send if songcast is inactive
     if (iState == eSongcastStateInactive) {
@@ -101,7 +104,7 @@ void Songcast::Send(const SongcastFormat& aFormat, uint32_t aFrameNumber, uint64
     // setup the audio message
     if (iAudioMsg)
     {
-        iAudioMsg->SetFormat(aFormat, aTimestampNs, aLatencyMs);
+        iAudioMsg->SetFormat(aFormat, aTimestampNs, iLatencyMs);
         iAudioMsg->SetFrame(aFrameNumber);
         iAudioMsg->SetHaltFlag(aHalt);
         iAudioMsg->SetData(aData, aBytes);

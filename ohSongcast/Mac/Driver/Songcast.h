@@ -125,12 +125,13 @@ public:
     void SetTtl(uint64_t aTtl);
     void SetLatencyMs(uint64_t aLatencyMs);
 
-    void Send(const SongcastFormat& aFormat, uint32_t aFrameNumber, uint64_t aTimestampNs, uint64_t aLatencyMs, bool aHalt, void* aData, uint32_t aBytes);
+    void Send(const SongcastFormat& aFormat, uint32_t aFrameNumber, uint64_t aTimestampNs, bool aHalt, void* aData, uint32_t aBytes);
 
 private:
     SongcastSocket iSocket;
     ESongcastState iState;
     SongcastAudioMessage* iAudioMsg;
+    uint64_t iLatencyMs;
 };
 
 

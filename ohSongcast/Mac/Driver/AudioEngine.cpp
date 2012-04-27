@@ -30,7 +30,6 @@ bool AudioEngine::init(OSDictionary* aProperties)
     iTimerFiredCount = 0;
     iTimestamp = 0;
     iAudioStopping = false;
-    iLatencyMs = 100;
     iTimerIntervalNs = iCurrentFormat->TimeNs();
 
     // allocate the output buffers
@@ -157,13 +156,6 @@ void AudioEngine::SetSongcast(Songcast& aSongcast)
 void AudioEngine::SetDescription(const char* aDescription)
 {
     setDescription(aDescription);
-}
-
-
-void AudioEngine::SetLatencyMs(uint64_t aLatencyMs)
-{
-    IOLog("Songcast AudioEngine[%p]::SetLatencyMs(%llu)\n", this, aLatencyMs);
-    iLatencyMs = aLatencyMs;
 }
 
 
@@ -296,7 +288,6 @@ void AudioEngine::TimerFired()
     // gather the audio data to send
     uint32_t frameNumber = iCurrentFrame;
     uint64_t timestamp = iTimestamp;
-    uint64_t latency = iLatencyMs;
     bool halt = iAudioStopping;
     void* data = iBuffer->BlockPtr(iCurrentBlock);
     uint32_t bytes = iBuffer->BlockBytes();
@@ -317,7 +308,7 @@ void AudioEngine::TimerFired()
     absolutetime_to_nanoseconds(currTimeAbs, &iTimestamp);
 
     // send the data
-    iSongcast->Send(*iCurrentFormat, frameNumber, timestamp, latency, halt, data, bytes);
+    iSongcast->Send(*iCurrentFormat, frameNumber, timestamp, halt, data, bytes);
 }
 
 
