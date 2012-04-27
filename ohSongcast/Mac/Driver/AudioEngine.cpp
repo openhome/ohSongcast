@@ -239,7 +239,24 @@ UInt32 AudioEngine::getCurrentSampleFrame()
 
 IOReturn AudioEngine::performFormatChange(IOAudioStream* aAudioStream, const IOAudioStreamFormat* aNewFormat, const IOAudioSampleRate* aNewSampleRate)
 {
-    IOLog("Songcast AudioEngine[%p]::performFormatChange()\n", this);
+    IOLog("Songcast AudioEngine[%p]::performFormatChange()", this);
+
+    if (aNewFormat) {
+        IOLog(" Format(%u, %u, %u, %u, %u, %u, %u, %u, %u)", (uint32_t)aNewFormat->fNumChannels, (uint32_t)aNewFormat->fSampleFormat, (uint32_t)aNewFormat->fNumericRepresentation,
+                                                             (uint32_t)aNewFormat->fBitDepth, (uint32_t)aNewFormat->fBitWidth, (uint32_t)aNewFormat->fAlignment,
+                                                             (uint32_t)aNewFormat->fByteOrder, (uint32_t)aNewFormat->fIsMixable, (uint32_t)aNewFormat->fDriverTag);
+    }
+    else {
+        IOLog(" Format()");
+    }
+
+    if (aNewSampleRate) {
+        IOLog(" SampleRate(%u, %u)\n", (uint32_t)aNewSampleRate->whole, (uint32_t)aNewSampleRate->fraction);
+    }
+    else {
+        IOLog(" SampleRate()\n");
+    }
+
     return kIOReturnSuccess;
 }
 
