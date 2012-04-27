@@ -41,28 +41,44 @@ typedef struct SongcastAudioHeader
 
 
 
+// Class defining format of audio sent by songcast
+class SongcastFormat
+{
+public:
+    SongcastFormat(uint32_t aSampleRate, uint8_t aBitDepth, uint8_t aChannels, uint16_t aSampleCount);
+
+    uint32_t Bytes() const;
+    uint64_t TimeNs() const;
+
+    const uint32_t SampleRate;
+    const uint32_t BitDepth;
+    const uint32_t Channels;
+    const uint32_t SampleCount;
+};
+
+
+
 // Class to wrap the data sent in an audio message
 class SongcastAudioMessage
 {
 public:
-    SongcastAudioMessage(uint32_t aFrames, uint32_t aChannels, uint32_t aBitDepth);
+    SongcastAudioMessage(uint32_t aMaxAudioBytes, const SongcastFormat& aFormat);
     ~SongcastAudioMessage();
     
     void* Ptr() const { return iPtr; }
-    uint32_t Bytes() const { return (sizeof(SongcastAudioHeader) + iAudioBytes); }
+    uint32_t Bytes() const;
     
+    void SetFormat(const SongcastFormat& aFormat, uint64_t aTimestampNs, uint64_t aLatencyMs);
     void SetHaltFlag(bool aHalt);
-    void SetSampleRate(uint32_t aSampleRate);
     void SetFrame(uint32_t aFrame);
-    void SetTimestamp(uint32_t aTimestamp);
-    void SetMediaLatency(uint32_t aLatency);
     void SetData(void* aPtr, uint32_t aBytes);
     
 private:
     SongcastAudioHeader* Header() const { return (SongcastAudioHeader*)iPtr; }
     
     void* iPtr;
-    const uint32_t iAudioBytes;
+    uint32_t iAudioBytes;
+    const uint32_t iMaxAudioBytes;
 };
 
 
@@ -101,16 +117,20 @@ public:
     Songcast();
     ~Songcast();
 
+    static const uint32_t SupportedFormatCount = 1;
+    static const SongcastFormat SupportedFormats[SupportedFormatCount];
+
     void SetActive(uint64_t aActive);
     void SetEndpoint(uint32_t aIpAddress, uint16_t aPort, uint32_t aAdapter);
     void SetTtl(uint64_t aTtl);
     void SetLatencyMs(uint64_t aLatencyMs);
 
-    void Send(SongcastAudioMessage& aMsg);
+    void Send(const SongcastFormat& aFormat, uint32_t aFrameNumber, uint64_t aTimestampNs, uint64_t aLatencyMs, bool aHalt, void* aData, uint32_t aBytes);
 
 private:
     SongcastSocket iSocket;
     ESongcastState iState;
+    SongcastAudioMessage* iAudioMsg;
 };
 
 
