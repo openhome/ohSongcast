@@ -72,6 +72,7 @@ namespace OpenHome.Songcast
 	    uint Volume { get; }
 	    bool Mute { get; }
         uint VolumeLimit { get; }
+        uint IpAddress { get; }
     }
 
     internal class Receiver : IReceiver, IDisposable
@@ -86,6 +87,8 @@ namespace OpenHome.Songcast
         static extern IntPtr ReceiverName(IntPtr aHandle);
         [DllImport("ohSongcast")]
         static extern uint ReceiverStatus(IntPtr aHandle);
+        [DllImport("ohSongcast")]
+        static extern uint ReceiverIpAddress(IntPtr aHandle);
         [DllImport("ohSongcast")]
         static extern bool ReceiverHasVolumeControl(IntPtr aHandle);
         [DllImport("ohSongcast")]
@@ -237,6 +240,14 @@ namespace OpenHome.Songcast
             get
             {
                 return ReceiverVolumeLimit(iReceiver);
+            }
+        }
+
+        public uint IpAddress
+        {
+            get
+            {
+                return ReceiverIpAddress(iReceiver);
             }
         }
 

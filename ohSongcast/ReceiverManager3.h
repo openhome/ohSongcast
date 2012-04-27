@@ -46,6 +46,7 @@ public:
 	const Brx& Group() const;
 	const Brx& Name() const;
 	EStatus Status() const;
+    TIpAddress IpAddress() const;
 	TBool HasVolumeControl() const;
 	TUint Volume() const;
 	TBool Mute() const;
