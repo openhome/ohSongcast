@@ -2,6 +2,7 @@
 #define HEADER_SONGCAST
 
 #include <sys/kpi_socket.h>
+#include <OpenHome/Fifo.h>
 
 
 // NOTE: This struct is __packed__ - this prevents the compiler from adding
@@ -67,10 +68,10 @@ public:
     
     void* Ptr() const { return iPtr; }
     uint32_t Bytes() const;
+    uint32_t Frame() const;
     
-    void SetFormat(const SongcastFormat& aFormat, uint64_t aTimestampNs, uint64_t aLatencyMs);
-    void SetHaltFlag(bool aHalt);
-    void SetFrame(uint32_t aFrame);
+    void SetHeader(const SongcastFormat& aFormat, uint64_t aTimestampNs, uint64_t aLatencyMs, bool aHalt, uint32_t aFrame);
+    void SetResent();
     void SetData(void* aPtr, uint32_t aBytes);
     
 private:
@@ -126,11 +127,14 @@ public:
     void SetLatencyMs(uint64_t aLatencyMs);
 
     void Send(const SongcastFormat& aFormat, uint32_t aFrameNumber, uint64_t aTimestampNs, bool aHalt, void* aData, uint32_t aBytes);
+    void Resend(uint64_t aFrameCount, const uint32_t* aFrames);
 
 private:
+    static const uint32_t kHistoryCount = 100;
+
     SongcastSocket iSocket;
     ESongcastState iState;
-    SongcastAudioMessage* iAudioMsg;
+    OpenHome::FifoLite<SongcastAudioMessage*, kHistoryCount> iHistory;
     uint64_t iLatencyMs;
 };
 

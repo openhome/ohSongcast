@@ -435,16 +435,8 @@ IOReturn AudioUserClient::ActionResend(AudioUserClient* aClient, void* aArg1, vo
 IOReturn AudioUserClient::DoResend(uint64_t aFrameCount, const uint32_t* aFrames)
 {
     IOReturn ret = DeviceOk();
-    if (ret == kIOReturnSuccess)
-    {
-        IOLog("Songcast AudioUserClient[%p]::Resend(%llu, [", this, aFrameCount, ret);
-
-        for (uint64_t i=0 ; i<aFrameCount ; i++)
-        {
-            uint32_t frame = OSSwapBigToHostInt32(*(aFrames + i));
-            IOLog("%u,", frame);
-        }
-        IOLog("])\n");
+    if (ret == kIOReturnSuccess) {
+        iDevice->GetSongcast().Resend(aFrameCount, aFrames);
     }
     else {
         IOLog("Songcast AudioUserClient[%p]::Resend(%llu) returns %x\n", this, aFrameCount, ret);

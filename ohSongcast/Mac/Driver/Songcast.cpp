@@ -30,7 +30,7 @@ const SongcastFormat Songcast::SupportedFormats[SupportedFormatCount] =
 Songcast::Songcast()
     : iSocket()
     , iState(eSongcastStateInactive)
-    , iAudioMsg(0)
+    , iHistory()
     , iLatencyMs(100)
 {
     // calculate the maximum songcast audio data size
@@ -43,27 +43,37 @@ Songcast::Songcast()
         }
     }
 
-    // create the audio message to use in sending the data - define the max
-    // size of the songcast audio data and set the defaults as the first supported format
-    iAudioMsg = new SongcastAudioMessage(maxBytes, SupportedFormats[0]);
-
-    if (iAudioMsg && iAudioMsg->Ptr() == 0)
+    // create a full queue of audio messages in the history
+    for (uint32_t i=0 ; i<kHistoryCount ; i++)
     {
-        delete iAudioMsg;
-        iAudioMsg = 0;
-    }
+        // messages contain a buffer to contain the maximum message size and are initialised
+        // with the first supported format
+        SongcastAudioMessage* msg = new SongcastAudioMessage(maxBytes, SupportedFormats[0]);
 
-    if (iAudioMsg == 0) {
-        IOLog("Songcast Songcast[%p]::Songcast() failed to create audio msg\n", this);
+        if (msg && msg->Ptr() == 0)
+        {
+            delete msg;
+            msg = 0;
+        }
+
+        if (msg == 0) {
+            IOLog("Songcast Songcast[%p]::Songcast() failed to create audio msg\n", this);
+        }
+        else {
+            iHistory.Write(msg);
+        }
     }
 }
 
 
 Songcast::~Songcast()
 {
-    if (iAudioMsg) {
-        delete iAudioMsg;
-        iAudioMsg = 0;
+    TUint count = iHistory.SlotsUsed();
+
+    for (TUint i=0 ; i<count ; i++)
+    {
+        SongcastAudioMessage* msg = iHistory.Read();
+        delete msg;
     }
 }
 
@@ -96,32 +106,70 @@ void Songcast::SetLatencyMs(uint64_t aLatencyMs)
 
 void Songcast::Send(const SongcastFormat& aFormat, uint32_t aFrameNumber, uint64_t aTimestampNs, bool aHalt, void* aData, uint32_t aBytes)
 {
-    // don't send if songcast is inactive
-    if (iState == eSongcastStateInactive) {
+    // don't send if songcast is inactive or no audio packets were created
+    if (iState == eSongcastStateInactive || iHistory.SlotsUsed() == 0) {
         return;
     }
 
-    // setup the audio message
-    if (iAudioMsg)
-    {
-        iAudioMsg->SetFormat(aFormat, aTimestampNs, iLatencyMs);
-        iAudioMsg->SetFrame(aFrameNumber);
-        iAudioMsg->SetHaltFlag(aHalt);
-        iAudioMsg->SetData(aData, aBytes);
+    // extract the oldest message from the history
+    SongcastAudioMessage* msg = iHistory.Read();
 
-        // if songcast inactive state is pending, this is the last audio msg - set the halt flag
-        if (iState == eSongcastStatePendingInactive) {
-            iAudioMsg->SetHaltFlag(true);
-        }
-
-        // send the msg
-        iSocket.Send(*iAudioMsg);
+    // if songcast inactive state is pending, this is the last audio msg - set the halt flag
+    if (iState == eSongcastStatePendingInactive) {
+        aHalt = true;
     }
+
+    // setup the audio message
+    msg->SetHeader(aFormat, aTimestampNs, iLatencyMs, aHalt, aFrameNumber);
+    msg->SetData(aData, aBytes);
+
+    // send the msg
+    iSocket.Send(*msg);
+
+    // set the resend flag before adding the message back to the history as most recent
+    msg->SetResent();
+    iHistory.Write(msg);
 
     // set state to inactive if pending
     if (iState == eSongcastStatePendingInactive) {
         IOLog("Songcast Songcast[%p]::Send() pending->inactive\n", this);
         iState = eSongcastStateInactive;
+    }
+}
+
+
+void Songcast::Resend(uint64_t aFrameCount, const uint32_t* aFrames)
+{
+    IOLog("Songcast Songcast[%p]::Resend(%llu, [", this, aFrameCount);
+
+    for (uint64_t i=0 ; i<aFrameCount ; i++)
+    {
+        uint32_t frame = OSSwapBigToHostInt32(*(aFrames + i));
+        IOLog("%u,", frame);
+    }
+
+    IOLog("])\n");
+
+    if (aFrameCount == 0) {
+        return;
+    }
+
+    TUint count = iHistory.SlotsUsed();
+    for (TUint i=0 ; i<count ; i++)
+    {
+        SongcastAudioMessage* msg = iHistory.Read();
+        iHistory.Write(msg);
+
+        for (uint64_t i=0 ; i<aFrameCount ; i++)
+        {
+            uint32_t frame = OSSwapBigToHostInt32(*(aFrames + i));
+
+            if (frame == msg->Frame())
+            {
+                iSocket.Send(*msg);
+                break;
+            }
+        }
     }
 }
 
@@ -300,8 +348,15 @@ uint32_t SongcastAudioMessage::Bytes() const
 }
 
 
-void SongcastAudioMessage::SetFormat(const SongcastFormat& aFormat, uint64_t aTimestampNs, uint64_t aLatencyMs)
+uint32_t SongcastAudioMessage::Frame() const
 {
+    return OSSwapBigToHostInt32(Header()->iAudioFrame);
+}
+
+
+void SongcastAudioMessage::SetHeader(const SongcastFormat& aFormat, uint64_t aTimestampNs, uint64_t aLatencyMs, bool aHalt, uint32_t aFrame)
+{
+    // setup message audio data size and format
     iAudioBytes = aFormat.Bytes();
     Header()->iTotalBytes = OSSwapHostToBigInt16(Bytes());
     Header()->iAudioSampleCount = OSSwapHostToBigInt16(aFormat.SampleCount);
@@ -310,29 +365,32 @@ void SongcastAudioMessage::SetFormat(const SongcastFormat& aFormat, uint64_t aTi
     Header()->iAudioBitDepth = aFormat.BitDepth;
     Header()->iAudioChannels = aFormat.Channels;
 
+    // convert ns timestamp to correct units and set timestamp fields
     uint64_t timestamp = (aTimestampNs * aFormat.SampleRate * 256) / 1000000000;
     Header()->iAudioNetworkTimestamp = OSSwapHostToBigInt32(timestamp);
     Header()->iAudioMediaTimestamp = Header()->iAudioNetworkTimestamp;
 
+    // convert and set latency
     uint64_t latency = (aLatencyMs * aFormat.SampleRate * 256) / 1000;
     Header()->iAudioMediaLatency = OSSwapHostToBigInt32(latency);
-}
 
-
-void SongcastAudioMessage::SetHaltFlag(bool aHalt)
-{
+    // set the audio flags to lossless with timestamps and, optionally, a halt
     if (aHalt) {
         Header()->iAudioFlags = 7;
     }
     else {
         Header()->iAudioFlags = 6;
     }
+
+    // set the frame numnber
+    Header()->iAudioFrame = OSSwapHostToBigInt32(aFrame);
 }
 
 
-void SongcastAudioMessage::SetFrame(uint32_t aFrame)
+void SongcastAudioMessage::SetResent()
 {
-    Header()->iAudioFrame = OSSwapHostToBigInt32(aFrame);
+    // set the resent flag
+    Header()->iAudioFlags |= 0x08;
 }
 
 
