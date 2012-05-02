@@ -155,11 +155,23 @@ void Songcast::Resend(uint64_t aFrameCount, const uint32_t* aFrames)
         return;
     }
 
+    IOLog("Songcast Songcast[%p]::Resend sending: [", this);
+
+    uint32_t firstFrame = 0xffffffff;
+    uint32_t lastFrame = 0;
+
     TUint count = iHistory.SlotsUsed();
     for (TUint i=0 ; i<count ; i++)
     {
         SongcastAudioMessage* msg = iHistory.Read();
         iHistory.Write(msg);
+
+        if (msg->Frame() < firstFrame) {
+            firstFrame = msg->Frame();
+        }
+        if (msg->Frame() > lastFrame) {
+            lastFrame = msg->Frame();
+        }
 
         for (uint64_t i=0 ; i<aFrameCount ; i++)
         {
@@ -167,11 +179,14 @@ void Songcast::Resend(uint64_t aFrameCount, const uint32_t* aFrames)
 
             if (frame == msg->Frame())
             {
+                IOLog("%u,", frame);
                 iSocket.Send(*msg);
                 break;
             }
         }
     }
+
+    IOLog("]  firstFrame=%u lastFrame=%u\n", firstFrame, lastFrame);
 }
 
 
