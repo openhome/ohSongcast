@@ -59,7 +59,6 @@ private:
     void TimerFired();
 
     uint32_t iCurrentBlock;
-    uint32_t iCurrentFrame;
 
     // all timer related integers are 64-bit to avoid conversion errors between 32 and 64 bit
     IOTimerEventSource* iTimer;

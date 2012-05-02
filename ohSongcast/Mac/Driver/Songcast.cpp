@@ -32,6 +32,7 @@ Songcast::Songcast()
     , iState(eSongcastStateInactive)
     , iHistory()
     , iLatencyMs(100)
+    , iFrame(0)
 {
     // calculate the maximum songcast audio data size
     uint32_t maxBytes = 0;
@@ -104,7 +105,7 @@ void Songcast::SetLatencyMs(uint64_t aLatencyMs)
 }
 
 
-void Songcast::Send(const SongcastFormat& aFormat, uint32_t aFrameNumber, uint64_t aTimestampNs, bool aHalt, void* aData, uint32_t aBytes)
+void Songcast::Send(const SongcastFormat& aFormat, uint64_t aTimestampNs, bool aHalt, void* aData, uint32_t aBytes)
 {
     // don't send if songcast is inactive or no audio packets were created
     if (iState == eSongcastStateInactive || iHistory.SlotsUsed() == 0) {
@@ -120,7 +121,7 @@ void Songcast::Send(const SongcastFormat& aFormat, uint32_t aFrameNumber, uint64
     }
 
     // setup the audio message
-    msg->SetHeader(aFormat, aTimestampNs, iLatencyMs, aHalt, aFrameNumber);
+    msg->SetHeader(aFormat, aTimestampNs, iLatencyMs, aHalt, ++iFrame);
     msg->SetData(aData, aBytes);
 
     // send the msg

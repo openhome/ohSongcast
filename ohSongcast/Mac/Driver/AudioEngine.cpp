@@ -23,7 +23,6 @@ bool AudioEngine::init(OSDictionary* aProperties)
     iCurrentFormat = &(Songcast::SupportedFormats[0]);
 
     iCurrentBlock = 0;
-    iCurrentFrame = 0;
     
     iTimer = 0;
     iTimeZero = 0;
@@ -179,7 +178,6 @@ IOReturn AudioEngine::performAudioEngineStart()
 {
     takeTimeStamp(false);
     iCurrentBlock = 0;
-    iCurrentFrame = 0;
 
     uint64_t currTime;
     clock_get_uptime(&currTime);
@@ -286,7 +284,6 @@ void AudioEngine::TimerFired()
     }    
 
     // gather the audio data to send
-    uint32_t frameNumber = iCurrentFrame;
     uint64_t timestamp = iTimestamp;
     bool halt = iAudioStopping;
     void* data = iBuffer->BlockPtr(iCurrentBlock);
@@ -295,8 +292,6 @@ void AudioEngine::TimerFired()
     // increment counters and send timestamp to the upper audio layers if the buffer
     // wraps
     iCurrentBlock++;
-    iCurrentFrame++;
-
     if (iCurrentBlock >= iBuffer->Blocks()) {
         iCurrentBlock = 0;
         takeTimeStamp();
@@ -308,7 +303,7 @@ void AudioEngine::TimerFired()
     absolutetime_to_nanoseconds(currTimeAbs, &iTimestamp);
 
     // send the data
-    iSongcast->Send(*iCurrentFormat, frameNumber, timestamp, halt, data, bytes);
+    iSongcast->Send(*iCurrentFormat, timestamp, halt, data, bytes);
 }
 
 

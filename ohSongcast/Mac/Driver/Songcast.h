@@ -126,7 +126,7 @@ public:
     void SetTtl(uint64_t aTtl);
     void SetLatencyMs(uint64_t aLatencyMs);
 
-    void Send(const SongcastFormat& aFormat, uint32_t aFrameNumber, uint64_t aTimestampNs, bool aHalt, void* aData, uint32_t aBytes);
+    void Send(const SongcastFormat& aFormat, uint64_t aTimestampNs, bool aHalt, void* aData, uint32_t aBytes);
     void Resend(uint64_t aFrameCount, const uint32_t* aFrames);
 
 private:
@@ -136,6 +136,7 @@ private:
     ESongcastState iState;
     OpenHome::FifoLite<SongcastAudioMessage*, kHistoryCount> iHistory;
     uint64_t iLatencyMs;
+    uint32_t iFrame;
 };
 
 
