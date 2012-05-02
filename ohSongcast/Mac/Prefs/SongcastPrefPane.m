@@ -444,11 +444,11 @@ static NSString* textSongcastOff;
     imageConnected = [[NSImage alloc] initWithContentsOfFile:[aBundle pathForResource:@"green" ofType:@"tiff"]];
     imageDisconnected = [[NSImage alloc] initWithContentsOfFile:[aBundle pathForResource:@"red" ofType:@"tiff"]];
 
-    textConnected = NSLocalizedStringFromTableInBundle(@"TableCellStatusConnected", nil, aBundle, @"");
-    textConnecting = NSLocalizedStringFromTableInBundle(@"TableCellStatusConnecting", nil, aBundle, @"");
-    textDisconnected = NSLocalizedStringFromTableInBundle(@"TableCellStatusDisconnected", nil, aBundle, @"");
-    textUnavailable = NSLocalizedStringFromTableInBundle(@"TableCellStatusUnavailable", nil, aBundle, @"");
-    textSongcastOff = NSLocalizedStringFromTableInBundle(@"TableCellStatusSongcastOff", nil, aBundle, @"");
+    textConnected = @"Connected";
+    textConnecting = @"Connecting";
+    textDisconnected = @"Disconnected";
+    textUnavailable = @"Unavailable";
+    textSongcastOff = @"Songcast Off";
 }
 
 + (NSImage*) imageConnected

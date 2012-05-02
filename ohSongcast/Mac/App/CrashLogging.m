@@ -195,10 +195,10 @@
     NSString* manufacturerName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"SongcastManufacturerName"];
 
     NSAlert* alert = [[NSAlert alloc] init];
-    [alert addButtonWithTitle:[NSString stringWithFormat:NSLocalizedString(@"CrashLogReport", @""), manufacturerName]];
-    [alert addButtonWithTitle:NSLocalizedString(@"CrashLogIgnore", @"")];
-    [alert setMessageText:[NSString stringWithFormat:NSLocalizedString(@"CrashLogTitle", @""), bundleName]];
-    [alert setInformativeText:[NSString stringWithFormat:NSLocalizedString(@"CrashLogText", @""), manufacturerName]];
+    [alert addButtonWithTitle:[NSString stringWithFormat:@"Report to %@", manufacturerName]];
+    [alert addButtonWithTitle:@"Ignore"];
+    [alert setMessageText:[NSString stringWithFormat:@"A problem occurred with %@", bundleName]];
+    [alert setInformativeText:[NSString stringWithFormat:@"Mac OS X and other applications are not affected.\n\nClick Report to send a report to %@.", manufacturerName]];
     [alert setAlertStyle:NSCriticalAlertStyle];
 
     if ([alert runModal] == NSAlertFirstButtonReturn)
