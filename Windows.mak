@@ -64,12 +64,13 @@ $(objdirbare) :
 clean:
 	del /S /Q $(objdirbare)
 
+objects_songcast_dll = $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_sender) $(objects_songcast) $(objects_netmon) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
 
 $(objdir)$(dllprefix)ohSongcast.$(dllext) : $(objects_topology) $(objects_sender) $(objects_songcast) $(objects_netmon) ohSongcast\Windows\SoundcardDriver.cpp
 	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcast\Windows\SoundcardDriver.cpp
-	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcast.$(dllext) $(ohnetdir)$(libprefix)ohNetCore.lib $(objects_topology) $(objects_sender) $(objects_songcast) $(objects_netmon) $(objdir)SoundcardDriver.$(objext) kernel32.lib setupapi.lib shell32.lib ole32.lib
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcast.$(dllext) $(objects_songcast_dll)
 
 $(objdir)TestSongcast.$(exeext) : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast\TestSongcast.cpp
 	$(compiler)TestSongcast.$(objext) -c $(cflags) $(includes) ohSongcast\TestSongcast.cpp
-	$(link) $(linkoutput)$(objdir)TestSongcast.$(exeext) $(objdir)ohSongcast.$(libext) $(objdir)TestSongcast.$(objext) 
+	$(link) $(linkoutput)$(objdir)TestSongcast.$(exeext) $(objdir)TestSongcast.$(objext) $(objects_songcast_dll) $(ohnetdir)$(libprefix)ohNetCore.lib
 
