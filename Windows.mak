@@ -72,5 +72,5 @@ $(objdir)$(dllprefix)ohSongcast.$(dllext) : $(objects_topology) $(objects_sender
 
 $(objdir)TestSongcast.$(exeext) : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast\TestSongcast.cpp
 	$(compiler)TestSongcast.$(objext) -c $(cflags) $(includes) ohSongcast\TestSongcast.cpp
-	$(link) $(linkoutput)$(objdir)TestSongcast.$(exeext) $(objdir)TestSongcast.$(objext) $(objects_songcast_dll) $(ohnetdir)$(libprefix)ohNetCore.lib
+	$(link) $(linkoutput)$(objdir)TestSongcast.$(exeext) $(objdir)TestSongcast.$(objext) $(objects_songcast_dll) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
