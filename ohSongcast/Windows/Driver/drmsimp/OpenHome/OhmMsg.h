@@ -7,6 +7,8 @@
 
 #include "Ohm.h"
 
+#include <wdm.h>
+
 // Ohm Header
 
 //Offset    Bytes                   Desc
@@ -39,29 +41,29 @@
 
 typedef struct
 {
-	UCHAR iMagic[4]; // "Ohm "
-	UCHAR iMajorVersion; // 1
-	UCHAR iMsgType; // 3 - Audio
-	USHORT iTotalBytes;
-	UCHAR iAudioHeaderBytes;
-	UCHAR iAudioFlags;
-	USHORT iAudioSamples;
-	ULONG iAudioFrame;
-	ULONG iAudioNetworkTimestamp;
-	ULONG iAudioMediaLatency;
-	ULONG iAudioMediaTimestamp;
-	ULONG iAudioSampleStartHi;
-	ULONG iAudioSampleStartLo;
-	ULONG iAudioSamplesTotalHi;
-	ULONG iAudioSamplesTotalLo;
-	ULONG iAudioSampleRate;
-	ULONG iAudioBitRate;
-	USHORT iAudioVolumeOffset;
-	UCHAR iAudioBitDepth;
-	UCHAR iAudioChannels;
-	UCHAR iReserved;
-	UCHAR iCodecNameBytes;  // 6
-	UCHAR iCodecName[6]; // "PCM   "
+	TUint8 iMagic[4]; // "Ohm "
+	TUint8 iMajorVersion; // 1
+	TUint8 iMsgType; // 3 - Audio
+	TUint16 iTotalBytes;
+	TUint8 iAudioHeaderBytes;
+	TUint8 iAudioFlags;
+	TUint16 iAudioSamples;
+	TUint32 iAudioFrame;
+	TUint32 iAudioNetworkTimestamp;
+	TUint32 iAudioMediaLatency;
+	TUint32 iAudioMediaTimestamp;
+	TUint32 iAudioSampleStartHi;
+	TUint32 iAudioSampleStartLo;
+	TUint32 iAudioSamplesTotalHi;
+	TUint32 iAudioSamplesTotalLo;
+	TUint32 iAudioSampleRate;
+	TUint32 iAudioBitRate;
+	TUint16 iAudioVolumeOffset;
+	TUint8 iAudioBitDepth;
+	TUint8 iAudioChannels;
+	TUint8 iReserved;
+	TUint8 iCodecNameBytes;  // 6
+	TUint8 iCodecName[6]; // "PCM   "
 } OHMHEADER, *POHMHEADER;
 
 namespace OpenHome {
@@ -210,7 +212,7 @@ class OhmMsgFactory : public IOhmMsgProcessor
 {
 	friend class OhmMsg;
 
-	static const TUint kMaxAudioMessages = 120;
+	static const TUint kMaxAudioMessages = 300;
 	static const TUint kMaxTrackMessages = 10;
 	static const TUint kMaxMetatextMessages = 10;
 
@@ -230,6 +232,7 @@ private:
 	void Process(OhmMsgMetatext& aMsg);
 
 private:
+	KSPIN_LOCK iSpinLock;
 	FifoLite<OhmMsgAudio*, kMaxAudioMessages> iFifoAudio;
 	FifoLite<OhmMsgTrack*, kMaxTrackMessages> iFifoTrack;
 	FifoLite<OhmMsgMetatext*, kMaxMetatextMessages> iFifoMetatext;

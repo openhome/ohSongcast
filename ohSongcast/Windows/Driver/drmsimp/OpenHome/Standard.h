@@ -4,11 +4,11 @@
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Exception.h>
 
-#include <wdm.h>
-
 namespace OpenHome {
 
-#define ASSERTS() ASSERT(false);
+#define OHASSERT(x)  if(!(x)) OHASSERTS()	
+
+#define OHASSERTS() *((TUint32*)0) = 0
 
 class INonCopyable
 {

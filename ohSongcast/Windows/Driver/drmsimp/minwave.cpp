@@ -1026,13 +1026,13 @@ OhmMsgAudio* CMiniportWaveCyclic::PipelineQueueRemove(SOCKADDR* aAddress)
 	OhmMsgAudio* msg = iPipeline.Read();
 
 	if (!msg->Resent()) {
-		if (iHistory.SlotsUsed() == kMaxPipelineMessages) {
+		if (iHistory.SlotsUsed() == kMaxHistoryMessages) {
 			iHistory.Read()->RemoveRef(); // discard
 		}
 
-		iHistory.Write(msg);
-
 		msg->AddRef();
+
+		iHistory.Write(msg);
 	}
 
 	RtlCopyMemory(aAddress, &iPipelineAddress, sizeof(SOCKADDR));
@@ -1110,12 +1110,14 @@ void CMiniportWaveCyclic::PipelineOutput()
 
 		header->iAudioMediaTimestamp = header->iAudioNetworkTimestamp;
 
+		/*
 		if (frame % 100 == 77) { // miss sending 1 in 100 messages
 			iPipelineOutputMsg->SetResent(true);
 			iPipelineOutputMsg->RemoveRef();
 			PipelineOutput();
 			return;
 		}
+		*/
 	}
 
 	iPipelineOutputBuf.Mdl = iPipelineOutputMsg->Mdl();

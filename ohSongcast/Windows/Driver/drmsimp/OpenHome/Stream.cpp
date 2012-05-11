@@ -331,8 +331,8 @@ const Brn ReaderBinary::Read(TUint aBytes)
 
 TUint ReaderBinary::ReadUintBe(TUint aBytes)
 {
-    ASSERT(aBytes > 0);
-    ASSERT(aBytes <= sizeof(TUint));
+    OHASSERT(aBytes > 0);
+    OHASSERT(aBytes <= sizeof(TUint));
     TUint val = 0;
     TUint count = 0;
     while(count < aBytes) {
@@ -345,8 +345,8 @@ TUint ReaderBinary::ReadUintBe(TUint aBytes)
 
 TInt ReaderBinary::ReadIntBe(TUint aBytes)
 {
-    ASSERT(aBytes > 0);
-    ASSERT(aBytes <= sizeof(TInt));
+    OHASSERT(aBytes > 0);
+    OHASSERT(aBytes <= sizeof(TInt));
     TInt val = 0;
     TUint count = 0;
 
@@ -364,8 +364,8 @@ TInt ReaderBinary::ReadIntBe(TUint aBytes)
 
 TUint ReaderBinary::ReadUintLe(TUint aBytes)
 {
-    ASSERT(aBytes > 0);
-    ASSERT(aBytes <= sizeof(TUint));
+    OHASSERT(aBytes > 0);
+    OHASSERT(aBytes <= sizeof(TUint));
     TUint val = 0;
     TUint shift = 0;
     while(shift < aBytes) {
@@ -378,8 +378,8 @@ TUint ReaderBinary::ReadUintLe(TUint aBytes)
 
 TUint64 ReaderBinary::ReadUint64Be(TUint aBytes)
 {
-    ASSERT(aBytes > 0);
-    ASSERT(aBytes <= sizeof(TUint64));
+    OHASSERT(aBytes > 0);
+    OHASSERT(aBytes <= sizeof(TUint64));
     TUint64 val = 0;
     TUint count = 0;
     while(count < aBytes) {
@@ -392,8 +392,8 @@ TUint64 ReaderBinary::ReadUint64Be(TUint aBytes)
 
 TUint64 ReaderBinary::ReadUint64Le(TUint aBytes)
 {
-    ASSERT(aBytes > 0);
-    ASSERT(aBytes <= sizeof(TUint64));
+    OHASSERT(aBytes > 0);
+    OHASSERT(aBytes <= sizeof(TUint64));
     TUint64 val = 0;
     TUint shift = 0;
     while(shift < aBytes) {

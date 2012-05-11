@@ -36,7 +36,7 @@ TUint FifoLiteBase::SlotsUsed() const
 
 TUint FifoLiteBase::Write()
 {
-    ASSERT(iSlots > iSlotsUsed);
+    OHASSERT(iSlots > iSlotsUsed);
     TUint index = iWriteIndex++;
     if(iWriteIndex == iSlots) {
         iWriteIndex = 0;
@@ -47,7 +47,7 @@ TUint FifoLiteBase::Write()
 
 TUint FifoLiteBase::WriteBack()
 {
-    ASSERT(iSlots > iSlotsUsed);
+    OHASSERT(iSlots > iSlotsUsed);
     if(iReadIndex == 0) {
         iReadIndex = iSlots - 1;;
     }
@@ -60,7 +60,7 @@ TUint FifoLiteBase::WriteBack()
 
 TUint FifoLiteBase::Read()
 {
-    ASSERT(iSlotsUsed > 0);
+    OHASSERT(iSlotsUsed > 0);
     TUint index = iReadIndex++;
     if(iReadIndex == iSlots) {
         iReadIndex = 0;

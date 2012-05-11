@@ -871,7 +871,7 @@ void OhmSender::RunMulticast()
 							iDriver.Resend(iRxBuffer.Read(frames * 4));
 						}
 					}
-                    else {
+					else if (header.MsgType() == OhmHeader::kMsgTypeAudio) {
 						// Check sender not us
 
 						Endpoint sender = iSocketOhm.Sender();

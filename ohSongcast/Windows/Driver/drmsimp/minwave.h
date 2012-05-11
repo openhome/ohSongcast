@@ -41,8 +41,8 @@ class CMiniportWaveCyclic : public CMiniportWaveCyclicMSVAD,  public IMiniportWa
     friend class CMiniportWaveCyclicStream;
     friend class CMiniportTopologySimple;
 
-	static const TUint kMaxPipelineMessages = 16;
-	static const TUint kMaxHistoryMessages = 100;
+	static const TUint kMaxPipelineMessages = 32;
+	static const TUint kMaxHistoryMessages = 210;
 
 public:
     DECLARE_STD_UNKNOWN();

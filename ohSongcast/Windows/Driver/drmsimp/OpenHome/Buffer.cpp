@@ -16,9 +16,9 @@ TBool Brx::Equals(const Brx& aBrx) const
 {
     if(Bytes() == aBrx.Bytes()) {
         const TByte* dest = Ptr();
-        ASSERT(dest != NULL);
+        OHASSERT(dest != NULL);
         const TByte* src = aBrx.Ptr();
-        ASSERT(src != NULL);
+        OHASSERT(src != NULL);
         return(memcmp(dest, src, Bytes()) == 0);
     }
     return false;
@@ -26,25 +26,25 @@ TBool Brx::Equals(const Brx& aBrx) const
 
 const TByte& Brx::At(TUint aByteIndex) const
 {
-    ASSERT(aByteIndex < Bytes());
+    OHASSERT(aByteIndex < Bytes());
     const TByte* ptr = Ptr();
-    ASSERT(ptr != NULL);
+    OHASSERT(ptr != NULL);
     return((TByte&)(ptr[aByteIndex]));
 }
 
 Brn Brx::Split(TUint aByteIndex) const
 {
-    ASSERT(aByteIndex <= Bytes());
+    OHASSERT(aByteIndex <= Bytes());
     const TByte* ptr = Ptr();
-    ASSERT(ptr != NULL);
+    OHASSERT(ptr != NULL);
     return Brn(ptr + aByteIndex, Bytes() - aByteIndex);
 }
 
 Brn Brx::Split(TUint aByteIndex, TUint aBytes) const
 {
-    ASSERT(aByteIndex + aBytes <= Bytes());
+    OHASSERT(aByteIndex + aBytes <= Bytes());
     const TByte* ptr = Ptr();
-    ASSERT(ptr != NULL);
+    OHASSERT(ptr != NULL);
     return Brn(ptr + aByteIndex, aBytes);
 }
 
@@ -52,9 +52,9 @@ TBool Brx::BeginsWith(const Brx& aBrx) const
 {
     if(Bytes() >= aBrx.Bytes()) {
         const TByte* ptr1 = Ptr();
-        ASSERT(ptr1 != NULL);
+        OHASSERT(ptr1 != NULL);
         const TByte* ptr2 = aBrx.Ptr();
-        ASSERT(ptr2 != NULL);
+        OHASSERT(ptr2 != NULL);
         return(memcmp(ptr1, ptr2, aBrx.Bytes()) == 0);
     }
     return false;
@@ -82,7 +82,7 @@ const TByte* Brn::Ptr() const
 Bwx::Bwx(TUint aBytes, TUint aMaxBytes) : Brx(aBytes), iMaxBytes(aMaxBytes)
 {
     //Ensure we didn't just construct an invalid Buffer
-    ASSERT(Bytes() <= MaxBytes());
+    OHASSERT(Bytes() <= MaxBytes());
 }
 
 void Bwx::Clear()
@@ -93,14 +93,14 @@ void Bwx::Clear()
 void Bwx::Replace(const Brx& aBuf)
 {
     if (aBuf.Bytes() > MaxBytes()) {
-		ASSERTS();
+		OHASSERTS();
     }
     else
     {
         const TByte* dest = Ptr();
-        ASSERT(dest != NULL);
+        OHASSERT(dest != NULL);
         const TByte* src = aBuf.Ptr();
-        ASSERT(src != NULL);
+        OHASSERT(src != NULL);
         (void)memmove(const_cast<TByte*>(dest), src, aBuf.Bytes());
         iBytes = aBuf.Bytes();
     }
@@ -114,9 +114,9 @@ void Bwx::ReplaceThrow(const Brx& aBuf)
     else
     {
         const TByte* dest = Ptr();
-        ASSERT(dest != NULL);
+        OHASSERT(dest != NULL);
         const TByte* src = aBuf.Ptr();
-        ASSERT(src != NULL);
+        OHASSERT(src != NULL);
         (void)memmove(const_cast<TByte*>(dest), src, aBuf.Bytes());
         iBytes = aBuf.Bytes();
     }
@@ -124,9 +124,9 @@ void Bwx::ReplaceThrow(const Brx& aBuf)
 
 void Bwx::Replace(const TByte* aPtr, TUint aBytes)
 {
-    ASSERT(aBytes <= MaxBytes());
+    OHASSERT(aBytes <= MaxBytes());
     const TByte* ptr = Ptr();
-    ASSERT(ptr != NULL);
+    OHASSERT(ptr != NULL);
     memcpy(const_cast<TByte*>(ptr), aPtr, aBytes);
     iBytes = aBytes;
 }
@@ -134,9 +134,9 @@ void Bwx::Replace(const TByte* aPtr, TUint aBytes)
 void Bwx::Replace(const TChar* aStr)
 {
     TUint bytes = OhNetStrlen(aStr);
-    ASSERT(bytes <= MaxBytes());
+    OHASSERT(bytes <= MaxBytes());
     const TByte* ptr = Ptr();
-    ASSERT(ptr != NULL);
+    OHASSERT(ptr != NULL);
     memcpy(const_cast<TByte*>(ptr), aStr, bytes);
     iBytes = bytes;
 }
@@ -149,25 +149,25 @@ void Bwx::Append(const TChar* aStr)
 void Bwx::Append(const Brx& aB)
 {
     const TByte* ptr = aB.Ptr();
-    ASSERT(ptr != NULL);
+    OHASSERT(ptr != NULL);
     Append(ptr, aB.Bytes());
 }
 
 void Bwx::Append(const TByte* aPtr, TUint aBytes)
 {
-    ASSERT(Bytes() + aBytes <= MaxBytes());
+    OHASSERT(Bytes() + aBytes <= MaxBytes());
     const TByte* ptr = Ptr();
-    ASSERT(ptr != NULL);
+    OHASSERT(ptr != NULL);
     memcpy(const_cast<TByte*>(ptr+Bytes()), aPtr, aBytes);
     iBytes = Bytes() + aBytes;
 }
 
 const TChar* Bwx::PtrZ() const
 {
-    ASSERT(Bytes() + 1 <= MaxBytes());
+    OHASSERT(Bytes() + 1 <= MaxBytes());
     //Nul terminate without updating number of bytes in buffer
     TByte* ptr = (TByte*)Ptr();
-    ASSERT(ptr != NULL);
+    OHASSERT(ptr != NULL);
     *(ptr + Bytes()) = '\0';
     return (const TChar*)ptr;
 }
@@ -175,21 +175,21 @@ const TChar* Bwx::PtrZ() const
 void Bwx::Fill(TByte aByte)
 {
     const TByte* ptr = Ptr();
-    ASSERT(ptr != NULL);
+    OHASSERT(ptr != NULL);
     memset(const_cast<TByte*>(ptr), aByte, Bytes());
 }
 
 void Bwx::SetBytes(TUint aBytes)
 {
-    ASSERT(aBytes <= MaxBytes());
+    OHASSERT(aBytes <= MaxBytes());
     iBytes = aBytes;
 }
 
 TByte& Bwx::At(TUint aByteIndex)
 {
-    ASSERT(aByteIndex < Bytes());
+    OHASSERT(aByteIndex < Bytes());
     const TByte* ptr = Ptr();
-    ASSERT(ptr != NULL);
+    OHASSERT(ptr != NULL);
     return(const_cast<TByte&>(ptr[aByteIndex]));
 }
 
@@ -201,12 +201,12 @@ Bwn::Bwn() : Bwx(0,0), iPtr(0)
 
 Bwn::Bwn(const Bwx& aBwx) : Bwx(aBwx.Bytes(), aBwx.MaxBytes()), iPtr(aBwx.Ptr())
 {
-    ASSERT(iPtr != NULL);
+    OHASSERT(iPtr != NULL);
 }
 
 Bwn::Bwn(const Bwn& aBwn) : Bwx(aBwn.Bytes(), aBwn.MaxBytes()), iPtr(aBwn.Ptr())
 {
-    ASSERT(iPtr != NULL);
+    OHASSERT(iPtr != NULL);
 }
 
 Bwn::Bwn(const TByte* aPtr, TUint aMaxBytes) : Bwx(0, aMaxBytes), iPtr(aPtr)
@@ -228,7 +228,7 @@ Bwn::Bwn(const TChar* aPtr, TUint aBytes, TUint aMaxBytes) : Bwx(aBytes, aMaxByt
 void Bwn::Set(const Bwx& aBwx)
 {
     iPtr = aBwx.Ptr();
-    ASSERT(iPtr != NULL);
+    OHASSERT(iPtr != NULL);
     iBytes = aBwx.Bytes();
     iMaxBytes = aBwx.MaxBytes();
 }
@@ -242,7 +242,7 @@ void Bwn::Set(const TByte* aPtr, TUint aMaxBytes)
 
 void Bwn::Set(const TByte* aPtr, TUint aBytes, TUint aMaxBytes)
 {
-    ASSERT(aBytes <= aMaxBytes);
+    OHASSERT(aBytes <= aMaxBytes);
     iPtr = aPtr;
     iBytes = aBytes;
     iMaxBytes = aMaxBytes;

@@ -1,4 +1,5 @@
 @echo off
+rd Build /s/q
 call builddriver.bat
 call buildinstall.bat
 copy ..\..\Build\Obj\Windows\Release\ohSongcast.dll Build\ohSongcast.dll

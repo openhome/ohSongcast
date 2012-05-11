@@ -52,7 +52,7 @@
                 <Line Canvas.Left="0" Canvas.Top="214" Height="13" Stroke="Black" StrokeThickness="2" Width="463" X1="0" X2="460" Y1="0" Y2="0" />
                 <Line Canvas.Left="0" Canvas.Top="268" Height="13" Stroke="Black" StrokeThickness="2" Width="463" X1="0" X2="460" Y1="0" Y2="0" />
                 <TextBlock Canvas.Left="16" Canvas.Top="233" FontFamily="Arial Black" FontSize="16" Height="23" Text="Latency (ms)" />
-                <Slider Canvas.Left="199" Canvas.Top="233" Height="22" IsSnapToTickEnabled="True" Maximum="2000" Minimum="50" SmallChange="50" TickPlacement="TopLeft" Value="{Binding Path=Latency}" Width="245" />
+                <Slider Canvas.Left="199" Canvas.Top="233" Height="22" IsSnapToTickEnabled="True" Maximum="1000" Minimum="50" SmallChange="50" TickPlacement="TopLeft" Value="{Binding Path=Latency}" Width="245" TickFrequency="50" />
                 <TextBox Canvas.Left="136" Canvas.Top="232" FontFamily="Arial Black" FontSize="14" FontWeight="Bold" Height="23" IsReadOnly="True" Text="{Binding Path=Latency}" Width="57" />
                 <TextBox Canvas.Left="199" Canvas.Top="333" Height="23" FontFamily="Arial Black" FontSize="14" Width="77" IsReadOnly="True" Text="{Binding Path=Channel}" />
                 <TextBlock Canvas.Left="15" Canvas.Top="336" Height="23" FontFamily="Arial Black" FontSize="16" Text="Multicast Channel" />

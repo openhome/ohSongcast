@@ -105,7 +105,7 @@ OhmHeaderAudio::OhmHeaderAudio(TBool aHalt,
 
 void OhmHeaderAudio::Internalise(IReader& aReader, const OhmHeader& aHeader)
 {
-    ASSERT (aHeader.MsgType() == OhmHeader::kMsgTypeAudio);
+    OHASSERT(aHeader.MsgType() == OhmHeader::kMsgTypeAudio);
     
     ReaderBinary readerBinary(aReader);
 
@@ -234,7 +234,7 @@ OhmHeaderTrack::OhmHeaderTrack(TUint aSequence, const Brx& aUri, const Brx& aMet
 
 void OhmHeaderTrack::Internalise(IReader& aReader, const OhmHeader& aHeader)
 {
-    ASSERT (aHeader.MsgType() == OhmHeader::kMsgTypeTrack);
+    OHASSERT(aHeader.MsgType() == OhmHeader::kMsgTypeTrack);
     
     ReaderBinary readerBinary(aReader);
 
@@ -268,7 +268,7 @@ OhmHeaderMetatext::OhmHeaderMetatext(TUint aSequence, const Brx& aMetatext)
 
 void OhmHeaderMetatext::Internalise(IReader& aReader, const OhmHeader& aHeader)
 {
-    ASSERT (aHeader.MsgType() == OhmHeader::kMsgTypeMetatext);
+    OHASSERT(aHeader.MsgType() == OhmHeader::kMsgTypeMetatext);
     
     ReaderBinary readerBinary(aReader);
 
@@ -297,7 +297,7 @@ OhmHeaderSlave::OhmHeaderSlave(TUint aSlaveCount)
     
 void OhmHeaderSlave::Internalise(IReader& aReader, const OhmHeader& aHeader)
 {
-    ASSERT (aHeader.MsgType() == OhmHeader::kMsgTypeSlave);
+    OHASSERT(aHeader.MsgType() == OhmHeader::kMsgTypeSlave);
     
     ReaderBinary readerBinary(aReader);
 
@@ -326,7 +326,7 @@ OhmHeaderResend::OhmHeaderResend(TUint aFramesCount)
     
 void OhmHeaderResend::Internalise(IReader& aReader, const OhmHeader& aHeader)
 {
-    ASSERT (aHeader.MsgType() == OhmHeader::kMsgTypeResend);
+    OHASSERT(aHeader.MsgType() == OhmHeader::kMsgTypeResend);
     
     ReaderBinary readerBinary(aReader);
 
@@ -413,7 +413,7 @@ OhzHeaderZoneUri::OhzHeaderZoneUri(const Brx& aZone, const Brx& aUri)
 
 void OhzHeaderZoneUri::Internalise(IReader& aReader, const OhzHeader& aHeader)
 {
-    ASSERT (aHeader.MsgType() == OhzHeader::kMsgTypeZoneUri);
+    OHASSERT(aHeader.MsgType() == OhzHeader::kMsgTypeZoneUri);
     
     ReaderBinary readerBinary(aReader);
 
@@ -442,7 +442,7 @@ OhzHeaderZoneQuery::OhzHeaderZoneQuery(const Brx& aQuery)
 
 void OhzHeaderZoneQuery::Internalise(IReader& aReader, const OhzHeader& aHeader)
 {
-    ASSERT (aHeader.MsgType() == OhzHeader::kMsgTypeZoneQuery);
+    OHASSERT(aHeader.MsgType() == OhzHeader::kMsgTypeZoneQuery);
     
     ReaderBinary readerBinary(aReader);
 
@@ -469,7 +469,7 @@ OhzHeaderPresetQuery::OhzHeaderPresetQuery(TUint aPreset)
 
 void OhzHeaderPresetQuery::Internalise(IReader& aReader, const OhzHeader& aHeader)
 {
-    ASSERT (aHeader.MsgType() == OhzHeader::kMsgTypePresetQuery);
+    OHASSERT(aHeader.MsgType() == OhzHeader::kMsgTypePresetQuery);
 
     ReaderBinary readerBinary(aReader);
 
@@ -497,7 +497,7 @@ OhzHeaderPresetInfo::OhzHeaderPresetInfo(TUint aPreset, const Brx& aMetadata)
 
 void OhzHeaderPresetInfo::Internalise(IReader& aReader, const OhzHeader& aHeader)
 {
-    ASSERT (aHeader.MsgType() == OhzHeader::kMsgTypePresetInfo);
+    OHASSERT(aHeader.MsgType() == OhzHeader::kMsgTypePresetInfo);
 
     ReaderBinary readerBinary(aReader);
 
