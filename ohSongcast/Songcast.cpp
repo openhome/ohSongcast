@@ -1,5 +1,4 @@
 #include "Songcast.h"
-#include "Icon.h"
 
 #include <OpenHome/Private/Debug.h>
 #include <algorithm>

@@ -4,7 +4,7 @@
 #include <IOKit/audio/IOAudioDevice.h>
 #include "AudioEngine.h"
 
-class SongcastSocket;
+class Songcast;
 
 
 // Implementation of the main class for the audio driver.
@@ -16,14 +16,13 @@ class AudioDevice : public IOAudioDevice
     OSDeclareDefaultStructors(AudioDevice);
 
 public:
-    SongcastSocket& Socket() { return *iSocket; }
-    AudioEngine& Engine() { return *iEngine; }
+    Songcast& GetSongcast() { return *iSongcast; }
 
 private:
     virtual bool initHardware(IOService* aProvider);
     virtual void free();
 
-    SongcastSocket* iSocket;
+    Songcast* iSongcast;
     AudioEngine* iEngine;
 };
 

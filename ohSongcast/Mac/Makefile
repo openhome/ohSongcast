@@ -17,7 +17,7 @@ endif
 export objdir = $(CURDIR)/Build/Obj/Mac/$(build_dir)/
 export product_name = ohSongcast
 
-packagemaker=/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker 
+packagemaker=/Applications/Xcode.app/Contents/Applications/PackageMaker.app/Contents/MacOS/PackageMaker 
 
 
 default : make_objdir_x86_64 make_objdir_i386 make_objdir_universal $(objdir)Installer/$(product_name).dmg

@@ -11,7 +11,7 @@
 class BlockBuffer
 {
 public:
-    BlockBuffer(uint32_t aBlocks, uint32_t aBlockFrames, uint32_t aChannels, uint32_t aBitDepth);
+    BlockBuffer(uint32_t aBlocks, uint32_t aBlockSamples, uint32_t aChannels, uint32_t aBitDepth);
     ~BlockBuffer();
 
     void* Ptr() const { return iPtr; }
@@ -19,16 +19,13 @@ public:
     
     void* BlockPtr(uint32_t aBlockIndex) const { return (uint8_t*)iPtr + (aBlockIndex * iBlockBytes); }
     uint32_t BlockBytes() const { return iBlockBytes; }
-
     uint32_t Blocks() const { return iBlocks; }
-    uint32_t BlockFrames() const { return iBlockFrames; }
     
 private:
     void* iPtr;
     const uint32_t iBytes;
     const uint32_t iBlockBytes;
     const uint32_t iBlocks;
-    const uint32_t iBlockFrames;
 };
 
 
@@ -45,9 +42,8 @@ public:
     virtual bool init(OSDictionary* aProperties);
     virtual void free();
     
-    void SetSocket(ISongcastSocket& aSocket);
+    void SetSongcast(Songcast& aSongcast);
     void SetDescription(const char* aDescription);
-    void SetLatencyMs(uint64_t aLatencyMs);
 
 private:
     virtual bool initHardware(IOService* aProvider);
@@ -63,8 +59,6 @@ private:
     void TimerFired();
 
     uint32_t iCurrentBlock;
-    uint32_t iCurrentFrame;
-    IOAudioSampleRate iSampleRate;
 
     // all timer related integers are 64-bit to avoid conversion errors between 32 and 64 bit
     IOTimerEventSource* iTimer;
@@ -73,11 +67,10 @@ private:
     uint64_t iTimerIntervalNs;
     uint64_t iTimestamp;
     bool iAudioStopping;
-    uint64_t iLatencyMs;
     
     BlockBuffer* iBuffer;
-    SongcastAudioMessage* iAudioMsg;
-    ISongcastSocket* iSocket;
+    Songcast* iSongcast;
+    const SongcastFormat* iCurrentFormat;
 };
 
 

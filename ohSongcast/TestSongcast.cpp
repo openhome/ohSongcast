@@ -53,6 +53,11 @@ using namespace OpenHome;
 using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
 
+
+static THandle gRecv = 0;
+static Bws<256> gRoom;
+
+
 void STDCALL loggerReceiver(void* /* aPtr */, ECallbackType aType, THandle aReceiver)
 {
 	const char* room = ReceiverRoom(aReceiver);
@@ -67,6 +72,19 @@ void STDCALL loggerReceiver(void* /* aPtr */, ECallbackType aType, THandle aRece
 	switch (aType) {
 	case eAdded:
 		printf("Added   %s %s %s %d\n", room, group, name, status);
+
+        {
+        Brn roomBuf(room);
+        if (roomBuf == gRoom)
+        {
+            printf("********************************************\n");
+            printf("Found   %s\n", room);
+            printf("********************************************\n");
+
+            ReceiverAddRef(aReceiver);
+            gRecv = aReceiver;
+        }
+        }
 		break;
 	case eChanged:
 		printf("Changed %s %s %s %d\n", room, group, name, status);
@@ -124,8 +142,18 @@ void STDCALL loggerConfigurationChanged(void* /* aPtr */, THandle aSongcast)
 	printf("Configuration changed: subnet=%x, channel=%d, ttl=%d, multicast=%d, enabled=%d, preset=%d\n", subnet, channel, ttl, multicast, enabled, preset);
 }
 
-int CDECL main(int /* aArgc */, char** /* aArgv[] */)
+int CDECL main(int aArgc, char* aArgv[])
 {
+    OptionParser parser;
+    OptionString optionRoom("-r", "--room", Brx::Empty(), "Room containing the receiver to play/stop");
+    parser.AddOption(&optionRoom);
+
+    if (!parser.Parse(aArgc, aArgv)) {
+        return 1;
+    }
+
+    gRoom.Replace(optionRoom.Value());
+
 	TIpAddress subnet = 522; // 10.2.0.0
     TUint channel = 0;
     TUint ttl = 4;
@@ -191,8 +219,26 @@ int CDECL main(int /* aArgc */, char** /* aArgv[] */)
         if (key == 'a') {
             SongcastSetSubnet(Songcast, 43200); // 192.168.0.0
         }
+
+        if (gRecv != 0)
+        {
+            if (key == 'p') {
+                SongcastSetEnabled(Songcast, true);
+                ReceiverPlay(gRecv);
+            }
+
+            if (key == 's') {
+                ReceiverStop(gRecv);
+                ReceiverStandby(gRecv);
+                SongcastSetEnabled(Songcast, false);
+            }
+        }
 	}
     
+    if (gRecv != 0) {
+        ReceiverRemoveRef(gRecv);
+    }
+
 	SongcastDestroy(Songcast);
 
 	printf("\n");

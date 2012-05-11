@@ -5,9 +5,6 @@
 
 
 static const uint32_t BLOCKS = 200;
-static const uint32_t BLOCK_FRAMES = 220;
-static const uint32_t CHANNELS = 2;
-static const uint32_t BIT_DEPTH = 24;
 
 
 // implementation of the AudioEngine class
@@ -23,37 +20,25 @@ bool AudioEngine::init(OSDictionary* aProperties)
         return false;
     }
 
+    iCurrentFormat = &(Songcast::SupportedFormats[0]);
+
     iCurrentBlock = 0;
-    iCurrentFrame = 0;
-    iSampleRate.whole = 44100;
-    iSampleRate.fraction = 0;
     
     iTimer = 0;
     iTimeZero = 0;
     iTimerFiredCount = 0;
     iTimestamp = 0;
     iAudioStopping = false;
-    iLatencyMs = 100;
-
-    // calculate the timer interval making sure no overflows occur
-    uint64_t interval = 1000000000;
-    interval *= BLOCK_FRAMES;
-    interval /= iSampleRate.whole;    
-    iTimerIntervalNs = interval;
+    iTimerIntervalNs = iCurrentFormat->TimeNs();
 
     // allocate the output buffers
-    iBuffer = new BlockBuffer(BLOCKS, BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
-    iAudioMsg = new SongcastAudioMessage(BLOCK_FRAMES, CHANNELS, BIT_DEPTH);
+    iBuffer = new BlockBuffer(BLOCKS, iCurrentFormat->SampleCount, iCurrentFormat->Channels, iCurrentFormat->BitDepth);
 
-    if (!iBuffer || !iBuffer->Ptr() || !iAudioMsg || !iAudioMsg->Ptr()) {
+    if (!iBuffer || !iBuffer->Ptr()) {
         IOLog("Songcast AudioEngine[%p]::init(%p) buffer alloc failed\n", this, aProperties);
         if (iBuffer) {
             delete iBuffer;
             iBuffer = 0;
-        }
-        if (iAudioMsg) {
-            delete iAudioMsg;
-            iAudioMsg = 0;
         }
         return false;
     }
@@ -73,9 +58,12 @@ bool AudioEngine::initHardware(IOService* aProvider)
         return false;
     }
     
-    setNumSampleFramesPerBuffer(BLOCKS * BLOCK_FRAMES);
-    setSampleRate(&iSampleRate);
+    setNumSampleFramesPerBuffer(BLOCKS * iCurrentFormat->SampleCount);
 
+    IOAudioSampleRate sampleRate;
+    sampleRate.whole = iCurrentFormat->SampleRate;
+    sampleRate.fraction = 0;
+    setSampleRate(&sampleRate);
 
     // create output stream
     IOAudioStream* outStream = new IOAudioStream;
@@ -93,17 +81,17 @@ bool AudioEngine::initHardware(IOService* aProvider)
 
     // initialise audio format for the stream
     IOAudioStreamFormat format;
-    format.fNumChannels = CHANNELS;
+    format.fNumChannels = iCurrentFormat->Channels;
     format.fSampleFormat = kIOAudioStreamSampleFormatLinearPCM;
     format.fNumericRepresentation = kIOAudioStreamNumericRepresentationSignedInt;
-    format.fBitDepth = BIT_DEPTH;
-    format.fBitWidth = BIT_DEPTH;
+    format.fBitDepth = iCurrentFormat->BitDepth;
+    format.fBitWidth = iCurrentFormat->BitDepth;
     format.fAlignment = kIOAudioStreamAlignmentHighByte;
     format.fByteOrder = kIOAudioStreamByteOrderBigEndian;
     format.fIsMixable = 1;
     format.fDriverTag = 0;
 
-    outStream->addAvailableFormat(&format, &iSampleRate, &iSampleRate);
+    outStream->addAvailableFormat(&format, &sampleRate, &sampleRate);
     outStream->setSampleBuffer(iBuffer->Ptr(), iBuffer->Bytes());
 
     if (outStream->setFormat(&format) != kIOReturnSuccess) {
@@ -153,31 +141,20 @@ void AudioEngine::free()
         delete iBuffer;
         iBuffer = 0;
     }
-    if (iAudioMsg) {
-        delete iAudioMsg;
-        iAudioMsg = 0;
-    }
 
     IOAudioEngine::free();
 }
 
 
-void AudioEngine::SetSocket(ISongcastSocket& aSocket)
+void AudioEngine::SetSongcast(Songcast& aSongcast)
 {
-    iSocket = &aSocket;
+    iSongcast = &aSongcast;
 }
 
 
 void AudioEngine::SetDescription(const char* aDescription)
 {
     setDescription(aDescription);
-}
-
-
-void AudioEngine::SetLatencyMs(uint64_t aLatencyMs)
-{
-    IOLog("Songcast AudioEngine[%p]::SetLatencyMs(%llu)\n", this, aLatencyMs);
-    iLatencyMs = aLatencyMs;
 }
 
 
@@ -201,7 +178,6 @@ IOReturn AudioEngine::performAudioEngineStart()
 {
     takeTimeStamp(false);
     iCurrentBlock = 0;
-    iCurrentFrame = 0;
 
     uint64_t currTime;
     clock_get_uptime(&currTime);
@@ -233,13 +209,30 @@ IOReturn AudioEngine::performAudioEngineStop()
 
 UInt32 AudioEngine::getCurrentSampleFrame()
 {
-    return iCurrentBlock * iBuffer->BlockFrames();
+    return iCurrentBlock * iCurrentFormat->SampleCount;
 }
 
 
 IOReturn AudioEngine::performFormatChange(IOAudioStream* aAudioStream, const IOAudioStreamFormat* aNewFormat, const IOAudioSampleRate* aNewSampleRate)
 {
-    IOLog("Songcast AudioEngine[%p]::performFormatChange()\n", this);
+    IOLog("Songcast AudioEngine[%p]::performFormatChange()", this);
+
+    if (aNewFormat) {
+        IOLog(" Format(%u, %u, %u, %u, %u, %u, %u, %u, %u)", (uint32_t)aNewFormat->fNumChannels, (uint32_t)aNewFormat->fSampleFormat, (uint32_t)aNewFormat->fNumericRepresentation,
+                                                             (uint32_t)aNewFormat->fBitDepth, (uint32_t)aNewFormat->fBitWidth, (uint32_t)aNewFormat->fAlignment,
+                                                             (uint32_t)aNewFormat->fByteOrder, (uint32_t)aNewFormat->fIsMixable, (uint32_t)aNewFormat->fDriverTag);
+    }
+    else {
+        IOLog(" Format()");
+    }
+
+    if (aNewSampleRate) {
+        IOLog(" SampleRate(%u, %u)\n", (uint32_t)aNewSampleRate->whole, (uint32_t)aNewSampleRate->fraction);
+    }
+    else {
+        IOLog(" SampleRate()\n");
+    }
+
     return kIOReturnSuccess;
 }
 
@@ -289,31 +282,16 @@ void AudioEngine::TimerFired()
         uint32_t interval = (timeOfNextFire > currTimeNs) ? (uint32_t)(timeOfNextFire - currTimeNs) : 0;
         iTimer->setTimeout(interval);
     }    
-    
-    // construct the audio message to send
-    void* block = iBuffer->BlockPtr(iCurrentBlock);
-    uint32_t blockBytes = iBuffer->BlockBytes();
 
-    // convert the timestamp to the correct units
-    uint64_t timestamp = (iTimestamp * iSampleRate.whole * 256) / 1000000000;
+    // gather the audio data to send
+    uint64_t timestamp = iTimestamp;
+    bool halt = iAudioStopping;
+    void* data = iBuffer->BlockPtr(iCurrentBlock);
+    uint32_t bytes = iBuffer->BlockBytes();
 
-    // calculate media latency
-    uint64_t latency = (iLatencyMs * iSampleRate.whole * 256) / 1000;
-
-    // set the data for the audio message
-    iAudioMsg->SetHaltFlag(iAudioStopping);
-    iAudioMsg->SetSampleRate(iSampleRate.whole);
-    iAudioMsg->SetFrame(iCurrentFrame);
-    iAudioMsg->SetTimestamp((uint32_t)timestamp);
-    iAudioMsg->SetMediaLatency((uint32_t)latency);
-    iAudioMsg->SetData(block, blockBytes);    
-
-    
     // increment counters and send timestamp to the upper audio layers if the buffer
     // wraps
     iCurrentBlock++;
-    iCurrentFrame++;
-
     if (iCurrentBlock >= iBuffer->Blocks()) {
         iCurrentBlock = 0;
         takeTimeStamp();
@@ -325,18 +303,17 @@ void AudioEngine::TimerFired()
     absolutetime_to_nanoseconds(currTimeAbs, &iTimestamp);
 
     // send the data
-    iSocket->Send(*iAudioMsg);
+    iSongcast->Send(*iCurrentFormat, timestamp, halt, data, bytes);
 }
 
 
 
 // implementation of BlockBuffer
-BlockBuffer::BlockBuffer(uint32_t aBlocks, uint32_t aBlockFrames, uint32_t aChannels, uint32_t aBitDepth)
+BlockBuffer::BlockBuffer(uint32_t aBlocks, uint32_t aBlockSamples, uint32_t aChannels, uint32_t aBitDepth)
 : iPtr(0)
-, iBytes(aBlocks * aBlockFrames * aChannels * aBitDepth / 8)
-, iBlockBytes(aBlockFrames * aChannels * aBitDepth / 8)
+, iBytes(aBlocks * aBlockSamples * aChannels * aBitDepth / 8)
+, iBlockBytes(aBlockSamples * aChannels * aBitDepth / 8)
 , iBlocks(aBlocks)
-, iBlockFrames(aBlockFrames)
 {
     iPtr = IOMalloc(iBytes);
 }

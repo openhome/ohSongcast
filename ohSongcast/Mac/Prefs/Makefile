@@ -16,19 +16,16 @@ resourcedir = $(outputdir)$(product_name).prefPane/Contents/Resources/
 
 
 compiler = gcc
-compiler_flags = -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks $(debug_specific_flags) -Wreturn-type -Wunused-variable -isysroot /Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.6 -gdwarf-2 -c -fobjc-gc -I../
+compiler_flags = -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks $(debug_specific_flags) -Wreturn-type -Wunused-variable -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.6 -gdwarf-2 -c -fobjc-gc -I../
 objc_flags = -x objective-c -std=gnu99 $(compiler_flags)
 
 
 link = gcc
-linkflags1 = -bundle -isysroot /Developer/SDKs/MacOSX10.6.sdk
+linkflags1 = -bundle -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.6.sdk
 linkflags2 = -mmacosx-version-min=10.6 -framework Cocoa -framework PreferencePanes
 
-copystrings = /Developer/Library/Xcode/Plug-ins/CoreBuildTasks.xcplugin/Contents/Resources/copystrings
-copystrings_flags = --validate --inputencoding utf-8 --outputencoding UTF-16
-
 ibtool = ibtool
-ibtool_flags = --errors --warnings --notices --output-format human-readable-text --sdk /Developer/SDKs/MacOSX10.6.sdk
+ibtool_flags = --errors --warnings --notices --output-format human-readable-text --sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.6.sdk
 
 
 default : make_outputdir $(outputdir)$(product_name).prefPane
@@ -52,13 +49,10 @@ objects = $(outputdir)SongcastPrefPane.o $(outputdir)Preferences.o
 $(outputdir)$(product_name) : $(objects)
 	$(link) $(arch_linkflags) $(linkflags1) $(objects) $(linkflags2) -o $@
 
-$(resourcedir)%.strings : %.strings
-	$(copystrings) $(copystrings_flags) $< --outdir $(@D)
-
 $(resourcedir)%.nib : %.xib
 	$(ibtool) $(ibtool_flags) --compile $@ $<
 
-$(outputdir)$(product_name).prefPane : $(outputdir)$(product_name) $(resourcedir)English.lproj/Localizable.strings $(resourcedir)English.lproj/InfoPlist.strings $(resourcedir)English.lproj/SongcastPrefPane.nib Info.plist Icon.png IconLarge.png green.tiff red.tiff ../BundleIcon.icns
+$(outputdir)$(product_name).prefPane : $(outputdir)$(product_name) $(resourcedir)English.lproj/SongcastPrefPane.nib Info.plist Icon.png IconLarge.png green.tiff red.tiff ../BundleIcon.icns
 	cp $< $(macosdir)
 	cp Icon.png $(resourcedir)
 	cp IconLarge.png $(resourcedir)

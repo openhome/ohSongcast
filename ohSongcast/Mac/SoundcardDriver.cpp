@@ -67,9 +67,11 @@ private:
         void SetActive(TBool aValue);
         void SetTtl(TUint aValue);
         void SetLatency(TUint aValue);
+        void Resend(const Brx& aFrames);
 
     private:
         io_connect_t iHandle;
+        Bws<ResendMaxBytes> iResendBuffer;
     };
 
     Driver* iDriver;
@@ -440,14 +442,18 @@ void OhmSenderDriverMac::SetTrackPosition(TUint64 aSampleStart, TUint64 aSamples
 {
 }
 
-void OhmSenderDriverMac::Resend(const Brx& /*aFrames*/)
+void OhmSenderDriverMac::Resend(const Brx& aFrames)
 {
+    if (iDriver) {
+        iDriver->Resend(aFrames);
+    }
 }
 
 // Implementation of internal Driver class
 
 OhmSenderDriverMac::Driver::Driver(io_service_t aService)
     : iHandle(0)
+    , iResendBuffer()
 {
     // open a connection to communicate with the service
     kern_return_t res = IOServiceOpen(aService, mach_task_self(), 0, &iHandle);
@@ -493,6 +499,20 @@ void OhmSenderDriverMac::Driver::SetLatency(TUint aValue)
     IOConnectCallScalarMethod(iHandle, eSetLatencyMs, &arg, 1, 0, 0);
 }
 
+void OhmSenderDriverMac::Driver::Resend(const Brx& aFrames)
+{
+    if (aFrames.Bytes() > iResendBuffer.MaxBytes())
+    {
+        iResendBuffer.Replace(aFrames.Ptr(), iResendBuffer.MaxBytes());
+    }
+    else
+    {
+        iResendBuffer.Replace(aFrames);
+    }
+    // must send the entire buffer (up to MaxBytes) to the driver
+    uint64_t arg = iResendBuffer.Bytes() / 4;
+    IOConnectCallMethod(iHandle, eResend, &arg, 1, iResendBuffer.Ptr(), iResendBuffer.MaxBytes(), 0, 0, 0, 0);
+}
 
 
 // Platform specific parts of the C interface
