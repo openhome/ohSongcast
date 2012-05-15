@@ -95,6 +95,11 @@ Return Value:
 
     DPF_ENTER(("[CMiniportWaveCyclic::~CMiniportWaveCyclic]"));
 
+    if (iDpc)
+    {
+        ExFreePoolWithTag(iDpc, OHSOUNDCARD_POOLTAG);
+    }
+
 	if (iSocket != 0)
 	{
 		iSocket->Close();
@@ -274,6 +279,7 @@ Return Value:
         iRenderAllocated = false;
     }
 
+	iDpc = 0;
 	iWsk = 0;
 	iSocket = 0;
 
@@ -348,6 +354,15 @@ Return Value:
 	{
 		return STATUS_INSUFFICIENT_RESOURCES;
 	}
+
+	iDpc = (PRKDPC)ExAllocatePoolWithTag(NonPagedPool, sizeof(KDPC), OHSOUNDCARD_POOLTAG);
+
+	if (iDpc == 0)
+	{
+		return STATUS_INSUFFICIENT_RESOURCES;
+	}
+
+    KeInitializeDpc(iDpc, Dpc, this);
 
     return STATUS_SUCCESS;
 }
@@ -815,16 +830,7 @@ void CMiniportWaveCyclic::UpdateEnabled(TUint aValue)
 
 				if (PipelineStopLocked())
 				{
-					if (!iPipelineSending)
-					{
-						iPipelineSending = true;
-
-						KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
-
-						PipelineOutput();
-
-						return;
-					}
+					PipelineRestartLocked();
 				}
 			}
 		}
@@ -861,16 +867,7 @@ void CMiniportWaveCyclic::UpdateActive(TUint aValue)
 
 				if (PipelineStopLocked())
 				{
-					if (!iPipelineSending)
-					{
-						iPipelineSending = true;
-
-						KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
-
-						PipelineOutput();
-
-						return;
-					}
+					PipelineRestartLocked();
 				}
 			}
 		}
@@ -1005,41 +1002,17 @@ TBool CMiniportWaveCyclic::PipelineQueueAddLocked(PMDL* aMdl, TUint* aBytes)
 }
 
 //=============================================================================
-// PipelineQueueRemove
+// PipelineRestart
 //=============================================================================
 
-OhmMsgAudio* CMiniportWaveCyclic::PipelineQueueRemove(SOCKADDR* aAddress)
+void CMiniportWaveCyclic::PipelineRestartLocked()
 {
-	KIRQL oldIrql;
-
-	KeAcquireSpinLock(&iPipelineSpinLock, &oldIrql);
-
-	if (iPipeline.SlotsUsed() == 0)
+	if (!iPipelineSending)
 	{
-		iPipelineSending = false;
+		iPipelineSending = true;
 
-		KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
-
-		return (0);
+		KeInsertQueueDpc(iDpc, 0, 0);
 	}
-
-	OhmMsgAudio* msg = iPipeline.Read();
-
-	if (!msg->Resent()) {
-		if (iHistory.SlotsUsed() == kMaxHistoryMessages) {
-			iHistory.Read()->RemoveRef(); // discard
-		}
-
-		msg->AddRef();
-
-		iHistory.Write(msg);
-	}
-
-	RtlCopyMemory(aAddress, &iPipelineAddress, sizeof(SOCKADDR));
-
-	KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
-
-	return (msg);
 }
 
 //=============================================================================
@@ -1048,14 +1021,41 @@ OhmMsgAudio* CMiniportWaveCyclic::PipelineQueueRemove(SOCKADDR* aAddress)
 
 void CMiniportWaveCyclic::PipelineOutput()
 {
-	iPipelineOutputMsg = PipelineQueueRemove(&iPipelineOutputAddress);
+	KIRQL oldIrql;
 
-	if (iPipelineOutputMsg == 0)
+	KeAcquireSpinLock(&iPipelineSpinLock, &oldIrql);
+
+	PipelineOutputLocked();
+
+	KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
+}
+	
+//=============================================================================
+// PipelineOutputLocked
+//=============================================================================
+
+void CMiniportWaveCyclic::PipelineOutputLocked()
+{
+	if (iPipeline.SlotsUsed() == 0)
 	{
+		iPipelineSending = false;
+
 		return;
 	}
 
+	iPipelineOutputMsg = iPipeline.Read();
+
+	RtlCopyMemory(&iPipelineOutputAddress, &iPipelineAddress, sizeof(SOCKADDR));
+
 	if (!iPipelineOutputMsg->Resent()) {
+		if (iHistory.SlotsUsed() == kMaxHistoryMessages) {
+			iHistory.Read()->RemoveRef(); // discard
+		}
+
+		iPipelineOutputMsg->AddRef();
+
+		iHistory.Write(iPipelineOutputMsg);
+
 		TUint bytes = iPipelineOutputMsg->Bytes();
 
 		// Fill in multipus header
@@ -1114,7 +1114,7 @@ void CMiniportWaveCyclic::PipelineOutput()
 		if (frame % 100 == 77) { // miss sending 1 in 100 messages
 			iPipelineOutputMsg->SetResent(true);
 			iPipelineOutputMsg->RemoveRef();
-			PipelineOutput();
+			PipelineOutputLocked();
 			return;
 		}
 		*/
@@ -1153,7 +1153,7 @@ NTSTATUS CMiniportWaveCyclic::PipelineOutputComplete(PDEVICE_OBJECT aDeviceObjec
 
 	IoFreeIrp(aIrp);
 
-	PipelineOutput(); // send the next message if there is one
+	KeInsertQueueDpc(iDpc, 0, 0);
 
 	// Always return STATUS_MORE_PROCESSING_REQUIRED to
 	// terminate the completion processing of the IRP.
@@ -1273,6 +1273,8 @@ TBool CMiniportWaveCyclic::PipelineSendLocked(TByte* aBuffer, TUint aBytes)
 // PipelineSend
 //=============================================================================
 
+// This is the function called from basedma.cpp
+
 void CMiniportWaveCyclic::PipelineSend(TByte* aBuffer, TUint aBytes)
 {
 	KIRQL oldIrql;
@@ -1287,11 +1289,7 @@ void CMiniportWaveCyclic::PipelineSend(TByte* aBuffer, TUint aBytes)
 			{
 				iPipelineSending = true;
 
-				KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
-
-				PipelineOutput();
-
-				return;
+				PipelineOutputLocked();
 			}
 		}
 	}
@@ -1339,16 +1337,7 @@ void CMiniportWaveCyclic::PipelineStop()
 	{
 		if (PipelineStopLocked())
 		{
-			if (!iPipelineSending)
-			{
-				iPipelineSending = true;
-
-				KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
-
-				PipelineOutput();
-
-				return;
-			}
+			PipelineRestartLocked();
 		}
 	}
 
@@ -1445,18 +1434,24 @@ void CMiniportWaveCyclic::PipelineResend(const Brx& aFrames)
 	}
 
 	if (resent > 0) {
-		if (!iPipelineSending)
-		{
-			iPipelineSending = true;
-
-			KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
-
-			PipelineOutput();
-
-			return;
-		}
+		PipelineRestartLocked();
 	}
 
 	KeReleaseSpinLock(&iPipelineSpinLock, oldIrql);
 }
+
+void CMiniportWaveCyclic::Dpc(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID SA1, IN PVOID SA2)
+{
+    UNREFERENCED_PARAMETER(Dpc);
+    UNREFERENCED_PARAMETER(SA1);
+    UNREFERENCED_PARAMETER(SA2);
+
+    CMiniportWaveCyclic* context = (CMiniportWaveCyclic*)DeferredContext;
+
+    if (context)
+    {
+		context->PipelineOutput();
+    }
+}
+
 

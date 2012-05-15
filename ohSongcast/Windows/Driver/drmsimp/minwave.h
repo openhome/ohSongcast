@@ -66,8 +66,9 @@ public:
 private:
 	void UpdateLatencyLocked();
 	void SetFormatLocked(TUint aSampleRate, TUint aBitRate, TUint aBitDepth, TUint aChannels);
-	OpenHome::Net::OhmMsgAudio* PipelineQueueRemove(SOCKADDR* aAddress);
 	void PipelineOutput();
+	void PipelineOutputLocked();
+	void PipelineRestartLocked();
 	static NTSTATUS PipelineOutputComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext);
 	NTSTATUS PipelineOutputComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp);
 	TBool PipelineQueueAddLocked(PMDL* aMdl, TUint* aBytes);
@@ -77,6 +78,7 @@ private:
 	TBool PipelineSendLocked(TByte* aBuffer, TUint aBytes);
 	TBool PipelineStopLocked();
 	TBool ResendLocked(OpenHome::Net::OhmMsgAudio& aMsg);
+	static void Dpc(IN  PKDPC Dpc, IN  PVOID DeferredContext, IN  PVOID SA1, IN  PVOID SA2);
 
 private:
     TBool iCaptureAllocated;
@@ -111,6 +113,7 @@ private:
 
 	CWinsock* iWsk;
 	CSocketOhm* iSocket;
+    PRKDPC	iDpc;
 };
 
 typedef CMiniportWaveCyclic *PCMiniportWaveCyclic;
