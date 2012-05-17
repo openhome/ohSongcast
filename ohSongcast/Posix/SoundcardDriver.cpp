@@ -11,7 +11,7 @@
 
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class OhmSenderDriverPosix : public IOhmSenderDriver
 {
@@ -30,12 +30,12 @@ private:
 };
 
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 
 using namespace OpenHome;
-using namespace OpenHome::Net;
+using namespace OpenHome::Av;
 
 
 OhmSenderDriverPosix::OhmSenderDriverPosix()
