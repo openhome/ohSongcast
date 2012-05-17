@@ -6,7 +6,7 @@
 #include <OpenHome/Private/Network.h>
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class IOhmSenderDriver
 {
@@ -21,7 +21,7 @@ public:
     virtual ~IOhmSenderDriver() {}
 };
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_OHM_SENDER_DRIVER

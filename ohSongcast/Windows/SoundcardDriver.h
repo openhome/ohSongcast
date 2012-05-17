@@ -12,7 +12,7 @@
 #include "../../OhmSenderDriver.h"
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class Songcast;
 
@@ -57,7 +57,7 @@ private:
 	IMMDeviceEnumerator* iDeviceEnumerator;
 };
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_SOUNDCARDDRIVER

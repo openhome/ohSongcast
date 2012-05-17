@@ -9,7 +9,7 @@ EXCEPTION(OhmError);
 EXCEPTION(OhzError);
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class Ohm
 {
@@ -396,8 +396,7 @@ private:
 };
 
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_OHM
-

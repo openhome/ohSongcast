@@ -100,7 +100,7 @@ DllExport void STDCALL SubnetRemoveRef(THandle aReceiver);
 ////////////////////////////////////////////
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class Songcast;
 
@@ -233,13 +233,13 @@ private:
 	TIpAddress iAdapter;
 	std::vector<Subnet*> iSubnetList;
 	OhmSender* iSender;
-	NetworkMonitor* iNetworkMonitor;
+	Net::NetworkMonitor* iNetworkMonitor;
 	IOhmSenderDriver* iDriver;
-	DvDeviceStandard* iDevice;
+	Net::DvDeviceStandard* iDevice;
 	ReceiverManager3* iReceiverManager;
 };
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_SONGCAST

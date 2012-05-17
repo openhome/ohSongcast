@@ -1,7 +1,7 @@
 #include "Ohm.h"
 
 using namespace OpenHome;
-using namespace OpenHome::Net;
+using namespace OpenHome::Av;
 
 // OhmHeader
 

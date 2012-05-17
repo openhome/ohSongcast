@@ -9,7 +9,7 @@
 #include "Ohm.h"
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class OhmSocket : public IReaderSource, public INonCopyable
 {
@@ -66,7 +66,7 @@ private:
 };
 
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_OHM_SOCKET

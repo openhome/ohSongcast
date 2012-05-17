@@ -52,6 +52,7 @@ int mygetch()
 using namespace OpenHome;
 using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
+using namespace OpenHome::Av;
 
 void STDCALL loggerReceiver(void* /* aPtr */, ECallbackType aType, THandle aReceiver)
 {

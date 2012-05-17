@@ -56,6 +56,7 @@ int mygetch()
 using namespace OpenHome;
 using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
+using namespace OpenHome::Av;
 
 class PcmSender
 {

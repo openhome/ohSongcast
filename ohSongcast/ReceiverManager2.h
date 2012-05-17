@@ -13,7 +13,7 @@
 #include "ReceiverManager1.h"
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class ReceiverManager2Receiver;
 
@@ -50,7 +50,7 @@ class ReceiverManager2Receiver
 {
 public:
 	ReceiverManager2Receiver(IReceiverManager2Handler& aHandler, ReceiverManager1Receiver& aReceiver);
-	CpDevice& Device() const;
+	Net::CpDevice& Device() const;
 	const Brx& Room() const;
 	const Brx& Group() const;
 	const Brx& Name() const;
@@ -85,9 +85,9 @@ public:
 	void MuteChanged();
 	void VolumeLimitChanged();
 
-	void CallbackPlay(IAsync& aAsync);		
-	void CallbackStop(IAsync& aAsync);		
-	void CallbackSetSender(IAsync& aAsync);		
+	void CallbackPlay(Net::IAsync& aAsync);		
+	void CallbackStop(Net::IAsync& aAsync);		
+	void CallbackSetSender(Net::IAsync& aAsync);		
 
 	void EventReceiverInitialEvent();
 	void EventReceiverTransportStateChanged();	
@@ -100,12 +100,12 @@ private:
 	ReceiverManager1Receiver& iReceiver;
 	TBool iActive;
 	mutable Mutex iMutex;
-	CpProxyAvOpenhomeOrgReceiver1* iServiceReceiver;
+	Net::CpProxyAvOpenhomeOrgReceiver1* iServiceReceiver;
     TUint iRefCount;
 	void* iUserData;
-	FunctorAsync iFunctorStop;
-	FunctorAsync iFunctorPlay;
-	FunctorAsync iFunctorSetSender;
+	Net::FunctorAsync iFunctorStop;
+	Net::FunctorAsync iFunctorPlay;
+	Net::FunctorAsync iFunctorSetSender;
 	Brhz iTransportState;
 	Brhz iUri;
 	Brhz iMetadata;
@@ -168,7 +168,7 @@ private:
 	void Select(Brx& aReceiverRoom, Brx& aReceiverGroup);
 */
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_RECEIVER_MANAGER1

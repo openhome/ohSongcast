@@ -6,10 +6,10 @@
 #include <OpenHome/Private/Timer.h>
 #include <OpenHome/Exception.h>
 #include <OpenHome/Functor.h>
-#include <OpenHome/Net/Core/CpTopology.h>
+#include <OpenHome/Av/CpTopology.h>
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class ReceiverManager1Receiver;
 
@@ -36,12 +36,12 @@ class ReceiverManager1Receiver  : private INonCopyable
 	static const TUint kMaxGroupBytes = 20;
 
 public:
-	ReceiverManager1Receiver(ReceiverManager1Room& aRoom, const Brx& aGroup, const Brx& aName, TUint aSourceIndex, CpDevice& aDevice);
+	ReceiverManager1Receiver(ReceiverManager1Room& aRoom, const Brx& aGroup, const Brx& aName, TUint aSourceIndex, Net::CpDevice& aDevice);
 	const Brx& Room() const;
 	const Brx& Group() const;
 	const Brx& Name() const;
 	TUint SourceIndex() const;
-	CpDevice& Device() const;
+	Net::CpDevice& Device() const;
 
 	TBool HasVolumeControl() const;
 	TUint Volume() const;
@@ -71,7 +71,7 @@ private:
 	Bws<kMaxGroupBytes> iGroup;
 	Bws<kMaxNameBytes> iName;
 	TUint iSourceIndex;
-	CpDevice& iDevice;
+	Net::CpDevice& iDevice;
 	void* iUserData;
     TUint iRefCount;
 };
@@ -156,7 +156,7 @@ private:
 	void Select(Brx& aReceiverRoom, Brx& aReceiverGroup);
 */
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_RECEIVER_MANAGER1

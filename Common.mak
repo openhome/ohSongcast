@@ -44,11 +44,7 @@ $(objdir)OhmProtocolMulticast.$(objext) : OhmProtocolMulticast.cpp OhmReceiver.h
 $(objdir)OhmProtocolUnicast.$(objext) : OhmProtocolUnicast.cpp OhmReceiver.h
 	$(compiler)OhmProtocolUnicast.$(objext) -c $(cflags) $(includes) OhmProtocolUnicast.cpp
 
-objects_topology = $(ohnetdir)CpTopology.$(objext) \
-                   $(ohnetdir)CpTopology1.$(objext) \
-                   $(ohnetdir)CpTopology2.$(objext) \
-                   $(ohnetdir)CpTopology3.$(objext) \
-                   $(ohnetdir)CpTopology4.$(objext) \
+objects_topology = $(ohtopologydir)libohTopology.$(libext) \
                    $(ohnetdir)CpAvOpenhomeOrgProduct1.$(objext) \
                    $(ohnetdir)CpAvOpenhomeOrgVolume1.$(objext) \
                    $(ohnetdir)CpAvOpenhomeOrgReceiver1.$(objext) \
@@ -87,7 +83,7 @@ all_common : TestReceiverManager1 TestReceiverManager2 TestReceiverManager3 Zone
 TestReceiverManager1 : $(objdir)TestReceiverManager1.$(exeext)
 $(objdir)TestReceiverManager1.$(exeext) : ohSongcast$(dirsep)TestReceiverManager1.cpp $(headers_topology) $(objects_topology)
 	$(compiler)TestReceiverManager1.$(objext) -c $(cflags) $(includes) ohSongcast$(dirsep)TestReceiverManager1.cpp
-	$(link) $(linkoutput)$(objdir)TestReceiverManager1.$(exeext) $(objdir)TestReceiverManager1.$(objext) $(objects_topology) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
+	$(link) $(linkoutput)$(objdir)TestReceiverManager1.$(exeext) $(objdir)TestReceiverManager1.$(objext) $(ohtopologydir)libohTopology.$(libext) $(objects_topology) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
 
 TestReceiverManager2 : $(objdir)TestReceiverManager2.$(exeext)
