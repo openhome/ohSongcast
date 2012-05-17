@@ -9,16 +9,6 @@ FifoLiteBase::FifoLiteBase(TUint aSlots) : iSlots(aSlots), iSlotsUsed(0),
 {
 }
 
-void* FifoLiteBase::operator new(size_t aBytes)
-{
-	return (ExAllocatePoolWithTag(NonPagedPool, aBytes, '2ten'));
-}
-
-void  FifoLiteBase::operator delete(void* aPtr)
-{
-	ExFreePoolWithTag(aPtr, '2ten');
-}
-
 TUint FifoLiteBase::Slots() const
 {
     return iSlots;
@@ -36,7 +26,7 @@ TUint FifoLiteBase::SlotsUsed() const
 
 TUint FifoLiteBase::Write()
 {
-    OHASSERT(iSlots > iSlotsUsed);
+    ASSERT(iSlots > iSlotsUsed);
     TUint index = iWriteIndex++;
     if(iWriteIndex == iSlots) {
         iWriteIndex = 0;
@@ -47,7 +37,7 @@ TUint FifoLiteBase::Write()
 
 TUint FifoLiteBase::WriteBack()
 {
-    OHASSERT(iSlots > iSlotsUsed);
+    ASSERT(iSlots > iSlotsUsed);
     if(iReadIndex == 0) {
         iReadIndex = iSlots - 1;;
     }
@@ -60,7 +50,7 @@ TUint FifoLiteBase::WriteBack()
 
 TUint FifoLiteBase::Read()
 {
-    OHASSERT(iSlotsUsed > 0);
+    ASSERT(iSlotsUsed > 0);
     TUint index = iReadIndex++;
     if(iReadIndex == iSlots) {
         iReadIndex = 0;

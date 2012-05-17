@@ -68,8 +68,8 @@
     NSString* appName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleName"];
 
     // initialise menu items that do not depend on state
-    [menuItemReconnect setTitle:NSLocalizedString(@"MenuReconnect", @"")];
-    [menuItemPrefs setTitle:[NSString stringWithFormat:NSLocalizedString(@"MenuPreferences", @""), appName]];
+    [menuItemReconnect setTitle:@"Reconnect Selected Receivers"];
+    [menuItemPrefs setTitle:[NSString stringWithFormat:@"Open %@ Preferences...", appName]];
 
     // create and initialise the model
     iModel = [[Model alloc] init];
@@ -173,14 +173,14 @@
     if ([iModel enabled])
     {
         imageFile = [[NSBundle mainBundle] pathForResource:@"MenuIconOn" ofType:@"png"];
-        menuItemStatusText = NSLocalizedString(@"MenuStatusOn", @"");
-        menuItemOnOffText = NSLocalizedString(@"MenuTurnOff", @"");
+        menuItemStatusText = @"%@: On";
+        menuItemOnOffText = @"Turn %@ Off";
     }
     else
     {
         imageFile = [[NSBundle mainBundle] pathForResource:@"MenuIconOff" ofType:@"png"];
-        menuItemStatusText = NSLocalizedString(@"MenuStatusOff", @"");
-        menuItemOnOffText = NSLocalizedString(@"MenuTurnOn", @"");        
+        menuItemStatusText = @"%@: Off";
+        menuItemOnOffText = @"Turn %@ On";
     }
     
     // set the images and text into the menu

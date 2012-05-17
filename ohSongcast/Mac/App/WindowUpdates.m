@@ -48,7 +48,7 @@
     {
         // update found - show the available view
         [self hideAll];
-        [textAvailable setStringValue:[NSString stringWithFormat:NSLocalizedString(@"UpdateAvailableText", @""), [aUpdateInfo appName], [aUpdateInfo version]]];
+        [textAvailable setStringValue:[NSString stringWithFormat:@"A new version of %@ (%@) is available.", [aUpdateInfo appName], [aUpdateInfo version]]];
         [viewAvailable setHidden:NO];
 
         // if this is an automatic update check, the window is not visible yet

@@ -13,8 +13,15 @@ endif
 
 MACHINE = $(shell uname -s)
 ifeq ($(MACHINE), Darwin)
-platform_cflags = -DPLATFORM_MACOSX_GNU -arch x86_64 -mmacosx-version-min=10.4
-platform_linkflags = -arch x86_64 -framework IOKit -framework CoreFoundation -framework CoreAudio -framework SystemConfiguration
+
+ifeq ($(mac-64),1)
+    platform_cflags = -DPLATFORM_MACOSX_GNU -arch x86_64 -mmacosx-version-min=10.4
+    platform_linkflags = -arch x86_64 -framework IOKit -framework CoreFoundation -framework CoreAudio -framework SystemConfiguration
+else
+    platform_cflags = -DPLATFORM_MACOSX_GNU -m32 -mmacosx-version-min=10.4
+    platform_linkflags = -m32 -framework IOKit -framework CoreFoundation -framework CoreAudio -framework SystemConfiguration
+endif
+
 platform_dllflags = -install_name @executable_path/$(@F)
 platform_include = -I/System/Library/Frameworks/IOKit.framework/Headers/
 osdir = Mac
@@ -82,13 +89,14 @@ $(objdir)SoundcardDriver.$(objext) : ohSongcast/Posix/SoundcardDriver.cpp
 	$(compiler)SoundcardDriver.$(objext) -c $(cflags) $(includes) ohSongcast/Posix/SoundcardDriver.cpp
 endif
 
+objects_songcast_dll =$(objects_topology) $(objects_sender) $(objects_songcast) $(objects_netmon) $(objects_driver) $(ohnetdir)$(libprefix)ohNetCore.$(libext)
 
 $(objdir)$(dllprefix)ohSongcast.$(dllext) : $(objects_topology) $(objects_sender) $(objects_songcast) $(objects_netmon) $(objects_driver)
-	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcast.$(dllext) $(objects_topology) $(objects_sender) $(objects_songcast) $(objects_netmon) $(objects_driver) $(ohnetdir)$(libprefix)ohNetCore.$(libext)
+	$(link_dll) $(linkoutput)$(objdir)$(dllprefix)ohSongcast.$(dllext) $(objects_songcast_dll)
 
 
 $(objdir)TestSongcast.$(exeext) : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast/TestSongcast.cpp
 	$(compiler)TestSongcast.$(objext) -c $(cflags) $(includes) ohSongcast/TestSongcast.cpp
-	$(link) $(linkoutput)$(objdir)TestSongcast.$(exeext) $(objdir)TestSongcast.$(objext) $(objdir)$(dllprefix)ohSongcast.$(dllext)
+	$(link) $(linkoutput)$(objdir)TestSongcast.$(exeext) $(objdir)TestSongcast.$(objext) $(objects_songcast_dll) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
 

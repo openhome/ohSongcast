@@ -4,6 +4,7 @@
 #include <OpenHome/Private/Maths.h>
 #include <OpenHome/Private/Arch.h>
 #include <OpenHome/Private/Debug.h>
+#include <OpenHome/Private/Uri.h>
 
 // Assumes only one Receiver per group (UPnP device)
 
@@ -62,6 +63,18 @@ const Brx& ReceiverManager3Receiver::Name() const
 ReceiverManager3Receiver::EStatus ReceiverManager3Receiver::Status() const
 {
 	return (iStatus);
+}
+
+TIpAddress ReceiverManager3Receiver::IpAddress() const
+{
+    CpDevice& dev = iReceiver.Device();
+
+    Brh location;
+    dev.GetAttribute("Upnp.Location", location);
+
+    Uri uri(location);
+    Endpoint endpoint(0, uri.Host());
+    return endpoint.Address();
 }
 
 TBool ReceiverManager3Receiver::HasVolumeControl() const

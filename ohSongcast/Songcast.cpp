@@ -1,5 +1,4 @@
 #include "Songcast.h"
-#include "Icon.h"
 
 #include <OpenHome/Private/Debug.h>
 #include <algorithm>
@@ -126,6 +125,11 @@ EReceiverStatus STDCALL ReceiverStatus(THandle aReceiver)
 	return (((Receiver*)aReceiver)->Status());
 }
 
+uint32_t STDCALL ReceiverIpAddress(THandle aReceiver)
+{
+	return (((Receiver*)aReceiver)->IpAddress());
+}
+
 bool STDCALL ReceiverHasVolumeControl(THandle aReceiver)
 {
 	return (((Receiver*)aReceiver)->HasVolumeControl());
@@ -248,6 +252,11 @@ const TChar* Receiver::Name() const
 EReceiverStatus Receiver::Status() const
 {
 	return (EReceiverStatus)iReceiver.Status();
+}
+
+TIpAddress Receiver::IpAddress() const
+{
+    return iReceiver.IpAddress();
 }
 
 TBool Receiver::HasVolumeControl() const
@@ -962,5 +971,3 @@ void Songcast::ReceiverVolumeLimitChanged(ReceiverManager3Receiver& aReceiver)
 	ASSERT(receiver);
 	(*iReceiverCallback)(iReceiverPtr, eVolumeLimitChanged, (THandle)receiver);
 }
-
-

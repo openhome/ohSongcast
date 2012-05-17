@@ -1,6 +1,8 @@
 #include "OhmMsg.h"
 #include <OpenHome/Arch.h>
 
+#include <ntddk.h>
+
 using namespace OpenHome;
 using namespace OpenHome::Net;
 
@@ -271,6 +273,8 @@ void OhmMsgMetatext::Externalise(IWriter& aWriter)
 
 OhmMsgFactory::OhmMsgFactory()
 {
+	KeInitializeSpinLock(&iSpinLock);
+
 	for (TUint i = 0; i < kMaxAudioMessages; i++) {
 		iFifoAudio.Write(new OhmMsgAudio(*this));
 	}
@@ -297,24 +301,30 @@ void  OhmMsgFactory::operator delete(void* aPtr)
 
 OhmMsgAudio& OhmMsgFactory::CreateAudio(PMDL aMdl, TUint aBytes)
 {
-	ASSERT(iFifoAudio.SlotsUsed() > 0);
+	KIRQL oldIrql;
+	KeAcquireSpinLock(&iSpinLock, &oldIrql);
 	OhmMsgAudio* msg = iFifoAudio.Read();
+	KeReleaseSpinLock(&iSpinLock, oldIrql);
 	msg->Create(aMdl, aBytes);
 	return (*msg);
 }
 
 OhmMsgTrack& OhmMsgFactory::CreateTrack(TUint aSequence, const Brx& aUri, const Brx& aMetadata)
 {
-	ASSERT(iFifoTrack.SlotsUsed() > 0);
+	KIRQL oldIrql;
+	KeAcquireSpinLock(&iSpinLock, &oldIrql);
 	OhmMsgTrack* msg = iFifoTrack.Read();
+	KeReleaseSpinLock(&iSpinLock, oldIrql);
 	msg->Create(aSequence, aUri, aMetadata);
 	return (*msg);
 }
 
 OhmMsgMetatext& OhmMsgFactory::CreateMetatext(TUint aSequence, const Brx& aMetatext)
 {
-	ASSERT(iFifoMetatext.SlotsUsed() > 0);
+	KIRQL oldIrql;
+	KeAcquireSpinLock(&iSpinLock, &oldIrql);
 	OhmMsgMetatext* msg = iFifoMetatext.Read();
+	KeReleaseSpinLock(&iSpinLock, oldIrql);
 	msg->Create(aSequence, aMetatext);
 	return (*msg);
 }
@@ -326,17 +336,26 @@ void OhmMsgFactory::Destroy(OhmMsg& aMsg)
 
 void OhmMsgFactory::Process(OhmMsgAudio& aMsg)
 {
+	KIRQL oldIrql;
+	KeAcquireSpinLock(&iSpinLock, &oldIrql);
 	iFifoAudio.Write(&aMsg);
+	KeReleaseSpinLock(&iSpinLock, oldIrql);
 }
 
 void OhmMsgFactory::Process(OhmMsgTrack& aMsg)
 {
+	KIRQL oldIrql;
+	KeAcquireSpinLock(&iSpinLock, &oldIrql);
 	iFifoTrack.Write(&aMsg);
+	KeReleaseSpinLock(&iSpinLock, oldIrql);
 }
 
 void OhmMsgFactory::Process(OhmMsgMetatext& aMsg)
 {
+	KIRQL oldIrql;
+	KeAcquireSpinLock(&iSpinLock, &oldIrql);
 	iFifoMetatext.Write(&aMsg);
+	KeReleaseSpinLock(&iSpinLock, oldIrql);
 }
 
 OhmMsgFactory::~OhmMsgFactory()

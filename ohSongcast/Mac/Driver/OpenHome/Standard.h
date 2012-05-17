@@ -1,14 +1,15 @@
 #ifndef HEADER_STANDARD
 #define HEADER_STANDARD
 
+#include <kern/assert.h>
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Exception.h>
 
+
 namespace OpenHome {
 
-#define OHASSERT(x)  if(!(x)) OHASSERTS()	
-
-#define OHASSERTS() *((TUint32*)0) = 0
+#define ASSERT(expr) assert(expr);
+#define ASSERTS() ASSERT(false);
 
 class INonCopyable
 {

@@ -36,8 +36,8 @@ bool AudioDevice::initHardware(IOService* aProvider)
     }
 
     // create the songcast socket
-    iSocket = new SongcastSocket();
-    iEngine->SetSocket(*iSocket);
+    iSongcast = new Songcast();
+    iEngine->SetSongcast(*iSongcast);
     iEngine->SetDescription(BRANDING_AUDIODEVICE_NAME);
 
     if (activateAudioEngine(iEngine) != kIOReturnSuccess) {
@@ -56,19 +56,18 @@ void AudioDevice::free()
 {
     IOLog("Songcast AudioDevice[%p]::free()\n", this);
 
-    // close the kernel socket
-    if (iSocket) {
-        iSocket->Close();
-        delete iSocket;
-        iSocket = 0;
-    }
-
     // release the engine
     if (iEngine) {
         iEngine->release();
         iEngine = 0;
     }
     
+    // destroy the songcast object
+    if (iSongcast) {
+        delete iSongcast;
+        iSongcast = 0;
+    }
+
     IOAudioDevice::free();
 }
 

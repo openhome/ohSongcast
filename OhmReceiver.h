@@ -3,7 +3,6 @@
 
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Buffer.h>
-#include <OpenHome/Net/Core/DvDevice.h>
 #include <OpenHome/Private/Thread.h>
 #include <OpenHome/Private/Timer.h>
 #include <OpenHome/Private/Uri.h>

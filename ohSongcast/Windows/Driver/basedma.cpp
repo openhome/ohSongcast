@@ -20,8 +20,6 @@ Abstract:
 
 #pragma code_seg("PAGE")
 
-extern void MpusSend(UCHAR* aBuffer, UINT aBytes);
-
 //=============================================================================
 STDMETHODIMP_(NTSTATUS)
 CMiniportWaveCyclicStreamMSVAD::AllocateBuffer

@@ -1,5 +1,4 @@
 #include "OhmReceiver.h"
-#include <OpenHome/Net/Core/DvAvOpenhomeOrgReceiver1.h>
 #include <OpenHome/Private/Ascii.h>
 #include <OpenHome/Private/Maths.h>
 #include <OpenHome/Private/Arch.h>
@@ -242,15 +241,17 @@ void OhmReceiver::PlayZoneMode(const Brx& aUri)
 		uri.Replace(aUri);
 	}
 	catch (UriError&) {
+		uri.Replace(Brn("ohm://0.0.0.0:0"));
 	}
 
 	Endpoint endpoint(uri.Port(), uri.Host());
+
+	iMutexTransport.Signal();
 
 	iMutexMode.Wait();
 
 	if (iEndpoint.Equals(endpoint)) {
 		iMutexMode.Signal();
-		iMutexTransport.Signal();
 		return;
 	}
 
@@ -271,6 +272,8 @@ void OhmReceiver::PlayZoneMode(const Brx& aUri)
 		iStopped.Wait();
 		break;
 	}
+
+	iMutexTransport.Wait();
 
 	Reset();
 
@@ -380,7 +383,7 @@ void OhmReceiver::Run()
 
 		switch (iPlayMode) {
         case eNone:
-            break;
+			ASSERTS();
 		case eMulticast:
 			iPlaying.Signal();
 			iProtocolMulticast->Play(iface, ttl, endpoint);
@@ -497,14 +500,20 @@ TUint OhmReceiver::Latency(OhmMsgAudio& aMsg)
 
 void OhmReceiver::Reset()
 {
-	iLatency = 0;
-	iRepairing = false;
-
 	iTimerRepair.Cancel();
 
-	while (iFifoRepair.SlotsUsed() > 0) {
-		iFifoRepair.Read()->RemoveRef();
+	if (iRepairing) {
+
+		iRepairFirst->RemoveRef();
+
+		while (iFifoRepair.SlotsUsed() > 0) {
+			iFifoRepair.Read()->RemoveRef();
+		}
 	}
+
+	iRepairing = false;
+
+	iLatency = 0;
 }
 
 TBool OhmReceiver::RepairBegin(OhmMsgAudio& aMsg)
@@ -522,9 +531,9 @@ void  OhmReceiver::RepairReset()
 {
 	LOG(kMedia, "RESET\n");
 
-	iLatency = 0;
-
 	iTimerRepair.Cancel();
+
+	iRepairFirst->RemoveRef();
 
 	while (iFifoRepair.SlotsUsed() > 0) {
 		iFifoRepair.Read()->RemoveRef();
@@ -532,6 +541,8 @@ void  OhmReceiver::RepairReset()
 
 	iTransportState = eDisconnected;
 	iDriver->Disconnected();
+
+	iLatency = 0;
 }
 
 
@@ -678,12 +689,12 @@ TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 
 			if (diff < 0) {
 				// not a duplicate, so reset
+				iFifoRepair.Write(msg);
 				RepairReset();
 				return (false);
 			}
 			else if (diff == 0) {
 				aMsg.RemoveRef();
-				iFifoRepair.Write(msg);
 				found = true;
 			}
 		}
@@ -871,6 +882,7 @@ TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 			if (diff < 0) {
 				if (count == kMaxRepairBacklogFrames) {
 					// can't put another frame into the backlog
+					iFifoRepair.Write(&aMsg);
 					RepairReset();
 					return (false);
 				}
@@ -880,7 +892,6 @@ TBool OhmReceiver::Repair(OhmMsgAudio& aMsg)
 			}
 			else if (diff == 0) {
 				aMsg.RemoveRef();
-				iFifoRepair.Write(msg);
 				found = true;
 			}
 		}
@@ -979,7 +990,8 @@ void OhmReceiver::ResendSeen()
 	iMutexTransport.Wait();
 
 	if (iRepairing) {
-		iTimerRepair.FireIn(Random(iLatency >> 2)); // delay repair timer by a random time between 0 and 1/4 of the audio latency
+		// iTimerRepair.FireIn(Random(iLatency >> 2)); // delay repair timer by a random time between 0 and 1/4 of the audio latency
+		iTimerRepair.FireIn(kSubsequentRepairTimeoutMs); // delay repair timer by a random time between 0 and 1/4 of the audio latency
 	}
 
 	iMutexTransport.Signal();

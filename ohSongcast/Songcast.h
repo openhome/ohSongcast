@@ -74,6 +74,7 @@ DllExport const char* STDCALL ReceiverRoom(THandle aReceiver);
 DllExport const char* STDCALL ReceiverGroup(THandle aReceiver);
 DllExport const char* STDCALL ReceiverName(THandle aReceiver);
 DllExport EReceiverStatus STDCALL ReceiverStatus(THandle aReceiver);
+DllExport uint32_t STDCALL ReceiverIpAddress(THandle aReceiver);
 DllExport bool STDCALL ReceiverHasVolumeControl(THandle aReceiver);
 DllExport uint32_t STDCALL ReceiverVolume(THandle aReceiver);
 DllExport bool STDCALL ReceiverMute(THandle aReceiver);
@@ -114,6 +115,7 @@ public:
 	const TChar* Group() const;
 	const TChar* Name() const;
 	EReceiverStatus Status() const;
+    TIpAddress IpAddress() const;
 	TBool HasVolumeControl() const;
 	TUint Volume() const;
 	TBool Mute() const;

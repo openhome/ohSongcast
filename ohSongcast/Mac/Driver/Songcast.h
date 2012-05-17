@@ -2,6 +2,7 @@
 #define HEADER_SONGCAST
 
 #include <sys/kpi_socket.h>
+#include <OpenHome/Fifo.h>
 
 
 // NOTE: This struct is __packed__ - this prevents the compiler from adding
@@ -41,40 +42,49 @@ typedef struct SongcastAudioHeader
 
 
 
+// Class defining format of audio sent by songcast
+class SongcastFormat
+{
+public:
+    SongcastFormat(uint32_t aSampleRate, uint8_t aBitDepth, uint8_t aChannels, uint16_t aSampleCount);
+
+    uint32_t Bytes() const;
+    uint64_t TimeNs() const;
+
+    const uint32_t SampleRate;
+    const uint32_t BitDepth;
+    const uint32_t Channels;
+    const uint32_t SampleCount;
+};
+
+
+
 // Class to wrap the data sent in an audio message
 class SongcastAudioMessage
 {
 public:
-    SongcastAudioMessage(uint32_t aFrames, uint32_t aChannels, uint32_t aBitDepth);
+    SongcastAudioMessage(uint32_t aMaxAudioBytes, const SongcastFormat& aFormat);
     ~SongcastAudioMessage();
     
     void* Ptr() const { return iPtr; }
-    uint32_t Bytes() const { return (sizeof(SongcastAudioHeader) + iAudioBytes); }
+    uint32_t Bytes() const;
+    uint32_t Frame() const;
     
-    void SetHaltFlag(bool aHalt);
-    void SetSampleRate(uint32_t aSampleRate);
-    void SetFrame(uint32_t aFrame);
-    void SetTimestamp(uint32_t aTimestamp);
-    void SetMediaLatency(uint32_t aLatency);
+    void SetHeader(const SongcastFormat& aFormat, uint64_t aTimestampNs, uint64_t aLatencyMs, bool aHalt, uint32_t aFrame);
+    void SetResent();
     void SetData(void* aPtr, uint32_t aBytes);
     
 private:
     SongcastAudioHeader* Header() const { return (SongcastAudioHeader*)iPtr; }
     
     void* iPtr;
-    const uint32_t iAudioBytes;
+    uint32_t iAudioBytes;
+    const uint32_t iMaxAudioBytes;
 };
 
 
 
 // Class representing the songcast socket
-class ISongcastSocket
-{
-public:
-    virtual ~ISongcastSocket() {}
-    virtual void Send(SongcastAudioMessage& aMsg) = 0;
-};
-
 enum ESongcastState
 {
     eSongcastStateInactive,
@@ -82,17 +92,14 @@ enum ESongcastState
     eSongcastStatePendingInactive
 };
 
-class SongcastSocket : public ISongcastSocket
+class SongcastSocket
 {
 public:
     SongcastSocket();
     ~SongcastSocket();
     
-    void Open(uint32_t aIpAddress, uint16_t aPort, uint32_t aAdapter);
-    void Close();
+    void SetEndpoint(uint32_t aIpAddress, uint16_t aPort, uint32_t aAdapter);
     void Send(SongcastAudioMessage& aMsg);
-    
-    void SetActive(uint64_t aActive);
     void SetTtl(uint64_t aTtl);
     
 private:
@@ -100,7 +107,36 @@ private:
 
     socket_t iSocket;
     uint8_t iTtl;
+};
+
+
+
+// Class defining the interface between the audio driver code and the songcast code
+class Songcast
+{
+public:
+    Songcast();
+    ~Songcast();
+
+    static const uint32_t SupportedFormatCount = 1;
+    static const SongcastFormat SupportedFormats[SupportedFormatCount];
+
+    void SetActive(uint64_t aActive);
+    void SetEndpoint(uint32_t aIpAddress, uint16_t aPort, uint32_t aAdapter);
+    void SetTtl(uint64_t aTtl);
+    void SetLatencyMs(uint64_t aLatencyMs);
+
+    void Send(const SongcastFormat& aFormat, uint64_t aTimestampNs, bool aHalt, void* aData, uint32_t aBytes);
+    void Resend(uint64_t aFrameCount, const uint32_t* aFrames);
+
+private:
+    static const uint32_t kHistoryCount = 100;
+
+    SongcastSocket iSocket;
     ESongcastState iState;
+    OpenHome::FifoLite<SongcastAudioMessage*, kHistoryCount> iHistory;
+    uint64_t iLatencyMs;
+    uint32_t iFrame;
 };
 
 
