@@ -78,7 +78,13 @@ objects_netmon   = $(ohnetmondir)NetworkMonitor.$(objext) \
                    $(ohnetdir)DvAvOpenhomeOrgNetworkMonitor1.$(objext)
 
 
-all_common : TestReceiverManager1 TestReceiverManager2 TestReceiverManager3 ZoneWatcher WavSender Receiver $(objdir)ohSongcast.net.dll $(objdir)TestSongcastCs.$(exeext)
+all_common_native : TestReceiverManager1 TestReceiverManager2 TestReceiverManager3 ZoneWatcher WavSender Receiver
+all_common_cs : $(objdir)ohSongcast.net.dll $(objdir)TestSongcastCs.$(exeext)
+ifeq ($(nativeonly), yes)
+    all_common : all_common_native
+else
+    all_common : all_common_native all_common_cs
+endif
 
 TestReceiverManager1 : $(objdir)TestReceiverManager1.$(exeext)
 $(objdir)TestReceiverManager1.$(exeext) : ohSongcast$(dirsep)TestReceiverManager1.cpp $(headers_topology) $(objects_topology)
