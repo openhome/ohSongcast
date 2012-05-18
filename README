@@ -20,7 +20,7 @@ make ohNetCore proxies devices TestFramework
 cd ../ohNetmon
 make
 cd ../ohTopology
-./waf configure --ohnet=../ohNet --dest-platform=[Windows-x86|Mac-x86|Linux-x86]
+./waf configure --ohnet=../ohNet --debug --dest-platform=[Windows-x86|Mac-x86|Linux-x86]
 ./waf build
 cd ../ohSongcast
 make
