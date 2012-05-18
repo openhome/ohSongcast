@@ -25,7 +25,7 @@ resourcedir = $(outputdir)$(product_name).app/Contents/Resources/
 
 
 compiler = gcc
-compiler_flags = -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks $(debug_specific_flags) -Wreturn-type -Wunused-variable -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.6 -gdwarf-2 -I../../../../ohnet/Build/Include -I../ -c
+compiler_flags = -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks $(debug_specific_flags) -Wreturn-type -Wunused-variable -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.6 -gdwarf-2 -I../../../../ohnet/Build/Include -I../../../../ohTopology/build/Include -I../ -c
 objc_flags = -x objective-c -std=gnu99 $(compiler_flags)
 objcc_flags = -x objective-c++ -fvisibility-inlines-hidden $(compiler_flags)
 
