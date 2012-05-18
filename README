@@ -1,0 +1,26 @@
+ohSongcast can be used to provide a virtual soundcard which sends a device's
+audio output to another device which implements the OpenHome Receiver service
+(http://www.openhome.org/wiki/Av:Developer:ReceiverService).
+
+Full versions exist for Windows 7 and Mac OSX.  Much of the code builds for
+other platforms but without integration their audio subsystems.
+
+The code can be built for Windows, Mac or Linux and requires:
+- Python (v2.6 or 2.7)
+- MSVC (Windows)
+- GCC (Mac / Linux)
+- ohNet (git@github.com:openhome/ohNet.git)
+- ohNetmon (git@github.com:openhome/ohTopology.git)
+- ohTopology (git@github.com:openhome/ohNetmon.git)
+
+All code must be cloned to the same root directory and can then be built using:
+
+cd ohNet
+make ohNetCore proxies devices TestFramework
+cd ../ohNetmon
+make
+cd ../ohTopology
+./waf configure --ohnet=../ohNet --dest-platform=[Windows-x86|Mac-x86|Linux-x86]
+./waf build
+cd ../ohSongcast
+make
