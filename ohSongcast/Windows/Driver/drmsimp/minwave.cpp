@@ -1180,26 +1180,29 @@ TBool CMiniportWaveCyclic::PipelineSendNewLocked()
 {
 	void* header = ExAllocatePoolWithTag(NonPagedPool, sizeof(OHMHEADER), '2ten');
 
-	if (header != NULL)
+	if (header == NULL)
 	{
-		RtlCopyMemory(header, &iPipelineHeader, sizeof(OHMHEADER));
-	
-		PMDL mdl = IoAllocateMdl(header, sizeof(OHMHEADER), false, false, 0);
-
-		if (mdl != NULL)
-		{
-			MmBuildMdlForNonPagedPool(mdl);
-
-			iPipelineMdl = mdl;
-			iPipelineMdlLast = mdl;
-
-			iPipelineBytes = sizeof(OHMHEADER);
-
-			return (true);
-		}
+		return (false);
 	}
 
-	return (false);
+	RtlCopyMemory(header, &iPipelineHeader, sizeof(OHMHEADER));
+	
+	PMDL mdl = IoAllocateMdl(header, sizeof(OHMHEADER), false, false, 0);
+
+	if (mdl == NULL)
+	{
+		ExFreePoolWithTag(header, '2ten');
+		return (false);
+	}
+
+	MmBuildMdlForNonPagedPool(mdl);
+
+	iPipelineMdl = mdl;
+	iPipelineMdlLast = mdl;
+
+	iPipelineBytes = sizeof(OHMHEADER);
+
+	return (true);
 }
 
 //=============================================================================
@@ -1235,25 +1238,27 @@ void CMiniportWaveCyclic::PipelineSendAddFragmentLocked(TByte* aBuffer, TUint aB
 {
 	TByte* buffer = (TByte*) ExAllocatePoolWithTag(NonPagedPool, aBytes, '2ten');
 
-	if (buffer != NULL)
+	if (buffer == NULL)
 	{
-		PMDL mdl = IoAllocateMdl(buffer, aBytes, FALSE, FALSE, NULL);
-
-		if (mdl == NULL)
-		{
-			ExFreePoolWithTag(buffer, '2ten');
-			return;
-		}
-
-		MmBuildMdlForNonPagedPool(mdl);
-
-		iPipelineMdlLast->Next = mdl;
-		iPipelineMdlLast = mdl;
-
-		iPipelineBytes += aBytes;
-
-		PipelineCopyAudioLocked(buffer, aBuffer, aBytes, iPipelineSampleChannelBytes);
+		return;
 	}
+
+	PMDL mdl = IoAllocateMdl(buffer, aBytes, FALSE, FALSE, NULL);
+
+	if (mdl == NULL)
+	{
+		ExFreePoolWithTag(buffer, '2ten');
+		return;
+	}
+
+	MmBuildMdlForNonPagedPool(mdl);
+
+	iPipelineMdlLast->Next = mdl;
+	iPipelineMdlLast = mdl;
+
+	iPipelineBytes += aBytes;
+
+	PipelineCopyAudioLocked(buffer, aBuffer, aBytes, iPipelineSampleChannelBytes);
 }
 
 //=============================================================================
