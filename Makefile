@@ -74,6 +74,11 @@ make_obj_dir :
 clean :
 	rm -rf $(objdir)
 
+ifeq ($(nativeonly), yes)
+    all_common : all_common_native
+else
+    all_common : all_common_native all_common_cs
+endif
 all : all_common $(objdir)$(dllprefix)ohSongcast.$(dllext) $(objdir)TestSongcast.$(exeext)
 
 
