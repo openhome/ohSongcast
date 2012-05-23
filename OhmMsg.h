@@ -9,7 +9,7 @@
 #include "Ohm.h"
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class OhmMsgAudio;
 class OhmMsgTrack;
@@ -221,8 +221,7 @@ private:
 	Mutex iMutex;
 };
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_OHMMSG
-

@@ -15,7 +15,7 @@
 
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class OhmSenderDriverMac : public IOhmSenderDriver
 {
@@ -80,14 +80,14 @@ private:
 };
 
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 
 EXCEPTION(SongcastError);
 
 using namespace OpenHome;
-using namespace OpenHome::Net;
+using namespace OpenHome::Av;
 
 
 // static class to wrap some of the messy audio hardware functions

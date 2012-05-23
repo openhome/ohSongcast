@@ -10,6 +10,7 @@
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
+using namespace OpenHome::Av;
 
 #ifdef _WIN32
 # pragma warning(disable:4355) // use of 'this' in ctor lists safe in this case

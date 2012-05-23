@@ -13,7 +13,7 @@
 #include "OhmSocket.h"
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 enum EOhmReceiverTransportState
 {
@@ -231,7 +231,7 @@ private:
 	Timer iTimerRepair;
 };
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_OHMRECEIVER

@@ -22,7 +22,7 @@
 
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 	class ReceiverManager2Logger : IReceiverManager2Handler
 	{
@@ -40,12 +40,13 @@ namespace Net {
 		ReceiverManager2* iReceiverManager;
 	};
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
+using namespace OpenHome::Av;
 
 ReceiverManager2Logger::ReceiverManager2Logger()
 {

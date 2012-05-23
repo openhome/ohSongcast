@@ -10,7 +10,7 @@
 #include "ReceiverManager2.h"
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class ReceiverManager3Receiver;
 
@@ -147,7 +147,7 @@ private:
 	void Select(Brx& aReceiverRoom, Brx& aReceiverGroup);
 */
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_RECEIVER_MANAGER3

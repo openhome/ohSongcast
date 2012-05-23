@@ -8,10 +8,12 @@
 
 #include <sys/utsname.h>
 #include <stdio.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class OhmSenderDriverPosix : public IOhmSenderDriver
 {
@@ -30,12 +32,12 @@ private:
 };
 
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 
 using namespace OpenHome;
-using namespace OpenHome::Net;
+using namespace OpenHome::Av;
 
 
 OhmSenderDriverPosix::OhmSenderDriverPosix()
@@ -70,7 +72,7 @@ void OhmSenderDriverPosix::SetLatency(TUint aValue)
 
 void OhmSenderDriverPosix::SetTrackPosition(TUint64 aSampleStart, TUint64 aSamplesTotal)
 {
-    printf("OhmSenderDriverPosix: TrackPosition %llu %llu\n", aSampleStart, aSamplesTotal);
+    printf("OhmSenderDriverPosix: TrackPosition %" PRIu64 " %" PRIu64 "\n", aSampleStart, aSamplesTotal);
 }
 
 void OhmSenderDriverPosix::Resend(const Brx& aFrames)

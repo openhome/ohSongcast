@@ -12,15 +12,15 @@
 #endif
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
-	class ProviderSender : public DvProviderAvOpenhomeOrgSender1
+	class ProviderSender : public Net::DvProviderAvOpenhomeOrgSender1
 	{
 	    static const TUint kMaxMetadataBytes = 4096;
 	    static const TUint kTimeoutAudioPresentMs = 1000;
 	
 	public:
-	    ProviderSender(DvDevice& aDevice);
+	    ProviderSender(Net::DvDevice& aDevice);
 	    
 	    void SetMetadata(const Brx& aValue);
 	    
@@ -33,11 +33,11 @@ namespace Net {
 	    ~ProviderSender() {}
 	    
 	private:
-	    virtual void PresentationUrl(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue);
-	    virtual void Metadata(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue);
-	    virtual void Audio(IDvInvocation& aInvocation, IDvInvocationResponseBool& aValue);
-	    virtual void Status(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue);
-	    virtual void Attributes(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue);
+	    virtual void PresentationUrl(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseString& aValue);
+	    virtual void Metadata(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseString& aValue);
+	    virtual void Audio(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseBool& aValue);
+	    virtual void Status(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseString& aValue);
+	    virtual void Attributes(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseString& aValue);
 	
 	    void UpdateMetadata();
 	    void TimerAudioPresentExpired();
@@ -47,15 +47,16 @@ namespace Net {
 	    mutable Mutex iMutex;
 	    Timer iTimerAudioPresent;
 	};
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
+using namespace OpenHome::Av;
 
 // ProviderSender
 
-ProviderSender::ProviderSender(DvDevice& aDevice)
+ProviderSender::ProviderSender(Net::DvDevice& aDevice)
     : DvProviderAvOpenhomeOrgSender1(aDevice)
     , iMutex("PSND")
     , iTimerAudioPresent(MakeFunctor(*this, &ProviderSender::TimerAudioPresentExpired))
@@ -79,7 +80,7 @@ ProviderSender::ProviderSender(DvDevice& aDevice)
     SetPropertyAttributes(Brx::Empty());
 }
 
-void ProviderSender::PresentationUrl(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue)
+void ProviderSender::PresentationUrl(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseString& aValue)
 {
 	Brhz value;
     GetPropertyPresentationUrl(value);
@@ -89,7 +90,7 @@ void ProviderSender::PresentationUrl(IDvInvocation& aInvocation, IDvInvocationRe
     aInvocation.EndResponse();
 }
 
-void ProviderSender::Metadata(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue)
+void ProviderSender::Metadata(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseString& aValue)
 {
 	Brhz value;
     GetPropertyMetadata(value);
@@ -99,7 +100,7 @@ void ProviderSender::Metadata(IDvInvocation& aInvocation, IDvInvocationResponseS
     aInvocation.EndResponse();
 }
 
-void ProviderSender::Audio(IDvInvocation& aInvocation, IDvInvocationResponseBool& aValue)
+void ProviderSender::Audio(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseBool& aValue)
 {
     TBool value;
     GetPropertyAudio(value);
@@ -108,7 +109,7 @@ void ProviderSender::Audio(IDvInvocation& aInvocation, IDvInvocationResponseBool
     aInvocation.EndResponse();
 }
 
-void ProviderSender::Status(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue)
+void ProviderSender::Status(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseString& aValue)
 {
     Brhz value;
     GetPropertyStatus(value);
@@ -118,7 +119,7 @@ void ProviderSender::Status(IDvInvocation& aInvocation, IDvInvocationResponseStr
     aInvocation.EndResponse();
 }
 
-void ProviderSender::Attributes(IDvInvocation& aInvocation, IDvInvocationResponseString& aValue)
+void ProviderSender::Attributes(Net::IDvInvocation& aInvocation, Net::IDvInvocationResponseString& aValue)
 {
     Brhz value;
     GetPropertyAttributes(value);
@@ -433,7 +434,7 @@ void OhmSenderDriver::ResetLocked()
 
 // OhmSender
 
-OhmSender::OhmSender(DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aName, TUint aChannel, TIpAddress aInterface, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, const Brx& aImage, const Brx& aMimeType, TUint aPreset)
+OhmSender::OhmSender(Net::DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aName, TUint aChannel, TIpAddress aInterface, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, const Brx& aImage, const Brx& aMimeType, TUint aPreset)
     : iDevice(aDevice)
     , iDriver(aDriver)
     , iName(aName)

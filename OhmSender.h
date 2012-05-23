@@ -15,7 +15,7 @@
 #include "OhmSenderDriver.h"
 
 namespace OpenHome {
-namespace Net {
+namespace Av {
 
 class ProviderSender;
 
@@ -91,7 +91,7 @@ public:
 	static const TUint kMaxTrackMetatextBytes = Ohm::kMaxTrackMetatextBytes;
 
 public:
-    OhmSender(DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aName, TUint aChannel, TIpAddress aInterface, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, const Brx& aImage, const Brx& aMimeType, TUint aPreset);
+    OhmSender(Net::DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aName, TUint aChannel, TIpAddress aInterface, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, const Brx& aImage, const Brx& aMimeType, TUint aPreset);
     ~OhmSender();
 
 	const Brx& Image() const;
@@ -146,7 +146,7 @@ private:
     TBool CheckSlaveExpiry();
     
 private:
-    DvDevice& iDevice;
+    Net::DvDevice& iDevice;
     IOhmSenderDriver& iDriver;
     Bws<kMaxNameBytes> iName;
     TUint iChannel;
@@ -228,7 +228,7 @@ private:
 };
 
 
-} // namespace Net
+} // namespace Av
 } // namespace OpenHome
 
 #endif // HEADER_OHM_SENDER

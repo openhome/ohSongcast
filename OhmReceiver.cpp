@@ -12,6 +12,7 @@
 
 using namespace OpenHome;
 using namespace OpenHome::Net;
+using namespace OpenHome::Av;
 
 OhmReceiver::OhmReceiver(TIpAddress aInterface, TUint aTtl, IOhmReceiverDriver& aDriver)
 	: iInterface(aInterface)

@@ -44,17 +44,13 @@ $(objdir)OhmProtocolMulticast.$(objext) : OhmProtocolMulticast.cpp OhmReceiver.h
 $(objdir)OhmProtocolUnicast.$(objext) : OhmProtocolUnicast.cpp OhmReceiver.h
 	$(compiler)OhmProtocolUnicast.$(objext) -c $(cflags) $(includes) OhmProtocolUnicast.cpp
 
-objects_topology = $(ohnetdir)CpTopology.$(objext) \
-                   $(ohnetdir)CpTopology1.$(objext) \
-                   $(ohnetdir)CpTopology2.$(objext) \
-                   $(ohnetdir)CpTopology3.$(objext) \
-                   $(ohnetdir)CpTopology4.$(objext) \
-                   $(ohnetdir)CpAvOpenhomeOrgProduct1.$(objext) \
+objects_topology = $(ohnetdir)CpAvOpenhomeOrgProduct1.$(objext) \
                    $(ohnetdir)CpAvOpenhomeOrgVolume1.$(objext) \
                    $(ohnetdir)CpAvOpenhomeOrgReceiver1.$(objext) \
 				   $(objdir)ReceiverManager1.$(objext) \
                    $(objdir)ReceiverManager2.$(objext) \
-                   $(objdir)ReceiverManager3.$(objext)
+                   $(objdir)ReceiverManager3.$(objext) \
+                   $(ohtopologydir)libohTopology.$(libext)
 
 headers_topology = ohSongcast$(dirsep)ReceiverManager1.h \
                    ohSongcast$(dirsep)ReceiverManager2.h \
@@ -82,7 +78,13 @@ objects_netmon   = $(ohnetmondir)NetworkMonitor.$(objext) \
                    $(ohnetdir)DvAvOpenhomeOrgNetworkMonitor1.$(objext)
 
 
-all_common : TestReceiverManager1 TestReceiverManager2 TestReceiverManager3 ZoneWatcher WavSender Receiver $(objdir)ohSongcast.net.dll $(objdir)TestSongcastCs.$(exeext)
+all_common_native : TestReceiverManager1 TestReceiverManager2 TestReceiverManager3 ZoneWatcher WavSender Receiver
+all_common_cs : $(objdir)ohSongcast.net.dll $(objdir)TestSongcastCs.$(exeext)
+ifeq ($(nativeonly), yes)
+    all_common : all_common_native
+else
+    all_common : all_common_native all_common_cs
+endif
 
 TestReceiverManager1 : $(objdir)TestReceiverManager1.$(exeext)
 $(objdir)TestReceiverManager1.$(exeext) : ohSongcast$(dirsep)TestReceiverManager1.cpp $(headers_topology) $(objects_topology)

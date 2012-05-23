@@ -18,7 +18,7 @@
 EXCEPTION(SongcastError);
 
 using namespace OpenHome;
-using namespace OpenHome::Net;
+using namespace OpenHome::Av;
 
 // {2685C863-5E57-4D9A-86EC-2EC9B7BBBCFD}
 DEFINE_GUID(OHSOUNDCARD_GUID, 0x2685C863, 0x5E57, 0x4D9A, 0x86, 0xEC, 0x2E, 0xC9, 0xB7, 0xBB, 0xBC, 0xFD);
