@@ -95,6 +95,14 @@ Return Value:
 
     DPF_ENTER(("[CMiniportWaveCyclic::~CMiniportWaveCyclic]"));
 
+	while (iPipeline.SlotsUsed() > 0) {
+		iPipeline.Read()->RemoveRef(); // discard
+	}
+
+	while (iHistory.SlotsUsed() > 0) {
+		iHistory.Read()->RemoveRef(); // discard
+	}
+
     if (iDpc)
     {
         ExFreePoolWithTag(iDpc, OHSOUNDCARD_POOLTAG);
@@ -1011,7 +1019,7 @@ void CMiniportWaveCyclic::PipelineRestartLocked()
 	{
 		iPipelineSending = true;
 
-		KeInsertQueueDpc(iDpc, 0, 0);
+		PipelineOutputLocked();
 	}
 }
 
@@ -1039,7 +1047,6 @@ void CMiniportWaveCyclic::PipelineOutputLocked()
 	if (iPipeline.SlotsUsed() == 0)
 	{
 		iPipelineSending = false;
-
 		return;
 	}
 
@@ -1124,10 +1131,17 @@ void CMiniportWaveCyclic::PipelineOutputLocked()
 	iPipelineOutputBuf.Length = iPipelineOutputMsg->Bytes();
 
 	PIRP irp = IoAllocateIrp(1, FALSE);
-	
-	IoSetCompletionRoutine(irp, PipelineOutputComplete, this, true, true, true);
 
-	iSocket->Send(&iPipelineOutputBuf, &iPipelineOutputAddress, irp);
+	if (irp != NULL)
+	{
+		IoSetCompletionRoutine(irp, PipelineOutputComplete, this, true, true, true);
+
+		iSocket->Send(&iPipelineOutputBuf, &iPipelineOutputAddress, irp);
+	}
+	else
+	{
+		KeInsertQueueDpc(iDpc, 0, 0);
+	}
 }
 
 //=============================================================================
@@ -1148,9 +1162,6 @@ NTSTATUS CMiniportWaveCyclic::PipelineOutputComplete(PDEVICE_OBJECT aDeviceObjec
 
     iPipelinePerformanceCounter = KeQueryInterruptTime();
 
-	iPipelineOutputMsg->SetResent(true);
-	iPipelineOutputMsg->RemoveRef();
-
 	IoFreeIrp(aIrp);
 
 	KeInsertQueueDpc(iDpc, 0, 0);
@@ -1165,20 +1176,30 @@ NTSTATUS CMiniportWaveCyclic::PipelineOutputComplete(PDEVICE_OBJECT aDeviceObjec
 // PipelineSendNewLocked
 //=============================================================================
 
-void CMiniportWaveCyclic::PipelineSendNewLocked()
+TBool CMiniportWaveCyclic::PipelineSendNewLocked()
 {
 	void* header = ExAllocatePoolWithTag(NonPagedPool, sizeof(OHMHEADER), '2ten');
 
-	RtlCopyMemory(header, &iPipelineHeader, sizeof(OHMHEADER));
+	if (header != NULL)
+	{
+		RtlCopyMemory(header, &iPipelineHeader, sizeof(OHMHEADER));
 	
-	PMDL mdl = IoAllocateMdl(header, sizeof(OHMHEADER), false, false, 0);
+		PMDL mdl = IoAllocateMdl(header, sizeof(OHMHEADER), false, false, 0);
 
-	MmBuildMdlForNonPagedPool(mdl);
+		if (mdl != NULL)
+		{
+			MmBuildMdlForNonPagedPool(mdl);
 
-	iPipelineMdl = mdl;
-	iPipelineMdlLast = mdl;
+			iPipelineMdl = mdl;
+			iPipelineMdlLast = mdl;
 
-	iPipelineBytes = sizeof(OHMHEADER);
+			iPipelineBytes = sizeof(OHMHEADER);
+
+			return (true);
+		}
+	}
+
+	return (false);
 }
 
 //=============================================================================
@@ -1214,16 +1235,25 @@ void CMiniportWaveCyclic::PipelineSendAddFragmentLocked(TByte* aBuffer, TUint aB
 {
 	TByte* buffer = (TByte*) ExAllocatePoolWithTag(NonPagedPool, aBytes, '2ten');
 
-	PMDL mdl = IoAllocateMdl(buffer, aBytes, FALSE, FALSE, NULL);
+	if (buffer != NULL)
+	{
+		PMDL mdl = IoAllocateMdl(buffer, aBytes, FALSE, FALSE, NULL);
 
-	MmBuildMdlForNonPagedPool(mdl);
+		if (mdl == NULL)
+		{
+			ExFreePoolWithTag(buffer, '2ten');
+			return;
+		}
 
-	iPipelineMdlLast->Next = mdl;
-	iPipelineMdlLast = mdl;
+		MmBuildMdlForNonPagedPool(mdl);
 
-	iPipelineBytes += aBytes;
+		iPipelineMdlLast->Next = mdl;
+		iPipelineMdlLast = mdl;
 
-	PipelineCopyAudioLocked(buffer, aBuffer, aBytes, iPipelineSampleChannelBytes);
+		iPipelineBytes += aBytes;
+
+		PipelineCopyAudioLocked(buffer, aBuffer, aBytes, iPipelineSampleChannelBytes);
+	}
 }
 
 //=============================================================================
@@ -1238,7 +1268,10 @@ TBool CMiniportWaveCyclic::PipelineSendLocked(TByte* aBuffer, TUint aBytes)
 
 	if (iPipelineMdl == 0)
 	{
-		PipelineSendNewLocked();
+		if (!PipelineSendNewLocked())
+		{
+			return (false);	// occurs if no resources to allocate new mdl
+		}
 	}
 
 	TUint combined = iPipelineBytes + aBytes;
@@ -1246,6 +1279,7 @@ TBool CMiniportWaveCyclic::PipelineSendLocked(TByte* aBuffer, TUint aBytes)
 	if (combined < iPipelinePacketBytes)
 	{
 		PipelineSendAddFragmentLocked(aBuffer, aBytes);
+
 		return (false);
 	}
 
@@ -1262,9 +1296,10 @@ TBool CMiniportWaveCyclic::PipelineSendLocked(TByte* aBuffer, TUint aBytes)
 		return (true);
 	}
 
-	PipelineSendNewLocked();
-
-	PipelineSendAddFragmentLocked(aBuffer + first, remaining);
+	if (PipelineSendNewLocked())
+	{
+		PipelineSendAddFragmentLocked(aBuffer + first, remaining);
+	}
 
 	return (result);
 }
@@ -1309,7 +1344,10 @@ TBool CMiniportWaveCyclic::PipelineStopLocked()
 
 	if (iPipelineMdl == 0)
 	{
-		PipelineSendNewLocked();
+		if (!PipelineSendNewLocked())
+		{
+			return (false);	// occurs if no resources to allocate a new mdl
+		}
 
 		TByte silence[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -1450,8 +1488,18 @@ void CMiniportWaveCyclic::Dpc(IN PKDPC Dpc, IN PVOID DeferredContext, IN PVOID S
 
     if (context)
     {
-		context->PipelineOutput();
+		context->Dpc();
     }
 }
+
+void CMiniportWaveCyclic::Dpc()
+{
+	iPipelineOutputMsg->SetResent(true);
+	iPipelineOutputMsg->RemoveRef();
+
+	PipelineOutput();
+}
+
+
 
 
