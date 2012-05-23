@@ -492,7 +492,7 @@ HRESULT STDCALL OhmSenderDriverWindows::QueryInterface(REFIID aId, VOID** aInter
 HRESULT STDCALL OhmSenderDriverWindows::OnDefaultDeviceChanged(EDataFlow aFlow, ERole aRole, LPCWSTR aDeviceId)
 {
 	if (aFlow == eRender && aRole == eMultimedia) {
-		TBool enabled = (wcscmp(iEndpointId, aDeviceId) == 0);
+		TBool enabled = ((aDeviceId != 0) && (wcscmp(iEndpointId, aDeviceId) == 0));
 		iSongcast->SetEnabled(enabled);
 	}
 
