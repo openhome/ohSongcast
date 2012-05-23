@@ -360,5 +360,16 @@ void OhmMsgFactory::Process(OhmMsgMetatext& aMsg)
 
 OhmMsgFactory::~OhmMsgFactory()
 {
+	for (TUint i = 0; i < kMaxAudioMessages; i++) {
+		delete (iFifoAudio.Read());
+	}
+
+	for (TUint i = 0; i < kMaxTrackMessages; i++) {
+		delete (iFifoTrack.Read());
+	}
+
+	for (TUint i = 0; i < kMaxMetatextMessages; i++) {
+		delete (iFifoMetatext.Read());
+	}
 }
 

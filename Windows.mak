@@ -47,6 +47,11 @@ rmdir = Scripts\rmdir.bat
 uset4 = no
 
 
+!if "$(nativeonly)"=="yes"
+all_common : all_common_native
+!else
+all_common : all_common_native all_common_cs
+!endif
 all: $(objdir)$(dllprefix)ohSongcast.$(dllext) $(objdir)TestSongcast.$(exeext) all_common
 
 

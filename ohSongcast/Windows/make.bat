@@ -1,5 +1,10 @@
-@echo off
 rd Build /s/q
+rd Driver\drmsimp\objchk_win7_x86 /s/q
+rd Driver\drmsimp\objchk_win7_amd64 /s/q
+md Build
+md Build\Driver32
+md Build\Driver64
+md Build\Obj
 call builddriver.bat
 call buildinstall.bat
 copy ..\..\Build\Obj\Windows\Release\ohSongcast.dll Build\ohSongcast.dll

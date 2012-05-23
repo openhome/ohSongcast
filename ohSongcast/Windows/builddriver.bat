@@ -1,8 +1,4 @@
 @echo off
-md Build >nul 2>nul
-md Build\Driver32 >nul 2>nul
-md Build\Driver64 >nul 2>nul
-md Build\Obj >nul 2>nul
 echo.
 echo Making 32 bit driver
 echo ====================

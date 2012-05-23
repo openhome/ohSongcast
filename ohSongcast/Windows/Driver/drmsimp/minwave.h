@@ -72,13 +72,14 @@ private:
 	static NTSTATUS PipelineOutputComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp, PVOID aContext);
 	NTSTATUS PipelineOutputComplete(PDEVICE_OBJECT aDeviceObject, PIRP aIrp);
 	TBool PipelineQueueAddLocked(PMDL* aMdl, TUint* aBytes);
-	void PipelineSendNewLocked();
+	TBool PipelineSendNewLocked();
 	void PipelineCopyAudioLocked(TByte* aDestination, TByte* aSource, TUint aBytes, TUint aSampleBytes);
 	void PipelineSendAddFragmentLocked(TByte* aBuffer, TUint aBytes);
 	TBool PipelineSendLocked(TByte* aBuffer, TUint aBytes);
 	TBool PipelineStopLocked();
 	TBool ResendLocked(OpenHome::Net::OhmMsgAudio& aMsg);
 	static void Dpc(IN  PKDPC Dpc, IN  PVOID DeferredContext, IN  PVOID SA1, IN  PVOID SA2);
+	void Dpc();
 
 private:
     TBool iCaptureAllocated;
