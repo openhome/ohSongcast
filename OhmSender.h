@@ -82,7 +82,6 @@ class OhmSender
     static const TUint kMaxZoneFrameBytes = 1 * 1024;
     static const TUint kTimerZoneUriDelayMs = 100;
     static const TUint kTimerPresetInfoDelayMs = 100;
-	static const TUint kMaxSenderUriBytes = 100; 
 
 public:
 	static const TUint kMaxNameBytes = 64;
@@ -180,7 +179,7 @@ private:
     ThreadFunctor* iThreadUnicast;
     ThreadFunctor* iThreadZone;
     Bws<Ohm::kMaxUriBytes> iUri;
-    Bws<kMaxSenderUriBytes> iSenderUri;
+    Uri iSenderUri;
     Bws<kMaxMetadataBytes> iSenderMetadata;
     TUint iSlaveCount;
     Endpoint iSlaveList[kMaxSlaveCount];

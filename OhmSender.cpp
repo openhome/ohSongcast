@@ -515,7 +515,7 @@ const Brx& OhmSender::MimeType() const
 
 const Brx& OhmSender::SenderUri() const
 {
-	return (iSenderUri);
+	return (iSenderUri.AbsoluteUri());
 }
 
 const Brx& OhmSender::SenderMetadata() const
@@ -1265,10 +1265,9 @@ void OhmSender::UpdateMetadata()
 	    iSenderMetadata.Append("<res protocolInfo=\"ohz:*:*:u\">");
 	}
 
-	iSenderUri.Replace("ohz://239.255.255.250:51972/");
-    iSenderUri.Append(iDevice.Udn());
+	iSenderUri.Replace(Brn("ohz://239.255.255.250:51972/"), iDevice.Udn());
 
-	iSenderMetadata.Append(iSenderUri);
+	iSenderMetadata.Append(iSenderUri.AbsoluteUri());
     iSenderMetadata.Append("</res>");
     
 	if (iImage.Bytes() > 0)
