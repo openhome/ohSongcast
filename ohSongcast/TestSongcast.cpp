@@ -146,6 +146,8 @@ void STDCALL loggerConfigurationChanged(void* /* aPtr */, THandle aSongcast)
 int CDECL main(int aArgc, char* aArgv[])
 {
     OptionParser parser;
+    OptionUint optionAdapter("-a", "--adapter", 0, "[adapter] index of network adapter to use");
+    parser.AddOption(&optionAdapter);
     OptionString optionRoom("-r", "--room", Brx::Empty(), "Room containing the receiver to play/stop");
     parser.AddOption(&optionRoom);
 
@@ -155,7 +157,13 @@ int CDECL main(int aArgc, char* aArgv[])
 
     gRoom.Replace(optionRoom.Value());
 
-	TIpAddress subnet = 522; // 10.2.0.0
+    InitialisationParams* initParams = InitialisationParams::Create();
+	UpnpLibrary::Initialise(initParams);
+    std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
+    TIpAddress subnet = (*subnetList)[optionAdapter.Value()]->Subnet();
+    UpnpLibrary::DestroySubnetList(subnetList);
+    UpnpLibrary::Close();
+
     TUint channel = 0;
     TUint ttl = 4;
 	TUint latency = 100;
