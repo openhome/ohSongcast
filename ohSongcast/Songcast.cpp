@@ -1,6 +1,10 @@
 #include "Songcast.h"
 
+#include "md5.c"
+
 #include <OpenHome/Private/Debug.h>
+#include <OpenHome/Private/Ascii.h>
+
 #include <algorithm>
 
 using namespace OpenHome;
@@ -456,11 +460,21 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 
     // TODO: manufacturer will need to be parsed and spaces replaced with -
 
-    udn.Replace(aManufacturer);
-	udn.Append("-Songcast-");
-	udn.Append(aComputer);
+    friendly.Replace(aManufacturer);
+	friendly.Append("-Songcast-");
+	friendly.Append(aComputer);
 
-	friendly.Replace(udn);
+	MD5_CTX ctx;
+
+	TByte md5[16];
+
+	MD5_Init(&ctx);
+	MD5_Update(&ctx, (unsigned char*) friendly.Ptr(), friendly.Bytes());
+	MD5_Final(md5, &ctx);
+
+	for (TUint i = 0; i < 16; i++) {
+		Ascii::AppendHex(udn, md5[i]);
+	}
 
     description.Replace(aManufacturer);
     description.Append(" Songcast");
