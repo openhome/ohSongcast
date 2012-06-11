@@ -9,6 +9,7 @@
 #include <OpenHome/Private/Thread.h>
 #include <OpenHome/Private/OptionParser.h>
 #include <OpenHome/Private/Debug.h>
+#include <OpenHome/Os.h>
 
 #include <vector>
 #include <stdio.h>
@@ -73,6 +74,7 @@ public:
 	void Pause();
 	void SetSpeed(TUint aValue);
 	void Restart();
+	void SetVerbosity(TBool bValue);
 	~PcmSender();
 	
 private:
@@ -93,9 +95,16 @@ private:
 	Timer iTimer;
 	Mutex iMutex;
 	TBool iPaused;
-	TUint iSpeed;
-	TUint iIndex;
-	TUint iPacketBytes;
+	TUint iSpeed;           // percent, 100%=normal
+	TUint iIndex;           // byte offset read position in source data
+	TUint iPacketBytes;     // how many bytes of audio in each packet
+	TUint iPacketSamples;   // how many audio samples in each packet
+	TUint iPacketTime;      // how much audio time in each packet
+	TUint64 iLastTimeUs;    // last time stamp from system
+	TInt32 iTimeOffsetUs;   // running offset in usec from ideal time
+	                        //  <0 means sender is behind
+	                        //  >0 means sender is ahead
+	TBool iVerbose;
 };
 
 PcmSender::PcmSender(OhmSender* aSender, OhmSenderDriver* aDriver, const Brx& aUri, const TByte* aData, TUint aSampleCount, TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth)
@@ -114,8 +123,14 @@ PcmSender::PcmSender(OhmSender* aSender, OhmSenderDriver* aDriver, const Brx& aU
 	, iPaused(false)
 	, iSpeed(kSpeedNormal)
 	, iIndex(0)
+	, iLastTimeUs(0)
+	, iTimeOffsetUs(0)
+	, iVerbose(false)
 {
 	CalculatePacketBytes();
+	printf ("bytes per packet:   %d\n", iPacketBytes);
+	printf ("samples per packet: %d\n", iPacketSamples);
+	printf ("usec per packet:    %d\n", iPacketTime);
 }
 
 void PcmSender::Start()
@@ -131,6 +146,8 @@ void PcmSender::Pause()
 
 	if (iPaused) {
 		iPaused = false;
+		iLastTimeUs = 0;
+		iTimeOffsetUs = 0;
 		iTimer.FireIn(kPeriodMs);
 	}
 	else {
@@ -153,21 +170,39 @@ void PcmSender::SetSpeed(TUint aSpeed)
 	iSpeed = aSpeed;
 	CalculatePacketBytes();
 	iMutex.Signal();
+	printf ("%3d%%: samples per packet: %d\n", iSpeed, iPacketSamples);
+}
+
+void PcmSender::SetVerbosity(TBool aValue)
+{
+	iMutex.Wait();
+	iVerbose = aValue;
+	iMutex.Signal();
 }
 
 void PcmSender::CalculatePacketBytes()
 {
     TUint bytespersample = iChannels * iBitDepth / 8;
     
-	TUint bytes = (iSampleRate * iSpeed * bytespersample * kPeriodMs) / (1000 * 100);
+	// in order to let wavsender change the playback rate,
+	// we keep constant it's idea of how much audio time is in each packet,
+	// but vary the amount of data that is actually sent
+
+	// calculate the amount of time in each packet
+	TUint norm_bytes = (iSampleRate * bytespersample * kPeriodMs) / 1000;
+	if (norm_bytes > kMaxPacketBytes) {
+		norm_bytes = kMaxPacketBytes;
+	}
+	TUint norm_packet_samples = norm_bytes / bytespersample;
+	iPacketTime = (norm_packet_samples*1000000/(iSampleRate/10) + 5)/10;
 	
-    if (bytes > kMaxPacketBytes) {
-        bytes = kMaxPacketBytes;
-    }
-	
-	TUint samples = bytes / bytespersample;
-	
-	iPacketBytes = samples * bytespersample;
+	// calculate the adjusted speed packet size
+	TUint bytes = (norm_bytes * iSpeed) / 100;
+	if (bytes > kMaxPacketBytes) {
+		bytes = kMaxPacketBytes;
+	}
+	iPacketSamples = bytes / bytespersample;
+	iPacketBytes = iPacketSamples * bytespersample;
 }
 
 void PcmSender::TimerExpired()
@@ -175,6 +210,8 @@ void PcmSender::TimerExpired()
 	iMutex.Wait();
 	
 	if (!iPaused) {
+	    TUint64 now = OsTimeInUs();
+
 	    if (iIndex == 0) {
             iSender->SetTrack(iUri, Brx::Empty(), iSampleCount, 0);
             iSender->SetMetatext(Brn("PcmSender repeated play"));
@@ -192,7 +229,50 @@ void PcmSender::TimerExpired()
             iIndex = remaining;
 		}
 	
-		iTimer.FireIn(kPeriodMs);
+		// skip the first packet, and any time the clock value wraps
+		if (iLastTimeUs && iLastTimeUs < now) {
+
+			// will contain the new time out in ms
+			TUint new_timer_ms = kPeriodMs;
+
+			// the difference in usec from where we should be
+			TInt32 diff = (TInt32)(now - iLastTimeUs) - iPacketTime;
+
+			// increment running offset
+			iTimeOffsetUs -= diff;
+
+			// determine new timer value based upon current offset from ideal
+			if (iTimeOffsetUs < -1000) {
+				// we are late
+				TInt32 time_offset_ms = iTimeOffsetUs/1000;
+				if (time_offset_ms < 1-(TInt32)kPeriodMs) {
+					// in case callback is severely late, we can only catch up so much
+					new_timer_ms = 1;
+				} else {
+					new_timer_ms = kPeriodMs + time_offset_ms;
+				}
+			} else if (iTimeOffsetUs > 1000) {
+				// we are early
+				new_timer_ms = kPeriodMs+1;
+			} else {
+				// we are about on time
+				new_timer_ms = kPeriodMs;
+			}
+
+			// set timer
+			iTimer.FireIn(new_timer_ms);
+
+			// logging
+			if (iVerbose) {
+				if (iTimeOffsetUs >= 1000)
+					printf ("tnow:%d tlast:%d actual:%4d diff:%4d offset:%5d timer:%d\n", (TUint)now, (TUint)iLastTimeUs, (TUint)(now-iLastTimeUs), diff, iTimeOffsetUs, new_timer_ms);
+				else
+					printf ("tnow:%d tlast:%d actual:%4d diff:%4d offset:%4d timer:%d\n", (TUint)now, (TUint)iLastTimeUs, (TUint)(now-iLastTimeUs), diff, iTimeOffsetUs, new_timer_ms);
+			}
+		} else {
+			iTimer.FireIn(kPeriodMs);
+		}
+		iLastTimeUs = now;
 	}
 	
 	iMutex.Signal();
@@ -236,6 +316,9 @@ int CDECL main(int aArgc, char* aArgv[])
     OptionBool optionDisabled("-d", "--disabled", "[disabled] start up disabled");
     parser.AddOption(&optionDisabled);
 
+    OptionBool optionPacketLogging("-z", "--logging", "[logging] toggle packet logging");
+    parser.AddOption(&optionPacketLogging);
+
     if (!parser.Parse(aArgc, aArgv)) {
         return (1);
     }
@@ -245,12 +328,22 @@ int CDECL main(int aArgc, char* aArgv[])
 	UpnpLibrary::Initialise(initParams);
 
     std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
+    printf ("adapter list:\n");
+    for (unsigned i=0; i<subnetList->size(); ++i) {
+		TIpAddress addr = (*subnetList)[i]->Address();
+		printf ("  %d: %d.%d.%d.%d\n", i, addr&0xff, (addr>>8)&0xff, (addr>>16)&0xff, (addr>>24)&0xff);
+    }
+    if (subnetList->size() <= optionAdapter.Value()) {
+		printf ("ERROR: adapter %d doesn't exist\n", optionAdapter.Value());
+		return (1);
+    }
+
     TIpAddress subnet = (*subnetList)[optionAdapter.Value()]->Subnet();
     TIpAddress adapter = (*subnetList)[optionAdapter.Value()]->Address();
     UpnpLibrary::DestroySubnetList(subnetList);
     UpnpLibrary::SetCurrentSubnet(subnet);
 
-    printf("Using subnet %d.%d.%d.%d\n", subnet&0xff, (subnet>>8)&0xff, (subnet>>16)&0xff, (subnet>>24)&0xff);
+    printf("using subnet %d.%d.%d.%d\n", subnet&0xff, (subnet>>8)&0xff, (subnet>>16)&0xff, (subnet>>24)&0xff);
 
 	Brhz file(optionFile.Value());
     
@@ -266,6 +359,7 @@ int CDECL main(int aArgc, char* aArgv[])
     TUint latency = optionLatency.Value();
     TBool multicast = optionMulticast.Value();
     TBool disabled = optionDisabled.Value();
+    TBool logging = optionPacketLogging.Value();
 
     // Read WAV file
     
@@ -391,6 +485,7 @@ int CDECL main(int aArgc, char* aArgv[])
     	printf("Unable to read wav file %d, %d\n", (int)count, subChunk2Size);
     	return (1);
     }
+    printf ("bytes in file:      %d\n", subChunk2Size);
     
     fclose(pFile);
     
@@ -400,11 +495,15 @@ int CDECL main(int aArgc, char* aArgv[])
     
   	TUint bytesPerSample = bitsPerSample / 8;
 	TUint sampleCount = subChunk2Size / bytesPerSample / numChannels;
-  	
+
     TUint scount = subChunk2Size / bytesPerSample;
     
     TUint pindex = 0;
     
+    printf ("sample rate:        %d\n", sampleRate);
+    printf ("sample size:        %d\n", bytesPerSample);
+    printf ("channels:           %d\n", numChannels);
+
     while (scount-- > 0)
     {
     	TUint bcount = bytesPerSample;
@@ -473,7 +572,6 @@ int CDECL main(int aArgc, char* aArgv[])
         		speed++;
         		pcmsender->SetSpeed(speed);
             }
-    		printf("%d\n", speed);
     	}
 
       	if (key == 's') {
@@ -481,13 +579,11 @@ int CDECL main(int aArgc, char* aArgv[])
     			speed--;
 	    		pcmsender->SetSpeed(speed);
     		}
-    		printf("%d\n", speed);
     	}
 
         if (key == 'n') {
             speed = PcmSender::kSpeedNormal;
             pcmsender->SetSpeed(speed);
-            printf("%d\n", speed);
         }
 
         if (key == 'p') {
@@ -523,6 +619,14 @@ int CDECL main(int aArgc, char* aArgv[])
                 disabled = true;
                 sender->SetEnabled(false);
                 printf("disabled\n");
+            }
+        }
+
+        if (key == 'z') {
+            if (logging) {
+                pcmsender->SetVerbosity(logging=false);
+            } else {
+                pcmsender->SetVerbosity(logging=true);
             }
         }
     }
