@@ -336,7 +336,7 @@ SongcastAudioMessage::SongcastAudioMessage(uint32_t aMaxAudioBytes, const Songca
 
         // initialise header data to default values
         Header()->iTotalBytes = OSSwapHostToBigInt16(Bytes());
-        Header()->iAudioFlags = 6;  // lossless audio with timestamps
+        Header()->iAudioFlags = 2;  // lossless audio without timestamps
         Header()->iAudioSampleCount = OSSwapHostToBigInt16(aFormat.SampleCount);
         Header()->iAudioFrame = 0;
         Header()->iAudioNetworkTimestamp = 0;
@@ -392,10 +392,10 @@ void SongcastAudioMessage::SetHeader(const SongcastFormat& aFormat, uint64_t aTi
 
     // set the audio flags to lossless with timestamps and, optionally, a halt
     if (aHalt) {
-        Header()->iAudioFlags = 7;
+        Header()->iAudioFlags = 3;
     }
     else {
-        Header()->iAudioFlags = 6;
+        Header()->iAudioFlags = 2;
     }
 
     // set the frame numnber
