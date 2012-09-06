@@ -17,14 +17,15 @@ ifeq ($(MACHINE), Darwin)
 ifeq ($(mac-64),1)
     platform_cflags = -DPLATFORM_MACOSX_GNU -arch x86_64 -mmacosx-version-min=10.4
     platform_linkflags = -arch x86_64 -framework IOKit -framework CoreFoundation -framework CoreAudio -framework SystemConfiguration
+    osdir = Mac-x64
 else
     platform_cflags = -DPLATFORM_MACOSX_GNU -m32 -mmacosx-version-min=10.4
     platform_linkflags = -m32 -framework IOKit -framework CoreFoundation -framework CoreAudio -framework SystemConfiguration
+    osdir = Mac-x86
 endif
 
 platform_dllflags = -install_name @executable_path/$(@F)
 platform_include = -I/System/Library/Frameworks/IOKit.framework/Headers/
-osdir = Mac
 else
 platform_cflags = -Wno-psabi
 platform_linkflags = 
