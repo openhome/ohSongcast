@@ -564,7 +564,7 @@ THandle SongcastCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel,
         return 0;
     }
 
-    Songcast* songcast = new Songcast(aSubnet, aChannel, aTtl, aLatency, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, aFatalErrorCallback, aFatalErrorPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl, Brn((TByte*) aImagePtr, aImageBytes), Brn(aMimeType));
+    Songcast* songcast = new Songcast(aSubnet, aChannel, aTtl, aLatency, aMulticast, aEnabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, aFatalErrorCallback, aFatalErrorPtr, aLogOutputCallback, aLogOutputPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl, Brn((TByte*) aImagePtr, aImageBytes), Brn(aMimeType));
 
     driver->SetSongcast(*songcast);
 
