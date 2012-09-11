@@ -25,7 +25,7 @@ DEFINE_GUID(OHSOUNDCARD_GUID, 0x2685C863, 0x5E57, 0x4D9A, 0x86, 0xEC, 0x2E, 0xC9
 
 // C interface
 
-THandle STDCALL SongcastCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aLatency, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, FatalErrorCallback aFatalErrorCallback, void* aFatalErrorPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, void* aImagePtr, uint32_t aImageBytes, const char* aMimeType)
+THandle STDCALL SongcastCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aLatency, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, MessageCallback aFatalErrorCallback, void* aFatalErrorPtr, MessageCallback aLogOutputCallback, void* aLogOutputPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, void* aImagePtr, uint32_t aImageBytes, const char* aMimeType)
 {
 	try {
         printf("%s\n", aDomain);
@@ -47,7 +47,7 @@ THandle STDCALL SongcastCreate(const char* aDomain, uint32_t aSubnet, uint32_t a
         OhmSenderDriverWindows* driver = new OhmSenderDriverWindows(aDomain, aManufacturer, enabled);
 
         // create the soundcard
-		Songcast* songcast = new Songcast(aSubnet, aChannel, aTtl, aLatency, multicast, enabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, aFatalErrorCallback, aFatalErrorPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl, Brn((TByte*) aImagePtr, aImageBytes), Brn(aMimeType));
+		Songcast* songcast = new Songcast(aSubnet, aChannel, aTtl, aLatency, multicast, enabled, aPreset, aReceiverCallback, aReceiverPtr, aSubnetCallback, aSubnetPtr, aConfigurationChangedCallback, aConfigurationChangedPtr, aFatalErrorCallback, aFatalErrorPtr, aLogOutputCallback, aLogOutputPtr, computer, driver, aManufacturer, aManufacturerUrl, aModelUrl, Brn((TByte*) aImagePtr, aImageBytes), Brn(aMimeType));
 
 		driver->SetSongcast(*songcast);
 

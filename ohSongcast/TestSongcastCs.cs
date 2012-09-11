@@ -3,7 +3,7 @@ using System.Net;
 
 using OpenHome.Songcast;
 
-    class Program : IReceiverHandler, ISubnetHandler, IConfigurationChangedHandler
+    class Program : IReceiverHandler, ISubnetHandler, IConfigurationChangedHandler, IMessageHandler
     {
         public static void Main(string[] args)
         {
@@ -18,7 +18,7 @@ using OpenHome.Songcast;
 
             try
             {
-                Songcast songcast = new Songcast("av.openhome.org", 522, 1, 1, 100, false, enabled, 99, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org", new byte[] { }, String.Empty);
+                Songcast songcast = new Songcast("av.openhome.org", 522, 1, 1, 100, false, enabled, 99, this, this, this, this, "OpenHome", "http://www.openhome.org", "http://www.openhome.org", new byte[] { }, String.Empty);
 
                 while (true)
                 {
@@ -112,5 +112,10 @@ using OpenHome.Songcast;
         public void SubnetRemoved(ISubnet aSubnet)
         {
             Console.WriteLine("Removed {0}:{1}", aSubnet.Address, aSubnet.AdapterName);
+        }
+
+        public void Message(string aMessage)
+        {
+            Console.WriteLine("Message: " + aMessage);
         }
     }

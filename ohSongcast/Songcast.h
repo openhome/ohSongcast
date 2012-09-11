@@ -42,9 +42,9 @@ enum EReceiverStatus {
 typedef void (STDCALL *ReceiverCallback)(void* aPtr, ECallbackType aType, THandle aReceiver);
 typedef void (STDCALL *SubnetCallback)(void* aPtr, ECallbackType aType, THandle aSubnet);
 typedef void (STDCALL *ConfigurationChangedCallback)(void* aPtr, THandle aSongcast);
-typedef void (STDCALL *FatalErrorCallback)(void* aPtr, const char* aMessage);
+typedef void (STDCALL *MessageCallback)(void* aPtr, const char* aMessage);
 
-DllExport THandle STDCALL SongcastCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aLatency, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, FatalErrorCallback aFatalErrorCallback, void* aFatalErrorPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, void* aImagePtr, uint32_t aImageBytes, const char* aMimeType);
+DllExport THandle STDCALL SongcastCreate(const char* aDomain, uint32_t aSubnet, uint32_t aChannel, uint32_t aTtl, uint32_t aLatency, uint32_t aMulticast, uint32_t aEnabled, uint32_t aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, MessageCallback aFatalErrorCallback, void* aFatalErrorPtr, MessageCallback aLogOutputCallback, void* aLogOutputPtr, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, void* aImagePtr, uint32_t aImageBytes, const char* aMimeType);
 
 DllExport uint32_t STDCALL SongcastSubnet(THandle aSongcast);
 DllExport uint32_t STDCALL SongcastChannel(THandle aSongcast);
@@ -177,7 +177,7 @@ public:
 	static const TUint kMaxUdnBytes = 200;
 
 public:
-    Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, FatalErrorCallback aFatalErrorCallback, void* aFatalErrorPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, const Brx& aImage, const Brx& aMimeType);
+    Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, MessageCallback aFatalErrorCallback, void* aFatalErrorPtr, MessageCallback aLogOutputCallback, void* aLogOutputPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, const Brx& aImage, const Brx& aMimeType);
 
 	TIpAddress GetSubnet();
 	TUint GetChannel();
@@ -203,6 +203,7 @@ public:
 private:
 	void SubnetListChanged();
 	void FatalErrorHandler(const char* aMessage);
+	void LogOutputHandler(const char* aMessage);
 	TBool UpdateAdapter();
 
 	// IReceiverManager3Handler
@@ -228,8 +229,10 @@ private:
 	void* iSubnetPtr;
 	ConfigurationChangedCallback iConfigurationChangedCallback;
 	void* iConfigurationChangedPtr;
-    FatalErrorCallback iFatalErrorCallback;
+    MessageCallback iFatalErrorCallback;
     void* iFatalErrorPtr;
+    MessageCallback iLogOutputCallback;
+    void* iLogOutputPtr;
 	Mutex iMutex;
 	TBool iClosing;
 	TIpAddress iAdapter;

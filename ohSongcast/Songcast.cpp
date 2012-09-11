@@ -427,7 +427,7 @@ Subnet::~Subnet()
     
 // Songcast
 
-Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, FatalErrorCallback aFatalErrorCallback, void* aFatalErrorPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, const Brx& aImage, const Brx& aMimeType)
+Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, TUint aPreset, ReceiverCallback aReceiverCallback, void* aReceiverPtr, SubnetCallback aSubnetCallback, void* aSubnetPtr, ConfigurationChangedCallback aConfigurationChangedCallback, void* aConfigurationChangedPtr, MessageCallback aFatalErrorCallback, void* aFatalErrorPtr, MessageCallback aLogOutputCallback, void* aLogOutputPtr, const Brx& aComputer, IOhmSenderDriver* aDriver, const char* aManufacturer, const char* aManufacturerUrl, const char* aModelUrl, const Brx& aImage, const Brx& aMimeType)
 	: iSubnet(aSubnet)
 	, iChannel(aChannel)
 	, iTtl(aTtl)
@@ -443,6 +443,8 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 	, iConfigurationChangedPtr(aConfigurationChangedPtr)
     , iFatalErrorCallback(aFatalErrorCallback)
     , iFatalErrorPtr(aFatalErrorPtr)
+	, iLogOutputCallback(aLogOutputCallback)
+	, iLogOutputPtr(aLogOutputPtr)
 	, iMutex("SCRD")
 	, iClosing(false)
 	, iAdapter(0)
@@ -487,11 +489,19 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
         initParams->SetFatalErrorHandler(fatal);
     }
 
+    if (iLogOutputCallback) {
+		// only set the log output handler if it has been specified - use the default ohnet handler otherwise
+		FunctorMsg logOutput = MakeFunctorMsg(*this, &Songcast::LogOutputHandler);
+		initParams->SetLogOutput(logOutput);
+	}
+
 	Functor callback = MakeFunctor(*this, &Songcast::SubnetListChanged);
 
 	initParams->SetSubnetListChangedListener(callback);
 
 	UpnpLibrary::Initialise(initParams);
+
+	Debug::SetLevel(Debug::kTrace);
 
 	UpnpLibrary::StartCombined(iSubnet);
 
@@ -525,6 +535,11 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 void Songcast::FatalErrorHandler(const char* aMessage)
 {
     (*iFatalErrorCallback)(iFatalErrorPtr, aMessage);
+}
+
+void Songcast::LogOutputHandler(const char* aMessage)
+{
+	(*iLogOutputCallback)(iLogOutputPtr, aMessage);
 }
 
 
