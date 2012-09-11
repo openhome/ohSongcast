@@ -497,11 +497,11 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 
 	Functor callback = MakeFunctor(*this, &Songcast::SubnetListChanged);
 
+	Debug::SetLevel(Debug::kTrace);
+
 	initParams->SetSubnetListChangedListener(callback);
 
 	UpnpLibrary::Initialise(initParams);
-
-	Debug::SetLevel(Debug::kTrace);
 
 	UpnpLibrary::StartCombined(iSubnet);
 
