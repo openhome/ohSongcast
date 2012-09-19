@@ -181,25 +181,24 @@ OhmSenderDriver::OhmSenderDriver()
 
 void OhmSenderDriver::SetAudioFormat(TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth, TBool aLossless, const Brx& aCodecName)
 {
-    iMutex.Wait();
+    AutoMutex mutex(iMutex);
+
     iSampleRate = aSampleRate;
     iBitRate = aBitRate;
     iChannels = aChannels;
     iBitDepth = aBitDepth;
     iLossless = aLossless;
     iCodecName.Replace(aCodecName);
-    iMutex.Signal();
 }
 
 void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
 {
-    iMutex.Wait();
+    AutoMutex mutex(iMutex);
     
     TUint samples = aBytes * 8 / iChannels / iBitDepth;
 
     if (!iSend) {
         iSampleStart += samples;
-        iMutex.Signal();
         return;
     }
 
@@ -254,15 +253,13 @@ void OhmSenderDriver::SendAudio(const TByte* aData, TUint aBytes)
     iSampleStart += samples;
 
     iFrame++;
-    
-    iMutex.Signal();
 }
 
 // IOhmSenderDriver
 
 void OhmSenderDriver::SetEnabled(TBool aValue)
 {
-	iMutex.Wait();
+    AutoMutex mutex(iMutex);
 
 	iEnabled = aValue;
 
@@ -276,13 +273,11 @@ void OhmSenderDriver::SetEnabled(TBool aValue)
 			iSend = true;
 		}
 	}
-
-	iMutex.Signal();
 }
 
 void OhmSenderDriver::SetActive(TBool aValue)
 {
-	iMutex.Wait();
+    AutoMutex mutex(iMutex);
 	
 	iActive = aValue;
 
@@ -296,39 +291,33 @@ void OhmSenderDriver::SetActive(TBool aValue)
 			iSend = true;
 		}
 	}
-
-	iMutex.Signal();
 }
 
 void OhmSenderDriver::SetEndpoint(const Endpoint& aEndpoint, TIpAddress aAdapter)
 {
-    iMutex.Wait();
+    AutoMutex mutex(iMutex);
     iEndpoint.Replace(aEndpoint);
 	iAdapter = aAdapter;
-    iMutex.Signal();
 }
 
 
 void OhmSenderDriver::SetTtl(TUint aValue)
 {
-    iMutex.Wait();
+    AutoMutex mutex(iMutex);
     iSocket.SetTtl(aValue);
-    iMutex.Signal();
 }
 
 void OhmSenderDriver::SetLatency(TUint aValue)
 {
-    iMutex.Wait();
+    AutoMutex mutex(iMutex);
     iLatency = aValue;
-    iMutex.Signal();
 }
 
 void OhmSenderDriver::SetTrackPosition(TUint64 aSamplesTotal, TUint64 aSampleStart)
 {
-    iMutex.Wait();
+    AutoMutex mutex(iMutex);
     iSamplesTotal = aSamplesTotal;
     iSampleStart = aSampleStart;
-    iMutex.Signal();
 }
 
 void OhmSenderDriver::Resend(OhmMsgAudio& aMsg)
@@ -349,7 +338,7 @@ void OhmSenderDriver::Resend(OhmMsgAudio& aMsg)
 
 void OhmSenderDriver::Resend(const Brx& aFrames)
 {
-    iMutex.Wait();
+    AutoMutex mutex(iMutex);
 
 	printf("RESEND");
 
@@ -415,8 +404,6 @@ void OhmSenderDriver::Resend(const Brx& aFrames)
 	}
 
 	printf("\n");
-
-	iMutex.Signal();
 }
 
 void OhmSenderDriver::ResetLocked()
@@ -490,11 +477,11 @@ OhmSender::OhmSender(Net::DvDevice& aDevice, IOhmSenderDriver& aDriver, const Br
 
 	iServer->Add("OHMS", new OhmSenderSession(*this));
 
-	iMutexStartStop.Wait();
-
+    // scope for AutoMutex
+    {
+    AutoMutex mutex(iMutexStartStop);
 	StartZone();
-    
-	iMutexStartStop.Signal();
+    }
 
     UpdateChannel();
 
@@ -526,19 +513,17 @@ const Brx& OhmSender::SenderMetadata() const
 
 void OhmSender::SetName(const Brx& aValue)
 {
-    iMutexStartStop.Wait();
+    AutoMutex mutex(iMutexStartStop);
     
 	if (iName != aValue) {
 		iName.Replace(aValue);
 		UpdateMetadata();
 	}
-
-    iMutexStartStop.Signal();
 }
 
 void OhmSender::SetChannel(TUint aValue)
 {
-    iMutexStartStop.Wait();
+    AutoMutex mutex(iMutexStartStop);
 
 	if (iChannel != aValue) {
 		if (iMulticast) {
@@ -559,13 +544,11 @@ void OhmSender::SetChannel(TUint aValue)
 			UpdateChannel();
 		}
 	}
-    
-    iMutexStartStop.Signal();
 }
 
 void OhmSender::SetInterface(TIpAddress aValue)
 {
-    iMutexStartStop.Wait();
+    AutoMutex mutex(iMutexStartStop);
     
 	if (iInterface != aValue) {
 		if (iStarted) {
@@ -586,13 +569,11 @@ void OhmSender::SetInterface(TIpAddress aValue)
 			StartZone();
 		}
 	}
-    
-    iMutexStartStop.Signal();
 }
 
 void OhmSender::SetTtl(TUint aValue)
 {
-    iMutexStartStop.Wait();
+    AutoMutex mutex(iMutexStartStop);
     
 	if (iTtl != aValue) {
 		if (iStarted) {
@@ -608,13 +589,11 @@ void OhmSender::SetTtl(TUint aValue)
 			LOG(kMedia, "OHM SENDER DRIVER TTL %d\n", iTtl);
 		}
 	}
-    
-    iMutexStartStop.Signal();
 }
 
 void OhmSender::SetLatency(TUint aValue)
 {
-    iMutexStartStop.Wait();
+    AutoMutex mutex(iMutexStartStop);
     
 	if (iLatency != aValue) {
 		if (iStarted) {
@@ -630,13 +609,11 @@ void OhmSender::SetLatency(TUint aValue)
 			LOG(kMedia, "OHM SENDER DRIVER LATENCY %d\n", iLatency);
 		}
 	}
-    
-    iMutexStartStop.Signal();
 }
 
 void OhmSender::SetMulticast(TBool aValue)
 {
-    iMutexStartStop.Wait();
+    AutoMutex mutex(iMutexStartStop);
 
 	if (iMulticast != aValue) {
 		if (iStarted) {
@@ -650,13 +627,11 @@ void OhmSender::SetMulticast(TBool aValue)
 			UpdateMetadata();
 		}
 	}
-    
-    iMutexStartStop.Signal();
 }
 
 void OhmSender::SetEnabled(TBool aValue)
 {
-    iMutexStartStop.Wait();
+    AutoMutex mutex(iMutexStartStop);
 
 	if (iEnabled != aValue) {
 		iEnabled = aValue;
@@ -674,8 +649,6 @@ void OhmSender::SetEnabled(TBool aValue)
 			iProvider->SetStatusDisabled();
 		}
 	}
-
-    iMutexStartStop.Signal();
 }
 
 // Start always called with the start/stop mutex locked
@@ -735,7 +708,8 @@ void OhmSender::StartZone()
 
 void OhmSender::SetTrack(const Brx& aUri, const Brx& aMetadata, TUint64 aSamplesTotal, TUint64 aSampleStart)
 {
-    iMutexActive.Wait();
+    AutoMutex mutex(iMutexActive);
+
 	iClientControllingTrackMetadata = true;
     iDriver.SetTrackPosition(aSamplesTotal, aSampleStart);
     iSequenceTrack++;
@@ -747,28 +721,24 @@ void OhmSender::SetTrack(const Brx& aUri, const Brx& aMetadata, TUint64 aSamples
     if (iActive) {
         SendTrack();
     }
-    
-    iMutexActive.Signal();
 }
 
 void OhmSender::SetMetatext(const Brx& aValue)
 {
-    iMutexActive.Wait();
+    AutoMutex mutex(iMutexActive);
+
     iSequenceMetatext++;
     iTrackMetatext.Replace(aValue);
     
     if (iActive) {
         SendMetatext();
     }
-    
-    iMutexActive.Signal();
 }
 
 void OhmSender::SetPreset(TUint aValue)
 {
-	iMutexZone.Wait();
+	AutoMutex mutex(iMutexZone);
 	iPreset = aValue;
-	iMutexZone.Signal();
 }
     
 OhmSender::~OhmSender()
@@ -781,10 +751,12 @@ OhmSender::~OhmSender()
 
 	LOG(kMedia, "OhmSender::~OhmSender disabled driver\n");
 
-	iMutexStartStop.Wait();
+    // scope for AutoMutex
+    {
+    AutoMutex mutex(iMutexStartStop);
     Stop();
 	StopZone();
-    iMutexStartStop.Signal();
+    }
 
     LOG(kMedia, "OhmSender::~OhmSender stopped\n");
 
@@ -841,7 +813,7 @@ void OhmSender::RunMulticast()
                     if (header.MsgType() <= OhmHeader::kMsgTypeListen) {
                         LOG(kMedia, "OhmSender::RunMulticast join/listen received\n");
                         
-                        iMutexActive.Wait();
+                        AutoMutex mutex(iMutexActive);
                         
                         if (header.MsgType() == OhmHeader::kMsgTypeJoin) {
                             SendTrack();
@@ -857,8 +829,6 @@ void OhmSender::RunMulticast()
 						iAliveJoined = true;
 
                         iTimerAliveJoin.FireIn(kTimerAliveJoinTimeoutMs);
-
-                        iMutexActive.Signal();
                     }
 					else if (header.MsgType() == OhmHeader::kMsgTypeResend) {
                         LOG(kMedia, "OhmSender::RunMulticast resend received\n");
@@ -887,7 +857,9 @@ void OhmSender::RunMulticast()
                         
 							TUint delay = Random(kTimerAliveAudioTimeoutMs, kTimerAliveAudioTimeoutMs >> 1);
 
-							iMutexActive.Wait();
+                            // scope for AutoMutex
+                            {
+                            AutoMutex mutex(iMutexActive);
                         
 							if (iActive) {
 								iActive = false;
@@ -898,8 +870,7 @@ void OhmSender::RunMulticast()
 							iAliveBlocked = true;
 
 							iTimerAliveAudio.FireIn(delay);
-
-							iMutexActive.Signal();
+                            }
 
 							LOG(kMedia, "OhmSender::RunMulticast blocked\n");
 
@@ -923,7 +894,9 @@ void OhmSender::RunMulticast()
         iTimerAliveJoin.Cancel();
         iTimerAliveAudio.Cancel();
         
-        iMutexActive.Wait();
+        // scope for AutoMutex
+        {
+        AutoMutex mutex(iMutexActive);
 
         if (iActive) {
             iActive = false;
@@ -933,8 +906,7 @@ void OhmSender::RunMulticast()
 
         iAliveJoined = false;
         iAliveBlocked = false;
-
-        iMutexActive.Signal();
+        }
         
         iNetworkDeactivated.Signal();
 
@@ -987,7 +959,9 @@ void OhmSender::RunUnicast()
             
                 iSlaveCount = 0;
                 
-                iMutexActive.Wait();
+                // scope for AutoMutex
+                {
+                AutoMutex mutex(iMutexActive);
 
                 iActive = true;
                 iAliveJoined = true;
@@ -995,8 +969,7 @@ void OhmSender::RunUnicast()
                 iDriver.SetActive(true);
 
 				LOG(kMedia, "OHM SENDER DRIVER ACTIVE %d\n", true);
-
-                iMutexActive.Signal();
+                }
                 
                 iTimerExpiry.FireIn(kTimerExpiryTimeoutMs);
                 
@@ -1020,20 +993,20 @@ void OhmSender::RunUnicast()
                                         iSlaveList[slave].Replace(sender);
                                         iSlaveExpiry[slave] = Time::Now() + kTimerExpiryTimeoutMs;
                                         iSlaveCount++;
-                                        iMutexActive.Wait();
+
+                                        AutoMutex mutex(iMutexActive);
                                         SendListen(sender);
-                                        iMutexActive.Signal();
                                     }
                                 }
                                 else {
                                     iSlaveExpiry[slave] = Time::Now() + kTimerExpiryTimeoutMs;
                                 }
                             }
-                            iMutexActive.Wait();
+
+                            AutoMutex mutex(iMutexActive);
                             SendSlaveList();
                             SendTrack();
                             SendMetatext();
-                            iMutexActive.Signal();
                         }
                         else if (header.MsgType() == OhmHeader::kMsgTypeListen) {
                             LOG(kMedia, "OhmSender::RunUnicast sending/listen\n");
@@ -1043,9 +1016,8 @@ void OhmSender::RunUnicast()
                             if (sender.Equals(iTargetEndpoint)) {
                                 iTimerExpiry.FireIn(kTimerExpiryTimeoutMs);
                                 if (CheckSlaveExpiry()) {
-                                    iMutexActive.Wait();
+                                    AutoMutex mutex(iMutexActive);
                                     SendSlaveList();
-                                    iMutexActive.Signal();
                                 }
                             }
                             else {
@@ -1059,12 +1031,12 @@ void OhmSender::RunUnicast()
                                         iSlaveList[slave].Replace(sender);
                                         iSlaveExpiry[slave] = Time::Now() + kTimerExpiryTimeoutMs;
                                         iSlaveCount++;
-                                        iMutexActive.Wait();
+
+                                        AutoMutex mutex(iMutexActive);
                                         SendListen(sender);
                                         SendSlaveList();
                                         SendTrack();
                                         SendMetatext();
-                                        iMutexActive.Signal();
                                     }
                                 }
                             }
@@ -1078,14 +1050,13 @@ void OhmSender::RunUnicast()
 						        iTimerExpiry.Cancel();
                     			if (iSlaveCount == 0) {
                                     if (sender.Equals(iTargetEndpoint)) {
-                                        iMutexActive.Wait();
+                                        AutoMutex mutex(iMutexActive);
                                         SendLeave(sender);
-                                        iMutexActive.Signal();
                                     }
                                     break;
                                 }
                                 else {
-                                    iMutexActive.Wait();
+                                    AutoMutex mutex(iMutexActive);
                                     
 									SendLeave(sender);
                                     
@@ -1100,18 +1071,16 @@ void OhmSender::RunUnicast()
 									iDriver.SetEndpoint(iTargetEndpoint, iTargetInterface);
 
 									LOG(kMedia, "OHM SENDER DRIVER ENDPOINT %x:%d\n", iTargetEndpoint.Address(), iTargetEndpoint.Port());
-                                    
-									iMutexActive.Signal();
                                 }
                             }
                             else {
                                 TUint slave = FindSlave(sender);
                                 if (slave < iSlaveCount) {
                                     RemoveSlave(slave);
-                                    iMutexActive.Wait();
+
+                                    AutoMutex mutex(iMutexActive);
                                     SendLeave(sender);
                                     SendSlaveList();
-                                    iMutexActive.Signal();
                                 }
                             }
                         }
@@ -1137,17 +1106,14 @@ void OhmSender::RunUnicast()
 
                 iRxBuffer.ReadFlush();
 
-                iMutexActive.Wait();
+                AutoMutex mutex(iMutexActive);
                 iActive = false;
-                
 
 				iAliveJoined = false;               
 
 				iDriver.SetActive(false);
 
 				LOG(kMedia, "OHM SENDER DRIVER ACTIVE %d\n", iActive);
-                
-				iMutexActive.Signal();
             }
         }
         catch (ReaderError&) {
@@ -1158,7 +1124,9 @@ void OhmSender::RunUnicast()
 
 		iTimerExpiry.Cancel();
 
-		iMutexActive.Wait();
+        // scope for AutoMutex
+        {
+        AutoMutex mutex(iMutexActive);
 
         if (iActive) {
             iActive = false;
@@ -1170,7 +1138,8 @@ void OhmSender::RunUnicast()
 
         iAliveJoined = false;
         iAliveBlocked = false;
-        iMutexActive.Signal();
+        }
+
 		iNetworkDeactivated.Signal();
         
         LOG(kMedia, "OhmSender::RunUnicast stop\n");
@@ -1179,19 +1148,21 @@ void OhmSender::RunUnicast()
 
 void OhmSender::TimerAliveJoinExpired()
 {
-    iMutexActive.Wait();
+    AutoMutex mutex(iMutexActive);
     iActive = false;
     iAliveJoined = false;
-    iMutexActive.Signal();
 }
 
 void OhmSender::TimerAliveAudioExpired()
 {
-    iMutexActive.Wait();
+    // scope for AutoMutex
+    {
+    AutoMutex mutex(iMutexActive);
     TBool joined = iAliveBlocked;
     iActive = joined;
     iAliveBlocked = false;
-    iMutexActive.Signal();
+    }
+
     iProvider->SetStatusEnabled();
 }
 
@@ -1208,15 +1179,13 @@ void OhmSender::TimerExpiryExpired()
     
     leave.Externalise(writer);
 
-    iMutexActive.Wait();
+    AutoMutex mutex(iMutexActive);
 
     try {
         iSocketOhm.Send(buffer, iSocketOhm.This());
     }
     catch (NetworkError&) {
     }
-
-    iMutexActive.Signal();
 }
 
 void OhmSender::UpdateChannel()
@@ -1229,7 +1198,7 @@ void OhmSender::UpdateChannel()
 
 void OhmSender::UpdateUri()
 {
-	iMutexZone.Wait();
+	AutoMutex mutex(iMutexZone);
 
 	if (iStarted) {
 		if (iMulticast) {
@@ -1246,8 +1215,6 @@ void OhmSender::UpdateUri()
 	}
 
 	SendZoneUri(3);
-
-	iMutexZone.Signal();
 }
 
 void OhmSender::UpdateMetadata()
@@ -1284,7 +1251,7 @@ void OhmSender::UpdateMetadata()
     iSenderMetadata.Append("</DIDL-Lite>");
 
 	if (!iClientControllingTrackMetadata) {
-		iMutexActive.Wait();
+		AutoMutex mutex(iMutexActive);
 	
 		iTrackMetadata.Replace(iSenderMetadata);
 		
@@ -1294,8 +1261,6 @@ void OhmSender::UpdateMetadata()
 		if (iActive) {
 			SendTrack();
 		}
-    
-		iMutexActive.Signal();
 	}
 
 	iProvider->SetMetadata(iSenderMetadata);
@@ -1483,9 +1448,8 @@ void OhmSender::RunZone()
                 
 					if (zone == iDevice.Udn())
 					{
-						iMutexZone.Wait();
+	                    AutoMutex mutex(iMutexZone);
 						SendZoneUri(1);
-						iMutexZone.Signal();
 					}
 				}
 				else if (header.MsgType() == OhzHeader::kMsgTypePresetQuery) {
@@ -1495,11 +1459,10 @@ void OhmSender::RunZone()
 					TUint preset = headerPresetQuery.Preset();
 
 					if (preset > 0) {
-						iMutexZone.Wait();
+	                    AutoMutex mutex(iMutexZone);
 						if (preset == iPreset) {
 							SendPresetInfo(1);
 						}
-						iMutexZone.Signal();
 					}
 				}
 
@@ -1607,16 +1570,14 @@ void OhmSender::SendPresetInfo()
 
 void OhmSender::TimerZoneUriExpired()
 {
-    iMutexZone.Wait();
+    AutoMutex mutex(iMutexZone);
     SendZoneUri();
-    iMutexZone.Signal();
 }
 
 void OhmSender::TimerPresetInfoExpired()
 {
-    iMutexZone.Wait();
+    AutoMutex mutex(iMutexZone);
     SendPresetInfo();
-    iMutexZone.Signal();
 }
     
 
