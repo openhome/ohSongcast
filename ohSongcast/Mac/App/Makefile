@@ -2,10 +2,10 @@
 
 ifeq ($(release), 1)
 debug_specific_flags = -Os -mdynamic-no-pic -fvisibility=hidden
-libohSongcast = ../../../Build/Obj/Mac/Release/libohSongcast.so
+libohSongcast = ../../../Build/Obj/Mac-x86/Release/libohSongcast.so
 else
 debug_specific_flags = -O0 -mfix-and-continue
-libohSongcast = ../../../Build/Obj/Mac/Debug/libohSongcast.so
+libohSongcast = ../../../Build/Obj/Mac-x86/Debug/libohSongcast.so
 endif
 
 
