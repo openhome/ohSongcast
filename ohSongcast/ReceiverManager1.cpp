@@ -465,7 +465,7 @@ ReceiverManager1::~ReceiverManager1()
 
 void ReceiverManager1::RoomAdded(IRoom& aRoom)
 {
-	ReceiverManager1Room* room = new ReceiverManager1Room(iHandler, aRoom);
+	ReceiverManager1Room* room = new ReceiverManager1Room(*this, aRoom);
 	aRoom.SetUserData(room);
 }
 
@@ -521,4 +521,59 @@ void ReceiverManager1::RoomVolumeLimitChanged(IRoom& aRoom)
 	ASSERT(room);
 	room->VolumeLimitChanged();
 }
+
+// IReceiverManager1Handler
+void ReceiverManager1::ReceiverAdded(ReceiverManager1Receiver& aReceiver)
+{
+    LOG(kTrace, "ReceiverManager1::ReceiverAdded ");
+    LOG(kTrace, aReceiver.Room());
+    LOG(kTrace, ":");
+    LOG(kTrace, aReceiver.Group());
+    LOG(kTrace, "\n");
+
+    iHandler.ReceiverAdded(aReceiver);
+}
+
+void ReceiverManager1::ReceiverChanged(ReceiverManager1Receiver& aReceiver)
+{
+    LOG(kTrace, "ReceiverManager1::ReceiverChanged ");
+    LOG(kTrace, aReceiver.Room());
+    LOG(kTrace, ":");
+    LOG(kTrace, aReceiver.Group());
+    LOG(kTrace, "\n");
+
+    iHandler.ReceiverChanged(aReceiver);
+}
+
+void ReceiverManager1::ReceiverRemoved(ReceiverManager1Receiver& aReceiver)
+{
+    LOG(kTrace, "ReceiverManager1::ReceiverRemoved ");
+    LOG(kTrace, aReceiver.Room());
+    LOG(kTrace, ":");
+    LOG(kTrace, aReceiver.Group());
+    LOG(kTrace, "\n");
+
+    iHandler.ReceiverRemoved(aReceiver);
+}
+
+void ReceiverManager1::ReceiverVolumeControlChanged(ReceiverManager1Receiver& aReceiver)
+{
+    iHandler.ReceiverVolumeControlChanged(aReceiver);
+}
+
+void ReceiverManager1::ReceiverVolumeChanged(ReceiverManager1Receiver& aReceiver)
+{
+    iHandler.ReceiverVolumeChanged(aReceiver);
+}
+
+void ReceiverManager1::ReceiverMuteChanged(ReceiverManager1Receiver& aReceiver)
+{
+    iHandler.ReceiverMuteChanged(aReceiver);
+}
+
+void ReceiverManager1::ReceiverVolumeLimitChanged(ReceiverManager1Receiver& aReceiver)
+{
+    iHandler.ReceiverVolumeLimitChanged(aReceiver);
+}
+
 

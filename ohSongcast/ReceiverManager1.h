@@ -113,7 +113,7 @@ private:
 	TUint iRefCount;
 };
 
-class ReceiverManager1 : public IHouseHandler
+class ReceiverManager1 : public IHouseHandler, public IReceiverManager1Handler
 {
 public:
 	static const TUint kMaxRoomBytes = 20;
@@ -135,6 +135,15 @@ private:
 	virtual void RoomVolumeChanged(IRoom& aRoom);
 	virtual void RoomMuteChanged(IRoom& aRoom);
 	virtual void RoomVolumeLimitChanged(IRoom& aRoom);
+
+    // IReceiverManager1Handler
+	virtual void ReceiverAdded(ReceiverManager1Receiver& aReceiver);
+	virtual void ReceiverChanged(ReceiverManager1Receiver& aReceiver);
+	virtual void ReceiverRemoved(ReceiverManager1Receiver& aReceiver);
+	virtual void ReceiverVolumeControlChanged(ReceiverManager1Receiver& aReceiver);
+	virtual void ReceiverVolumeChanged(ReceiverManager1Receiver& aReceiver);
+	virtual void ReceiverMuteChanged(ReceiverManager1Receiver& aReceiver);
+	virtual void ReceiverVolumeLimitChanged(ReceiverManager1Receiver& aReceiver);
 
 private:
 	IReceiverManager1Handler& iHandler;

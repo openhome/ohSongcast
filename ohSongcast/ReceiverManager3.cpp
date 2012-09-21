@@ -287,14 +287,24 @@ ReceiverManager3::~ReceiverManager3()
 
 void ReceiverManager3::ReceiverAdded(ReceiverManager2Receiver& aReceiver)
 {
-    LOG(kTopology, "ReceiverManager3::ReceiverAdded\n");
+    LOG(kTrace, "ReceiverManager3::ReceiverAdded ");
+    LOG(kTrace, aReceiver.Room());
+    LOG(kTrace, ":");
+    LOG(kTrace, aReceiver.Group());
+    LOG(kTrace, "\n");
+
 	ReceiverManager3Receiver* receiver = new ReceiverManager3Receiver(iHandler, aReceiver, *this);
 	aReceiver.SetUserData(receiver);
 }
 
 void ReceiverManager3::ReceiverChanged(ReceiverManager2Receiver& aReceiver)
 {
-    LOG(kTopology, "ReceiverManager3::ReceiverChanged\n");
+    LOG(kTrace, "ReceiverManager3::ReceiverChanged ");
+    LOG(kTrace, aReceiver.Room());
+    LOG(kTrace, ":");
+    LOG(kTrace, aReceiver.Group());
+    LOG(kTrace, "\n");
+
 	ReceiverManager3Receiver* receiver = (ReceiverManager3Receiver*)(aReceiver.UserData());
 	ASSERT(receiver);
 	ASSERT(receiver->IsAttachedTo(aReceiver));
@@ -303,9 +313,13 @@ void ReceiverManager3::ReceiverChanged(ReceiverManager2Receiver& aReceiver)
 
 void ReceiverManager3::ReceiverRemoved(ReceiverManager2Receiver& aReceiver)
 {
-    LOG(kTopology, "ReceiverManager3::ReceiverRemoved\n");
+    LOG(kTrace, "ReceiverManager3::ReceiverRemoved ");
+    LOG(kTrace, aReceiver.Room());
+    LOG(kTrace, ":");
+    LOG(kTrace, aReceiver.Group());
+    LOG(kTrace, "\n");
+
 	ReceiverManager3Receiver* receiver = (ReceiverManager3Receiver*)(aReceiver.UserData());
-    LOG(kTopology, "ReceiverManager3::~ReceiverRemoved %x\n", receiver);
 	ASSERT(receiver);
 	ASSERT(receiver->IsAttachedTo(aReceiver));
 	receiver->Removed();

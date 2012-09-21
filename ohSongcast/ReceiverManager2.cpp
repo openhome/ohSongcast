@@ -240,12 +240,15 @@ void ReceiverManager2Receiver::EventReceiverInitialEvent()
 	iServiceReceiver->PropertyUri(iUri);
 	iServiceReceiver->PropertyMetadata(iMetadata);
 
+    // this must be called before iActive is set to true to ensure that the ReceiverAdded event is
+    // added to the queue before all others
+	iHandler.ReceiverAdded(*this);
+
 	iMutex.Wait();
 	iActive = true;
 	TBool hasVolumeControl = iHasVolumeControl;
 	iMutex.Signal();
 
-	iHandler.ReceiverAdded(*this);
 	if(hasVolumeControl)
 	{
 		iHandler.ReceiverVolumeControlChanged(*this);
@@ -500,11 +503,11 @@ void ReceiverManager2::ReceiverVolumeLimitChanged(ReceiverManager1Receiver& aRec
 
 void ReceiverManager2::ReceiverAdded(ReceiverManager2Receiver& aReceiver)
 {
-    LOG(kTopology, "ReceiverManager2::ReceiverAdded ");
-    LOG(kTopology, aReceiver.Room());
-    LOG(kTopology, ":");
-    LOG(kTopology, aReceiver.Group());
-    LOG(kTopology, "\n");
+    LOG(kTrace, "ReceiverManager2::ReceiverAdded ");
+    LOG(kTrace, aReceiver.Room());
+    LOG(kTrace, ":");
+    LOG(kTrace, aReceiver.Group());
+    LOG(kTrace, "\n");
 
 	ReceiverManager2Job* job = iFree.Read();
 	job->Set(aReceiver, &IReceiverManager2Handler::ReceiverAdded);
@@ -513,11 +516,11 @@ void ReceiverManager2::ReceiverAdded(ReceiverManager2Receiver& aReceiver)
 
 void ReceiverManager2::ReceiverChanged(ReceiverManager2Receiver& aReceiver)
 {
-    LOG(kTopology, "ReceiverManager2::ReceiverChanged ");
-    LOG(kTopology, aReceiver.Room());
-    LOG(kTopology, ":");
-    LOG(kTopology, aReceiver.Group());
-    LOG(kTopology, "\n");
+    LOG(kTrace, "ReceiverManager2::ReceiverChanged ");
+    LOG(kTrace, aReceiver.Room());
+    LOG(kTrace, ":");
+    LOG(kTrace, aReceiver.Group());
+    LOG(kTrace, "\n");
 
 	ReceiverManager2Job* job = iFree.Read();
 	job->Set(aReceiver, &IReceiverManager2Handler::ReceiverChanged);
@@ -526,11 +529,11 @@ void ReceiverManager2::ReceiverChanged(ReceiverManager2Receiver& aReceiver)
 
 void ReceiverManager2::ReceiverRemoved(ReceiverManager2Receiver& aReceiver)
 {
-    LOG(kTopology, "ReceiverManager2::ReceiverRemoved ");
-    LOG(kTopology, aReceiver.Room());
-    LOG(kTopology, ":");
-    LOG(kTopology, aReceiver.Group());
-    LOG(kTopology, "\n");
+    LOG(kTrace, "ReceiverManager2::ReceiverRemoved ");
+    LOG(kTrace, aReceiver.Room());
+    LOG(kTrace, ":");
+    LOG(kTrace, aReceiver.Group());
+    LOG(kTrace, "\n");
 
 	ReceiverManager2Job* job = iFree.Read();
 	job->Set(aReceiver, &IReceiverManager2Handler::ReceiverRemoved);
