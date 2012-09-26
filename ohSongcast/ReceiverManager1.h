@@ -32,8 +32,8 @@ class ReceiverManager1Receiver  : private INonCopyable
 {
 	friend class ReceiverManager1Room;
 
-	static const TUint kMaxNameBytes = 20;
-	static const TUint kMaxGroupBytes = 20;
+	static const TUint kMaxNameBytes = 64;
+	static const TUint kMaxGroupBytes = 64;
 
 public:
 	ReceiverManager1Receiver(ReceiverManager1Room& aRoom, const Brx& aGroup, const Brx& aName, TUint aSourceIndex, Net::CpDevice& aDevice);
