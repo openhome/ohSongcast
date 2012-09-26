@@ -116,10 +116,6 @@ private:
 class ReceiverManager1 : public IHouseHandler, public IReceiverManager1Handler
 {
 public:
-	static const TUint kMaxRoomBytes = 20;
-	static const TUint kMaxGroupBytes = 20;
-
-public:
 	ReceiverManager1(IReceiverManager1Handler& aHandler);
     void Refresh();
     ~ReceiverManager1();
