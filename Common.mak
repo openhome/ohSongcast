@@ -114,9 +114,11 @@ $(objdir)Receiver.$(exeext) : Receiver$(dirsep)Receiver.cpp $(headers_receiver) 
 	$(link) $(linkoutput)$(objdir)Receiver.$(exeext) $(objdir)Receiver.$(objext) $(objects_receiver) $(ohnetdir)$(libprefix)ohNetCore.$(libext) $(ohnetdir)$(libprefix)TestFramework.$(libext)
 
 
-$(objdir)ohSongcast.net.dll : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast$(dirsep)Songcast.cs
+$(objdir)ohSongcast.net.dll : $(objdir)$(dllprefix)ohSongcast.$(dllext) ohSongcast$(dirsep)Songcast.cs $(ohnetdir)ohNet.net.dll
+	$(copyfile) $(ohnetdir)ohNet.net.dll $(objdir)
 	$(csharp) /unsafe /t:library \
 		/out:$(objdir)ohSongcast.net.dll \
+		/reference:$(ohnetdir)ohNet.net.dll \
 		ohSongcast$(dirsep)Songcast.cs
 
 $(objdir)TestSongcastCs.$(exeext) : $(objdir)ohSongcast.net.dll ohSongcast$(dirsep)TestSongcastCs.cs

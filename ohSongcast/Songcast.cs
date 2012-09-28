@@ -125,10 +125,10 @@ namespace OpenHome.Songcast
         {
             iReceiver = aReceiver;
             ReceiverAddRef(iReceiver);
-            iUdn = Marshal.PtrToStringAnsi(ReceiverUdn(iReceiver));
-            iRoom = Marshal.PtrToStringAnsi(ReceiverRoom(iReceiver));
-            iGroup = Marshal.PtrToStringAnsi(ReceiverGroup(iReceiver));
-            iName = Marshal.PtrToStringAnsi(ReceiverName(iReceiver));
+            iUdn = OpenHome.Net.Core.InteropUtils.PtrToStringUtf8(ReceiverUdn(iReceiver));
+            iRoom = OpenHome.Net.Core.InteropUtils.PtrToStringUtf8(ReceiverRoom(iReceiver));
+            iGroup = OpenHome.Net.Core.InteropUtils.PtrToStringUtf8(ReceiverGroup(iReceiver));
+            iName = OpenHome.Net.Core.InteropUtils.PtrToStringUtf8(ReceiverName(iReceiver));
         }
 
         internal bool Owns(IntPtr aReceiver)
@@ -292,7 +292,7 @@ namespace OpenHome.Songcast
             iSubnet = aSubnet;
             iMutex = new Mutex();
             iAddress = (uint)SubnetAddress(iSubnet);
-            iAdapterName = Marshal.PtrToStringAnsi(SubnetAdapterName(iSubnet));
+            iAdapterName = OpenHome.Net.Core.InteropUtils.PtrToStringUtf8(SubnetAdapterName(iSubnet));
             SubnetAddRef(iSubnet);
         }
 
@@ -308,7 +308,7 @@ namespace OpenHome.Songcast
         {
             iMutex.WaitOne();
             iAddress = (uint)SubnetAddress(iSubnet);
-            iAdapterName = Marshal.PtrToStringAnsi(SubnetAdapterName(iSubnet));
+            iAdapterName = OpenHome.Net.Core.InteropUtils.PtrToStringUtf8(SubnetAdapterName(iSubnet));
             iMutex.ReleaseMutex();
         }
 
@@ -594,13 +594,13 @@ namespace OpenHome.Songcast
 
         private unsafe void FatalErrorCallback(IntPtr aPtr, char* aMessage)
         {
-            string msg = Marshal.PtrToStringAnsi((IntPtr)aMessage);
+            string msg = OpenHome.Net.Core.InteropUtils.PtrToStringUtf8((IntPtr)aMessage);
             throw new SongcastError(msg);
         }
 
         private unsafe void LogOutputCallback(IntPtr aPtr, char* aMessage)
         {
-            string msg = Marshal.PtrToStringAnsi((IntPtr)aMessage);
+            string msg = OpenHome.Net.Core.InteropUtils.PtrToStringUtf8((IntPtr)aMessage);
             iLogOutputHandler.Message(msg);
         }
 
@@ -676,8 +676,8 @@ namespace OpenHome.Songcast
 
         public unsafe void SetTrack(IntPtr aHandle, string aUri, string aMetadata, long aSamplesTotal, long aSampleStart)
         {
-            IntPtr uri = Marshal.StringToHGlobalAnsi(aUri);
-            IntPtr metadata = Marshal.StringToHGlobalAnsi(aMetadata);
+            IntPtr uri = OpenHome.Net.Core.InteropUtils.StringToHGlobalUtf8(aUri);
+            IntPtr metadata = OpenHome.Net.Core.InteropUtils.StringToHGlobalUtf8(aMetadata);
             SongcastSetTrack(iHandle, (char*)uri, (char*)metadata, aSamplesTotal, aSampleStart);
             Marshal.FreeHGlobal(uri);
             Marshal.FreeHGlobal(metadata);
@@ -685,7 +685,7 @@ namespace OpenHome.Songcast
 
         public unsafe void SetMetatext(IntPtr aHandle, string aValue)
         {
-            IntPtr value = Marshal.StringToHGlobalAnsi(aValue);
+            IntPtr value = OpenHome.Net.Core.InteropUtils.StringToHGlobalUtf8(aValue);
             SongcastSetMetatext(iHandle, (char*)value);
             Marshal.FreeHGlobal(value);
         }

@@ -57,6 +57,7 @@ dllext = so
 link_dll = ${CROSS_COMPILE}g++ -lpthread $(platform_linkflags) $(platform_dllflags) -shared -shared-libgcc
 csharp = dmcs /nologo
 dirsep = /
+copyfile = cp -f
 
 
 default : all

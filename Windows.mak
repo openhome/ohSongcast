@@ -4,10 +4,12 @@
 !if "$(release)"=="1"
 link_flag_debug = 
 debug_specific_cflags = /MT /Ox
+debug_specific_csflags = 
 build_dir = Release
 !else
 link_flag_debug = /debug
 debug_specific_cflags = /MTd /Zi /Od /RTC1
+debug_specific_csflags = /debug
 build_dir = Debug
 !endif
 
@@ -36,7 +38,7 @@ dllext = dll
 link_dll = link /nologo $(link_flag_debug) /map Ws2_32.lib Iphlpapi.lib Dbghelp.lib /dll
 link_dll_service = link /nologo $(link_flag_debug)  /map $(objdir)ohNet.lib Ws2_32.lib Iphlpapi.lib Dbghelp.lib /dll
 csplatform = x86
-csharp = csc /nologo /platform:$(csplatform) /nostdlib /reference:%SystemRoot%\microsoft.net\framework\v2.0.50727\mscorlib.dll /debug
+csharp = csc /nologo /platform:$(csplatform) $(debug_specific_csflags)
 publiccsdir = Public\Cs^\csharp
 dirsep = ^\
 installdir = $(PROGRAMFILES)\ohNet
@@ -45,6 +47,7 @@ installincludedir = $(installdir)\include
 mkdir = Scripts\mkdir.bat
 rmdir = Scripts\rmdir.bat
 uset4 = no
+copyfile = copy /Y
 
 
 !if "$(nativeonly)"=="yes"
