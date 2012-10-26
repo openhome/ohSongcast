@@ -426,7 +426,9 @@ OhmSender::OhmSender(Net::DvDevice& aDevice, IOhmSenderDriver& aDriver, const Br
     , iDriver(aDriver)
     , iName(aName)
     , iChannel(aChannel)
-    , iInterface(aInterface)
+    , iOhmInterface(aInterface)
+	, iOhzInterface(aInterface)
+	, iServerInterface(aInterface)
     , iTtl(aTtl)
 	, iLatency(aLatency)
     , iMulticast(aMulticast)
@@ -441,6 +443,7 @@ OhmSender::OhmSender(Net::DvDevice& aDevice, IOhmSenderDriver& aDriver, const Br
     , iNetworkDeactivated("OHDN", 0)
     , iZoneDeactivated("OHDZ", 0)
     , iStarted(false)
+	, iZoneStarted(false)
     , iActive(false)
     , iAliveJoined(false)
     , iAliveBlocked(false)
@@ -473,14 +476,14 @@ OhmSender::OhmSender(Net::DvDevice& aDevice, IOhmSenderDriver& aDriver, const Br
     iThreadZone = new ThreadFunctor("MTXZ", MakeFunctor(*this, &OhmSender::RunZone), kThreadPriorityNetwork, kThreadStackBytesNetwork);
     iThreadZone->Start();    
 
-	iServer = new SocketTcpServer("OHMS", 0, iInterface);
+	iServer = new SocketTcpServer("OHMS", 0, iServerInterface);
 
 	iServer->Add("OHMS", new OhmSenderSession(*this));
 
     // scope for AutoMutex
     {
     AutoMutex mutex(iMutexStartStop);
-	StartZone();
+	StartZone(iOhzInterface);
     }
 
     UpdateChannel();
@@ -527,11 +530,11 @@ void OhmSender::SetChannel(TUint aValue)
 
 	if (iChannel != aValue) {
 		if (iMulticast) {
-			if (iStarted) {
+			if (iEnabled) {
 				Stop();
 				iChannel = aValue;
 				UpdateChannel();
-				Start();
+				Start(iOhmInterface);
 			}
 			else {
 				iChannel = aValue;
@@ -550,38 +553,45 @@ void OhmSender::SetInterface(TIpAddress aValue)
 {
     AutoMutex mutex(iMutexStartStop);
     
-	if (iInterface != aValue) {
-		if (iStarted) {
+	if (iOhmInterface != aValue) {
+		if (iEnabled) {
 			Stop();
-			StopZone();
+			Start(aValue);
+		}
+	}
+
+	if (iOhzInterface != aValue)
+	{
+		StopZone();
+		StartZone(aValue);
+	}
+
+	if (iServerInterface != aValue)
+	{
+		if (iEnabled)
+		{
 			delete (iServer);
-			iInterface = aValue;
-			iServer = new SocketTcpServer("OHMS", 0, iInterface);
+			iServer = new SocketTcpServer("OHMS", 0, aValue);
 			iServer->Add("OHMS", new OhmSenderSession(*this));
             // recreate server before UpdateMetadata() as that function requires the server port
+			iServerInterface = aValue;
 			UpdateMetadata();
-			StartZone();
-			Start();
-		}
-		else {
-			StopZone();
-			iInterface = aValue;
-			StartZone();
 		}
 	}
 }
+
 
 void OhmSender::SetTtl(TUint aValue)
 {
     AutoMutex mutex(iMutexStartStop);
     
 	if (iTtl != aValue) {
-		if (iStarted) {
+		if (iEnabled) {
 			Stop();
 			iTtl = aValue;
 			iDriver.SetTtl(iTtl);
 			LOG(kMedia, "OHM SENDER DRIVER TTL %d\n", iTtl);
-			Start();
+			Start(iOhmInterface);
 		}
 		else {
 			iTtl = aValue;
@@ -596,12 +606,12 @@ void OhmSender::SetLatency(TUint aValue)
     AutoMutex mutex(iMutexStartStop);
     
 	if (iLatency != aValue) {
-		if (iStarted) {
+		if (iEnabled) {
 			Stop();
 			iLatency = aValue;
 			iDriver.SetLatency(iLatency);
 			LOG(kMedia, "OHM SENDER DRIVER LATENCY %d\n", iLatency);
-			Start();
+			Start(iOhmInterface);
 		}
 		else {
 			iLatency = aValue;
@@ -616,11 +626,11 @@ void OhmSender::SetMulticast(TBool aValue)
     AutoMutex mutex(iMutexStartStop);
 
 	if (iMulticast != aValue) {
-		if (iStarted) {
+		if (iEnabled) {
 			Stop();
 			iMulticast = aValue;
 			UpdateMetadata();
-			Start();
+			Start(iOhmInterface);
 		}
 		else {
 			iMulticast = aValue;
@@ -642,7 +652,7 @@ void OhmSender::SetEnabled(TBool aValue)
     
 		if (iEnabled) {
 			iProvider->SetStatusEnabled();
-			Start();
+			Start(iOhmInterface);
 		}
 		else {
 			Stop();
@@ -653,21 +663,22 @@ void OhmSender::SetEnabled(TBool aValue)
 
 // Start always called with the start/stop mutex locked
 
-void OhmSender::Start()
+void OhmSender::Start(TIpAddress aValue)
 {
     if (!iStarted) {
         if (iMulticast) {
-            iSocketOhm.OpenMulticast(iInterface, iTtl, iMulticastEndpoint);
+            iSocketOhm.OpenMulticast(aValue, iTtl, iMulticastEndpoint);
             iTargetEndpoint.Replace(iMulticastEndpoint);
-			iTargetInterface = iInterface;
+			iTargetInterface = aValue;
             iThreadMulticast->Signal();
         }
         else {
-            iSocketOhm.OpenUnicast(iInterface, iTtl);
-			iTargetInterface = iInterface;
+            iSocketOhm.OpenUnicast(aValue, iTtl);
+			iTargetInterface = aValue;
             iThreadUnicast->Signal();
         }
         iStarted = true;
+        iOhmInterface = aValue;
         UpdateUri();
     }
 }
@@ -693,17 +704,26 @@ void OhmSender::Stop()
 
 void OhmSender::StopZone()
 {
-    iSocketOhz.ReadInterrupt();
-    iZoneDeactivated.Wait();
-	iTimerZoneUri.Cancel();
-	iTimerPresetInfo.Cancel();
-    iSocketOhz.Close();
+	if (iZoneStarted)
+	{
+		iSocketOhz.ReadInterrupt();
+		iZoneDeactivated.Wait();
+		iTimerZoneUri.Cancel();
+		iTimerPresetInfo.Cancel();
+		iSocketOhz.Close();
+		iZoneStarted = false;
+	}
 }
 
-void OhmSender::StartZone()
+void OhmSender::StartZone(TIpAddress aValue)
 {
-    iSocketOhz.Open(iInterface, iTtl);
-	iThreadZone->Signal();
+	if (!iZoneStarted)
+	{
+		iSocketOhz.Open(aValue, iTtl);
+		iThreadZone->Signal();
+		iZoneStarted = true;
+		iOhzInterface = aValue;
+	}
 }
 
 void OhmSender::SetTrack(const Brx& aUri, const Brx& aMetadata, TUint64 aSamplesTotal, TUint64 aSampleStart)
@@ -847,7 +867,7 @@ void OhmSender::RunMulticast()
 
 						Endpoint sender = iSocketOhm.Sender();
 
-						if (sender.Address() != iInterface) {
+						if (sender.Address() != iOhmInterface) {
 	                        LOG(kMedia, "OhmSender::RunMulticast audio received\n");
 
 							// The following randomisation prevents two senders from both sending,
@@ -1200,7 +1220,7 @@ void OhmSender::UpdateUri()
 {
 	AutoMutex mutex(iMutexZone);
 
-	if (iStarted) {
+	if (iEnabled) {
 		if (iMulticast) {
 			iUri.Replace("ohm://");
 			iMulticastEndpoint.AppendEndpoint(iUri);
@@ -1241,7 +1261,7 @@ void OhmSender::UpdateMetadata()
 	{
 		iSenderMetadata.Append("<upnp:albumArtURI>");
 		iSenderMetadata.Append("http://");
-		Endpoint(iServer->Port(), iInterface).AppendEndpoint(iSenderMetadata);
+		Endpoint(iServer->Port(), iServerInterface).AppendEndpoint(iSenderMetadata);
 		iSenderMetadata.Append("/icon");
 		iSenderMetadata.Append("</upnp:albumArtURI>");
 	}

@@ -118,9 +118,9 @@ private:
     void UpdateMetadata();
     void UpdateUri();
 
-    void Start();
+    void Start(TIpAddress aValue);
     void Stop();
-    void StartZone();
+    void StartZone(TIpAddress aValue);
     void StopZone();
     void EnabledChanged();
     void ChannelChanged();
@@ -149,7 +149,9 @@ private:
     IOhmSenderDriver& iDriver;
     Bws<kMaxNameBytes> iName;
     TUint iChannel;
-    TIpAddress iInterface;
+    TIpAddress iOhmInterface;
+    TIpAddress iOhzInterface;
+    TIpAddress iServerInterface;
     TUint iTtl;
     TUint iLatency;
     TBool iMulticast;
@@ -169,6 +171,7 @@ private:
     Semaphore iZoneDeactivated;
     ProviderSender* iProvider;
     TBool iStarted;
+    TBool iZoneStarted;
     TBool iActive;
     TBool iAliveJoined;
     TBool iAliveBlocked;
