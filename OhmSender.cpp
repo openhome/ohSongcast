@@ -553,17 +553,25 @@ void OhmSender::SetInterface(TIpAddress aValue)
 {
     AutoMutex mutex(iMutexStartStop);
     
+    // Zone is restarted before the ohm socket. This is not a particularly robust fix for the following bug:
+    // 1. SetInterface(0) called
+    // 2. Previously, Stop() and Start(0) where successfully called, meaning the ohm socket was started
+    // 3. Then, StopZone() is called successfully and StartZone(0) throws, meaning that this function exits
+    //    leaving the ohm socket open and ohz socket closed.
+    // 4. The calls in step 2 call UpdateUri which ultimately sets the iTimerZoneUri to fire.
+    // 5. The timer thread fires which then tries to call iSocketOhz.Send which then asserts because the socket is closed.
+    // So, moving the Stop/StartZone to the top of this method avoids the problem but it doesn't seem robust
+	if (iOhzInterface != aValue)
+	{
+		StopZone();
+		StartZone(aValue);
+	}
+
 	if (iOhmInterface != aValue) {
 		if (iEnabled) {
 			Stop();
 			Start(aValue);
 		}
-	}
-
-	if (iOhzInterface != aValue)
-	{
-		StopZone();
-		StartZone(aValue);
 	}
 
 	if (iServerInterface != aValue)
@@ -689,16 +697,11 @@ void OhmSender::Start(TIpAddress aValue)
 void OhmSender::Stop()
 {
     if (iStarted) {
-		LOG(kMedia, "STOP INTERRUPT\n");
         iSocketOhm.ReadInterrupt();
-		LOG(kMedia, "STOP WAIT\n");
         iNetworkDeactivated.Wait();
-		LOG(kMedia, "STOP CLOSE\n");
         iSocketOhm.Close();
         iStarted = false;
-		LOG(kMedia, "STOP UPDATE\n");
         UpdateUri();
-		LOG(kMedia, "STOP DONE\n");
     }
 }
 
