@@ -552,7 +552,7 @@ void OhmSender::SetChannel(TUint aValue)
 void OhmSender::SetInterface(TIpAddress aValue)
 {
     AutoMutex mutex(iMutexStartStop);
-    
+
     // Zone is restarted before the ohm socket. This is not a particularly robust fix for the following bug:
     // 1. SetInterface(0) called
     // 2. Previously, Stop() and Start(0) where successfully called, meaning the ohm socket was started
@@ -572,19 +572,17 @@ void OhmSender::SetInterface(TIpAddress aValue)
 			Stop();
 			Start(aValue);
 		}
+        iOhmInterface = aValue;
 	}
 
 	if (iServerInterface != aValue)
 	{
-		if (iEnabled)
-		{
-			delete (iServer);
-			iServer = new SocketTcpServer("OHMS", 0, aValue);
-			iServer->Add("OHMS", new OhmSenderSession(*this));
-            // recreate server before UpdateMetadata() as that function requires the server port
-			iServerInterface = aValue;
-			UpdateMetadata();
-		}
+        delete (iServer);
+        iServer = new SocketTcpServer("OHMS", 0, aValue);
+        iServer->Add("OHMS", new OhmSenderSession(*this));
+        // recreate server before UpdateMetadata() as that function requires the server port
+        iServerInterface = aValue;
+        UpdateMetadata();
 	}
 }
 
