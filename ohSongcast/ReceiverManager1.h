@@ -9,6 +9,9 @@
 #include <OpenHome/Av/CpTopology.h>
 
 namespace OpenHome {
+    namespace Net {
+        class CpStack;
+    } // namespace Net
 namespace Av {
 
 class ReceiverManager1Receiver;
@@ -116,7 +119,7 @@ private:
 class ReceiverManager1 : public IHouseHandler, public IReceiverManager1Handler
 {
 public:
-	ReceiverManager1(IReceiverManager1Handler& aHandler);
+	ReceiverManager1(Net::CpStack& aCpStack, IReceiverManager1Handler& aHandler);
     void Refresh();
     ~ReceiverManager1();
 

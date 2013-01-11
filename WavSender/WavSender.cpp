@@ -5,11 +5,11 @@
 #include <OpenHome/Net/Core/CpDeviceUpnp.h>
 #include <OpenHome/Private/Ascii.h>
 #include <OpenHome/Private/Maths.h>
-#include <OpenHome/Net/Private/Stack.h>
 #include <OpenHome/Private/Thread.h>
 #include <OpenHome/Private/OptionParser.h>
 #include <OpenHome/Private/Debug.h>
 #include <OpenHome/Os.h>
+#include <OpenHome/Private/Env.h>
 
 #include <vector>
 #include <stdio.h>
@@ -69,7 +69,7 @@ public:
 	static const TUint kMaxPacketBytes = 4096;
 	
 public:
-	PcmSender(OhmSender* aSender, OhmSenderDriver* aDriver, const Brx& aUri, const TByte* aData, TUint aSampleCount, TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth);
+	PcmSender(Environment& aEnv, OhmSender* aSender, OhmSenderDriver* aDriver, const Brx& aUri, const TByte* aData, TUint aSampleCount, TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth);
 	void Start();
 	void Pause();
 	void SetSpeed(TUint aValue);
@@ -82,6 +82,7 @@ private:
 	void TimerExpired();
 	
 private:
+    Environment& iEnv;
     OhmSender* iSender;
     OhmSenderDriver* iDriver;
 	Bws<OhmSender::kMaxTrackUriBytes> iUri;
@@ -107,8 +108,9 @@ private:
 	TBool iVerbose;
 };
 
-PcmSender::PcmSender(OhmSender* aSender, OhmSenderDriver* aDriver, const Brx& aUri, const TByte* aData, TUint aSampleCount, TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth)
-	: iSender(aSender)
+PcmSender::PcmSender(Environment& aEnv, OhmSender* aSender, OhmSenderDriver* aDriver, const Brx& aUri, const TByte* aData, TUint aSampleCount, TUint aSampleRate, TUint aBitRate, TUint aChannels, TUint aBitDepth)
+	: iEnv(aEnv)
+    , iSender(aSender)
 	, iDriver(aDriver)
 	, iUri(aUri)
 	, iData(aData)
@@ -118,7 +120,7 @@ PcmSender::PcmSender(OhmSender* aSender, OhmSenderDriver* aDriver, const Brx& aU
 	, iChannels(aChannels)
 	, iBitDepth(aBitDepth)
 	, iTotalBytes(aSampleCount * aChannels * aBitDepth / 8)
-	, iTimer(MakeFunctor(*this, &PcmSender::TimerExpired))
+	, iTimer(aEnv, MakeFunctor(*this, &PcmSender::TimerExpired))
 	, iMutex("WAVP")
 	, iPaused(false)
 	, iSpeed(kSpeedNormal)
@@ -210,7 +212,7 @@ void PcmSender::TimerExpired()
 	iMutex.Wait();
 	
 	if (!iPaused) {
-	    TUint64 now = OsTimeInUs();
+	    TUint64 now = OsTimeInUs(iEnv.OsCtx());
 
 	    if (iIndex == 0) {
             iSender->SetTrack(iUri, Brx::Empty(), iSampleCount, 0);
@@ -325,9 +327,9 @@ int CDECL main(int aArgc, char* aArgv[])
 
     InitialisationParams* initParams = InitialisationParams::Create();
 
-	UpnpLibrary::Initialise(initParams);
+	Library* lib = new Library(initParams);
 
-    std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
+    std::vector<NetworkAdapter*>* subnetList = lib->CreateSubnetList();
     printf ("adapter list:\n");
     for (unsigned i=0; i<subnetList->size(); ++i) {
 		TIpAddress addr = (*subnetList)[i]->Address();
@@ -340,8 +342,8 @@ int CDECL main(int aArgc, char* aArgv[])
 
     TIpAddress subnet = (*subnetList)[optionAdapter.Value()]->Subnet();
     TIpAddress adapter = (*subnetList)[optionAdapter.Value()]->Address();
-    UpnpLibrary::DestroySubnetList(subnetList);
-    UpnpLibrary::SetCurrentSubnet(subnet);
+    Library::DestroySubnetList(subnetList);
+    lib->SetCurrentSubnet(subnet);
 
     printf("using subnet %d.%d.%d.%d\n", subnet&0xff, (subnet>>8)&0xff, (subnet>>16)&0xff, (subnet>>24)&0xff);
 
@@ -527,9 +529,9 @@ int CDECL main(int aArgc, char* aArgv[])
 		pindex += bytesPerSample;	    
     }
     
-    UpnpLibrary::StartDv();
+    DvStack* dvStack = lib->StartDv();
 
-    DvDeviceStandard* device = new DvDeviceStandard(udn);
+    DvDeviceStandard* device = new DvDeviceStandard(*dvStack, udn);
     
     device->SetAttribute("Upnp.Domain", "av.openhome.org");
     device->SetAttribute("Upnp.Type", "Sender");
@@ -544,13 +546,13 @@ int CDECL main(int aArgc, char* aArgv[])
     device->SetAttribute("Upnp.SerialNumber", "");
     device->SetAttribute("Upnp.Upc", "");
 
-    OhmSenderDriver* driver = new OhmSenderDriver();
+    OhmSenderDriver* driver = new OhmSenderDriver(lib->Env());
     
 	Brn icon(icon_png, icon_png_len);
 
-	OhmSender* sender = new OhmSender(*device, *driver, name, channel, adapter, ttl, latency, multicast, !disabled, icon, Brn("image/png"), 0);
+	OhmSender* sender = new OhmSender(lib->Env(), *device, *driver, name, channel, adapter, ttl, latency, multicast, !disabled, icon, Brn("image/png"), 0);
 	
-    PcmSender* pcmsender = new PcmSender(sender, driver, file, data, sampleCount, sampleRate, byteRate * 8, numChannels, bitsPerSample);
+    PcmSender* pcmsender = new PcmSender(lib->Env(), sender, driver, file, data, sampleCount, sampleRate, byteRate * 8, numChannels, bitsPerSample);
     
     device->SetEnabled();
 

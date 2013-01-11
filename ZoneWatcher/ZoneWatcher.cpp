@@ -2,7 +2,6 @@
 #include <OpenHome/Net/Core/OhNet.h>
 #include <OpenHome/Private/Ascii.h>
 #include <OpenHome/Private/Maths.h>
-#include <OpenHome/Net/Private/Stack.h>
 #include <OpenHome/Private/Thread.h>
 #include <OpenHome/Private/OptionParser.h>
 #include <OpenHome/Private/Debug.h>
@@ -56,7 +55,7 @@ using namespace OpenHome::Av;
 class Watcher
 {
 public:
-	Watcher(TIpAddress aInterface);
+	Watcher(Environment& aEnv, TIpAddress aInterface);
 	void Run();
 	~Watcher();
 private:
@@ -66,8 +65,9 @@ private:
 	ThreadFunctor* iThread;
 };
 
-Watcher::Watcher(TIpAddress aInterface)
+Watcher::Watcher(Environment& aEnv, TIpAddress aInterface)
 	: iInterface(aInterface)
+    , iSocket(aEnv)
 	, iBuffer(iSocket)
 {
 
@@ -144,26 +144,23 @@ int CDECL main(int aArgc, char* aArgv[])
 	//Debug::SetLevel(Debug::kAll);
 
     OptionParser parser;
-    
     OptionUint optionAdapter("-a", "--adapter", 0, "[adapter] index of network adapter to use");
     parser.AddOption(&optionAdapter);
-
     if (!parser.Parse(aArgc, aArgv)) {
         return (1);
     }
 
     InitialisationParams* initParams = InitialisationParams::Create();
+    Library* lib = new Library(initParams);
 
-    UpnpLibrary::Initialise(initParams);
-
-    std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
+    std::vector<NetworkAdapter*>* subnetList = lib->CreateSubnetList();
     TIpAddress subnet = (*subnetList)[optionAdapter.Value()]->Subnet();
     TIpAddress interface = (*subnetList)[optionAdapter.Value()]->Address();
-    UpnpLibrary::DestroySubnetList(subnetList);
+    Library::DestroySubnetList(subnetList);
 
     printf("Using subnet %d.%d.%d.%d\n", subnet&0xff, (subnet>>8)&0xff, (subnet>>16)&0xff, (subnet>>24)&0xff);
 
-	Watcher* watcher = new Watcher(interface);
+	Watcher* watcher = new Watcher(lib->Env(), interface);
 
     for (;;) {
     	int key = mygetch();
@@ -174,5 +171,5 @@ int CDECL main(int aArgc, char* aArgv[])
 	}
 
 	delete (watcher);
+    delete lib;
 }
-

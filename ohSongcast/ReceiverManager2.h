@@ -13,6 +13,9 @@
 #include "ReceiverManager1.h"
 
 namespace OpenHome {
+    namespace Net {
+        class CpStack;
+    } // namespace Net
 namespace Av {
 
 class ReceiverManager2Receiver;
@@ -120,7 +123,7 @@ class ReceiverManager2 : public IReceiverManager1Handler, public IReceiverManage
 	static const TUint kMaxJobCount = 20;
 
 public:
-	ReceiverManager2(IReceiverManager2Handler& aHandler);
+	ReceiverManager2(Net::CpStack& aCpStack, IReceiverManager2Handler& aHandler);
     void Refresh();
     ~ReceiverManager2();
 

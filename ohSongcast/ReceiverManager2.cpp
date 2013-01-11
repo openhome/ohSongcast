@@ -410,7 +410,7 @@ ReceiverManager2Receiver::~ReceiverManager2Receiver()
 
 // ReceiverManager
 
-ReceiverManager2::ReceiverManager2(IReceiverManager2Handler& aHandler)
+ReceiverManager2::ReceiverManager2(Net::CpStack& aCpStack, IReceiverManager2Handler& aHandler)
 	: iHandler(aHandler)
 	, iFree(kMaxJobCount)
 	, iReady(kMaxJobCount)
@@ -419,7 +419,7 @@ ReceiverManager2::ReceiverManager2(IReceiverManager2Handler& aHandler)
 		iFree.Write(new ReceiverManager2Job(aHandler));
 	}
 	
-	iReceiverManager = new ReceiverManager1(*this);
+	iReceiverManager = new ReceiverManager1(aCpStack, *this);
 
 	iThread = new ThreadFunctor("RM2T", MakeFunctor(*this, &ReceiverManager2::Run));
 	iThread->Start();

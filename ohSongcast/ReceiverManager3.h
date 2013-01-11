@@ -10,6 +10,9 @@
 #include "ReceiverManager2.h"
 
 namespace OpenHome {
+    namespace Net {
+        class CpStack;
+    } // namespace Net
 namespace Av {
 
 class ReceiverManager3Receiver;
@@ -101,7 +104,7 @@ public:
 	static const TUint kMaxMetadataBytes = 4000;
 
 public:
-	ReceiverManager3(IReceiverManager3Handler& aHandler, const Brx& aUri, const Brx& aMetadata);
+	ReceiverManager3(Net::CpStack& aCpStack, IReceiverManager3Handler& aHandler, const Brx& aUri, const Brx& aMetadata);
 	void SetMetadata(const Brx& aMetadata);
     void Refresh();
     ~ReceiverManager3();

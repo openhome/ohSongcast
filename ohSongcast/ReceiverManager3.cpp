@@ -197,12 +197,12 @@ ReceiverManager3Receiver::~ReceiverManager3Receiver()
 
 // ReceiverManager
 
-ReceiverManager3::ReceiverManager3(IReceiverManager3Handler& aHandler, const Brx& aUri, const Brx& aMetadata)
+ReceiverManager3::ReceiverManager3(Net::CpStack& aCpStack, IReceiverManager3Handler& aHandler, const Brx& aUri, const Brx& aMetadata)
 	: iHandler(aHandler)
 	, iUri(aUri)
 	, iMetadata(aMetadata)
 {
-	iReceiverManager = new ReceiverManager2(*this);
+	iReceiverManager = new ReceiverManager2(aCpStack, *this);
 }
 
 void ReceiverManager3::Refresh()

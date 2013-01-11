@@ -2,7 +2,6 @@
 #include <OpenHome/Net/Core/OhNet.h>
 #include <OpenHome/Private/Ascii.h>
 #include <OpenHome/Private/Maths.h>
-#include <OpenHome/Net/Private/Stack.h>
 #include <OpenHome/Private/Thread.h>
 #include <OpenHome/Private/OptionParser.h>
 #include <OpenHome/Private/Debug.h>
@@ -27,7 +26,7 @@ namespace Av {
 	class ReceiverManager2Logger : IReceiverManager2Handler
 	{
 	public:
-		ReceiverManager2Logger();
+		ReceiverManager2Logger(Net::CpStack& aCpStack);
 		virtual void ReceiverAdded(ReceiverManager2Receiver& aReceiver);
 		virtual void ReceiverChanged(ReceiverManager2Receiver& aReceiver);
 		virtual void ReceiverRemoved(ReceiverManager2Receiver& aReceiver);
@@ -48,9 +47,9 @@ using namespace OpenHome::Net;
 using namespace OpenHome::TestFramework;
 using namespace OpenHome::Av;
 
-ReceiverManager2Logger::ReceiverManager2Logger()
+ReceiverManager2Logger::ReceiverManager2Logger(Net::CpStack& aCpStack)
 {
-	iReceiverManager = new ReceiverManager2(*this);
+	iReceiverManager = new ReceiverManager2(aCpStack, *this);
 }
 
 ReceiverManager2Logger::~ReceiverManager2Logger()
@@ -186,30 +185,27 @@ int CDECL main(int aArgc, char* aArgv[])
 	InitialisationParams* initParams = InitialisationParams::Create();
 
     OptionParser parser;
-    
     OptionUint optionDuration("-d", "--duration", 30, "Number of seconds to run the test");
-
     parser.AddOption(&optionDuration);
-    
     if (!parser.Parse(aArgc, aArgv)) {
         return (1);
     }
 
-    UpnpLibrary::Initialise(initParams);
-    std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
+    Library* lib = new Library(initParams);
+    std::vector<NetworkAdapter*>* subnetList = lib->CreateSubnetList();
     TIpAddress subnet = (*subnetList)[0]->Subnet();
-    UpnpLibrary::DestroySubnetList(subnetList);
-    UpnpLibrary::StartCp(subnet);
+    Library::DestroySubnetList(subnetList);
+    CpStack* cpStack = lib->StartCp(subnet);
 
     // Debug::SetLevel(Debug::kTopology);
 
-	ReceiverManager2Logger* logger = new ReceiverManager2Logger();
+	ReceiverManager2Logger* logger = new ReceiverManager2Logger(*cpStack);
 	
-    Blocker* blocker = new Blocker;
+    Blocker* blocker = new Blocker(lib->Env());
     blocker->Wait(optionDuration.Value());
     delete blocker;
 	
 	delete (logger);
 
-	UpnpLibrary::Close();
+	delete lib;
 }

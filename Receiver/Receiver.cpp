@@ -1,10 +1,10 @@
 #include <OpenHome/OhNetTypes.h>
 #include <OpenHome/Private/Ascii.h>
 #include <OpenHome/Private/Maths.h>
-#include <OpenHome/Net/Private/Stack.h>
 #include <OpenHome/Private/Thread.h>
 #include <OpenHome/Private/OptionParser.h>
 #include <OpenHome/Private/Debug.h>
+#include <OpenHome/Net/Core/OhNet.h>
 
 #include <vector>
 #include <stdio.h>
@@ -182,12 +182,12 @@ int CDECL main(int aArgc, char* aArgv[])
 
     InitialisationParams* initParams = InitialisationParams::Create();
 
-	UpnpLibrary::Initialise(initParams);
+	Library* lib = new Library(initParams);
 
-    std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
+    std::vector<NetworkAdapter*>* subnetList = lib->CreateSubnetList();
     TIpAddress subnet = (*subnetList)[optionAdapter.Value()]->Subnet();
     TIpAddress adapter = (*subnetList)[optionAdapter.Value()]->Address();
-    UpnpLibrary::DestroySubnetList(subnetList);
+    Library::DestroySubnetList(subnetList);
 
     printf("Using subnet %d.%d.%d.%d\n", subnet&0xff, (subnet>>8)&0xff, (subnet>>16)&0xff, (subnet>>24)&0xff);
 
@@ -196,9 +196,10 @@ int CDECL main(int aArgc, char* aArgv[])
 
 	OhmReceiverDriver* driver = new OhmReceiverDriver();
 
-	OhmReceiver* receiver = new OhmReceiver(adapter, ttl, *driver);
+	OhmReceiver* receiver = new OhmReceiver(lib->Env(), adapter, ttl, *driver);
 
-    UpnpLibrary::StartCp(subnet);
+    CpStack* cpStack = lib->StartCp(subnet);
+    cpStack = cpStack; // avoid unused variable warning
 
 	printf("q = quit\n");
 	
@@ -223,7 +224,7 @@ int CDECL main(int aArgc, char* aArgv[])
        
 	delete(receiver);
 
-	UpnpLibrary::Close();
+	delete lib;
 
 	printf("\n");
 	

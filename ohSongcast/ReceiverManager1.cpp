@@ -447,10 +447,10 @@ ReceiverManager1Receiver::~ReceiverManager1Receiver()
 
 // ReceiverManager
 
-ReceiverManager1::ReceiverManager1(IReceiverManager1Handler& aHandler)
+ReceiverManager1::ReceiverManager1(Net::CpStack& aCpStack, IReceiverManager1Handler& aHandler)
 	: iHandler(aHandler)
 {
-	iHouse = new House(*this);
+	iHouse = new House(aCpStack, *this);
 }
 
 void ReceiverManager1::Refresh()

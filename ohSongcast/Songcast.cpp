@@ -501,11 +501,13 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 
 	initParams->SetSubnetListChangedListener(callback);
 
-	UpnpLibrary::Initialise(initParams);
+	Library* lib = new Library(initParams);
 
-	UpnpLibrary::StartCombined(iSubnet);
+	CpStack* cpStack;
+    DvStack* dvStack;
+    lib->StartCombined(iSubnet, cpStack, dvStack);
 
-	iDevice = new DvDeviceStandard(udn);
+	iDevice = new DvDeviceStandard(*dvStack, udn);
     
 	iDevice->SetAttribute("Upnp.Domain", "av.openhome.org");
     iDevice->SetAttribute("Upnp.Type", "Songcast");
@@ -522,13 +524,11 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 
 	SubnetListChanged();
 
-	iSender = new OhmSender(*iDevice, *iDriver, name, iChannel, iAdapter, iTtl, iLatency, iMulticast, iEnabled, aImage, aMimeType, iPreset);
-
-	iNetworkMonitor = new NetworkMonitor(*iDevice, name);
-	
+	Environment& env = lib->Env();
+    iSender = new OhmSender(env, *iDevice, *iDriver, name, iChannel, iAdapter, iTtl, iLatency, iMulticast, iEnabled, aImage, aMimeType, iPreset);
+	iNetworkMonitor = new NetworkMonitor(env, *iDevice, name);
 	iDevice->SetEnabled();
-
-	iReceiverManager = new ReceiverManager3(*this, iSender->SenderUri(), iSender->SenderMetadata());
+	iReceiverManager = new ReceiverManager3(*cpStack, *this, iSender->SenderUri(), iSender->SenderMetadata());
 }
 
 

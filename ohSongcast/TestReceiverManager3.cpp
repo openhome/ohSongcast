@@ -2,7 +2,6 @@
 #include <OpenHome/Net/Core/OhNet.h>
 #include <OpenHome/Private/Ascii.h>
 #include <OpenHome/Private/Maths.h>
-#include <OpenHome/Net/Private/Stack.h>
 #include <OpenHome/Private/Thread.h>
 #include <OpenHome/Private/OptionParser.h>
 #include <OpenHome/Private/Debug.h>
@@ -27,7 +26,7 @@ namespace Av {
 	class ReceiverManager3Logger : IReceiverManager3Handler
 	{
 	public:
-		ReceiverManager3Logger(const Brx& aUri);
+		ReceiverManager3Logger(Net::CpStack& aCpStack, const Brx& aUri);
 		virtual void ReceiverAdded(ReceiverManager3Receiver& aReceiver);
 		virtual void ReceiverChanged(ReceiverManager3Receiver& aReceiver);
 		virtual void ReceiverRemoved(ReceiverManager3Receiver& aReceiver);
@@ -50,9 +49,9 @@ using namespace OpenHome::Av;
 
 // ohz://239.255.255.250:51972/0026-0f21-88aa
 
-ReceiverManager3Logger::ReceiverManager3Logger(const Brx& aValue)
+ReceiverManager3Logger::ReceiverManager3Logger(Net::CpStack& aCpStack, const Brx& aValue)
 {
-	iReceiverManager = new ReceiverManager3(*this, aValue, Brx::Empty());
+	iReceiverManager = new ReceiverManager3(aCpStack, *this, aValue, Brx::Empty());
 }
 
 ReceiverManager3Logger::~ReceiverManager3Logger()
@@ -194,20 +193,20 @@ int CDECL main(int aArgc, char* aArgv[])
         return 1;
     }
     InitialisationParams* initParams = InitialisationParams::Create();
-    UpnpLibrary::Initialise(initParams);
-    std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
+    Library* lib = new Library(initParams);
+    std::vector<NetworkAdapter*>* subnetList = lib->CreateSubnetList();
     TIpAddress subnet = (*subnetList)[0]->Subnet();
-    UpnpLibrary::DestroySubnetList(subnetList);
-    UpnpLibrary::StartCp(subnet);
+    Library::DestroySubnetList(subnetList);
+    CpStack* cpStack = lib->StartCp(subnet);
 
     // Debug::SetLevel(Debug::kTopology);
 
-	ReceiverManager3Logger* logger = new ReceiverManager3Logger(Brx::Empty());
+	ReceiverManager3Logger* logger = new ReceiverManager3Logger(*cpStack, Brx::Empty());
 	
-    Blocker* blocker = new Blocker;
+    Blocker* blocker = new Blocker(lib->Env());
     blocker->Wait(optionDuration.Value());
 	delete blocker;
 	
 	delete logger;
-	UpnpLibrary::Close();
+	delete lib;
 }
