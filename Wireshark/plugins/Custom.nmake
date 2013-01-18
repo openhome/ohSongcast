@@ -1,0 +1,47 @@
+#
+# $Id: Custom.nmake.example 45172 2012-09-27 11:39:54Z etxrab $
+#
+
+include ..\config.nmake
+
+all: ohz ohm
+
+ohz:: 
+	cd ohz
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake
+	cd ..
+	
+ohz:: 
+	cd ohm
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake
+	cd ..
+
+clean:
+	cd ohz
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake clean
+	cd ..
+	cd ohm
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake clean
+	cd ..
+
+distclean: clean
+	cd ohz
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake distclean
+	cd ..
+	cd ohm
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake distclean
+	cd ..
+	
+maintainer-clean: distclean
+	cd ohz
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake maintainer-clean
+	cd ..
+	cd ohm
+	$(MAKE) /$(MAKEFLAGS) -f Makefile.nmake maintainer-clean
+	cd ..
+
+install-plugins:
+!IFDEF ENABLE_LIBWIRESHARK
+	xcopy ohz\*.dll ..\$(INSTALL_DIR)\plugins\$(VERSION) /d
+	xcopy ohm\*.dll ..\$(INSTALL_DIR)\plugins\$(VERSION) /d
+!ENDIF
