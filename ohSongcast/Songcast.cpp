@@ -445,7 +445,6 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
     , iFatalErrorPtr(aFatalErrorPtr)
 	, iLogOutputCallback(aLogOutputCallback)
 	, iLogOutputPtr(aLogOutputPtr)
-	, iMutex("SCRD")
 	, iClosing(false)
 	, iAdapter(0)
 	, iSender(0)
@@ -501,11 +500,15 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 
 	initParams->SetSubnetListChangedListener(callback);
 
-	Library* lib = new Library(initParams);
+    // create the OhNet library
+    iLibrary = new Library(initParams);
+
+    // it is now ok to create the mutex
+    iMutex = new Mutex("SCRD");
 
 	CpStack* cpStack;
     DvStack* dvStack;
-    lib->StartCombined(iSubnet, cpStack, dvStack);
+    iLibrary->StartCombined(iSubnet, cpStack, dvStack);
 
 	iDevice = new DvDeviceStandard(*dvStack, udn);
     
@@ -524,7 +527,7 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 
 	SubnetListChanged();
 
-	Environment& env = lib->Env();
+	Environment& env = iLibrary->Env();
     iSender = new OhmSender(env, *iDevice, *iDriver, name, iChannel, iAdapter, iTtl, iLatency, iMulticast, iEnabled, aImage, aMimeType, iPreset);
 	iNetworkMonitor = new NetworkMonitor(env, *iDevice, name);
 	iDevice->SetEnabled();
@@ -599,18 +602,18 @@ private:
 
 void Songcast::SubnetListChanged()
 {
-	iMutex.Wait();
+	iMutex->Wait();
 
 	TBool closing = iClosing;
 
-	iMutex.Signal();
+	iMutex->Signal();
 
 	if (closing) {
 		return;
 	}
 
     // get the new subnet list from ohnet
-    std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
+    std::vector<NetworkAdapter*>* subnetList = iLibrary->CreateSubnetList();
 
     std::vector<NetworkAdapter*>::iterator newSubnetListIt;
     std::vector<Subnet*>::iterator oldSubnetListIt;
@@ -659,7 +662,7 @@ void Songcast::SubnetListChanged()
         }
     }
 
-	UpnpLibrary::DestroySubnetList(subnetList);
+	Library::DestroySubnetList(subnetList);
 
 	// Now manage our current subnet and adapter
 
@@ -702,74 +705,74 @@ TBool Songcast::UpdateAdapter()
 
 TIpAddress Songcast::GetSubnet()
 {
-	iMutex.Wait();
+	iMutex->Wait();
 	TIpAddress subnet = iSubnet;
-	iMutex.Signal();
+	iMutex->Signal();
 	return (subnet);
 }
 
 TUint Songcast::GetChannel()
 {
-	iMutex.Wait();
+	iMutex->Wait();
 	TUint channel = iChannel;
-	iMutex.Signal();
+	iMutex->Signal();
 	return (channel);
 }
 
 TUint Songcast::GetTtl()
 {
-	iMutex.Wait();
+	iMutex->Wait();
 	TUint ttl = iTtl;
-	iMutex.Signal();
+	iMutex->Signal();
 	return (ttl);
 }
 
 TUint Songcast::GetLatency()
 {
-	iMutex.Wait();
+	iMutex->Wait();
 	TUint latency = iLatency;
-	iMutex.Signal();
+	iMutex->Signal();
 	return (latency);
 }
 
 TBool Songcast::GetMulticast()
 {
-	iMutex.Wait();
+	iMutex->Wait();
 	TBool multicast = iMulticast;
-	iMutex.Signal();
+	iMutex->Signal();
 	return (multicast);
 }
 
 TBool Songcast::GetEnabled()
 {
-	iMutex.Wait();
+	iMutex->Wait();
 	TBool enabled = iEnabled;
-	iMutex.Signal();
+	iMutex->Signal();
 	return (enabled);
 }
 
 TUint Songcast::GetPreset()
 {
-	iMutex.Wait();
+	iMutex->Wait();
 	TUint preset = iPreset;
-	iMutex.Signal();
+	iMutex->Signal();
 	return (preset);
 }
 
 void Songcast::SetSubnet(TIpAddress aValue)
 {
-	iMutex.Wait();
+	iMutex->Wait();
 
 	if (iSubnet == aValue || iClosing) {
-		iMutex.Signal();
+	    iMutex->Signal();
 		return;
 	}
 
 	iSubnet = aValue;
 
-	iMutex.Signal();
+	iMutex->Signal();
 
-	UpnpLibrary::SetCurrentSubnet(iSubnet);
+	iLibrary->SetCurrentSubnet(iSubnet);
 
 	ASSERT(UpdateAdapter());
 
@@ -778,16 +781,16 @@ void Songcast::SetSubnet(TIpAddress aValue)
 
 void Songcast::SetChannel(TUint aValue)
 {
-	iMutex.Wait();
+	iMutex->Wait();
 
 	if (iChannel == aValue || iClosing) {
-		iMutex.Signal();
+	    iMutex->Signal();
 		return;
 	}
 
 	iChannel = aValue;
 
-	iMutex.Signal();
+	iMutex->Signal();
 
 	iSender->SetChannel(aValue);
 
@@ -796,16 +799,16 @@ void Songcast::SetChannel(TUint aValue)
 
 void Songcast::SetTtl(TUint aValue)
 {
-	iMutex.Wait();
+	iMutex->Wait();
 
 	if (iTtl == aValue || iClosing) {
-		iMutex.Signal();
+	    iMutex->Signal();
 		return;
 	}
 
 	iTtl = aValue;
 
-	iMutex.Signal();
+	iMutex->Signal();
 
 	iSender->SetTtl(aValue);
 
@@ -814,16 +817,16 @@ void Songcast::SetTtl(TUint aValue)
 
 void Songcast::SetLatency(TUint aValue)
 {
-	iMutex.Wait();
+	iMutex->Wait();
 
 	if (iLatency == aValue  || iClosing) {
-		iMutex.Signal();
+	    iMutex->Signal();
 		return;
 	}
 
 	iLatency = aValue;
 
-	iMutex.Signal();
+	iMutex->Signal();
 
 	iSender->SetLatency(aValue);
 
@@ -832,16 +835,16 @@ void Songcast::SetLatency(TUint aValue)
 
 void Songcast::SetMulticast(TBool aValue)
 {
-	iMutex.Wait();
+	iMutex->Wait();
 
 	if (iMulticast == aValue || iClosing) {
-		iMutex.Signal();
+	    iMutex->Signal();
 		return;
 	}
 
 	iMulticast = aValue;
 
-	iMutex.Signal();
+	iMutex->Signal();
 
 	iSender->SetMulticast(aValue);
 
@@ -852,16 +855,16 @@ void Songcast::SetMulticast(TBool aValue)
 
 void Songcast::SetEnabled(TBool aValue)
 {
-	iMutex.Wait();
+	iMutex->Wait();
 
 	if (iEnabled == aValue || iClosing) {
-		iMutex.Signal();
+	    iMutex->Signal();
 		return;
 	}
 
 	iEnabled = aValue;
 
-	iMutex.Signal();
+	iMutex->Signal();
 
 	iSender->SetEnabled(aValue);
 
@@ -870,16 +873,16 @@ void Songcast::SetEnabled(TBool aValue)
 
 void Songcast::SetPreset(TUint aValue)
 {
-	iMutex.Wait();
+	iMutex->Wait();
 
 	if (iPreset == aValue || iClosing) {
-		iMutex.Signal();
+	    iMutex->Signal();
 		return;
 	}
 
 	iPreset = aValue;
 
-	iMutex.Signal();
+	iMutex->Signal();
 
 	iSender->SetPreset(aValue);
 
@@ -905,11 +908,11 @@ Songcast::~Songcast()
 {
     LOG(kMedia, "Songcast::~Songcast\n");
 
-	iMutex.Wait();
+	iMutex->Wait();
 
 	iClosing = true;
 
-	iMutex.Signal();
+	iMutex->Signal();
 
     LOG(kMedia, "Songcast::~Songcast registered closing\n");
 
@@ -944,7 +947,8 @@ Songcast::~Songcast()
 
     LOG(kMedia, "Songcast::~Songcast subnets destroyed\n");
 
-	Net::UpnpLibrary::Close();
+    delete iMutex;
+    delete iLibrary;
 
     LOG(kMedia, "Songcast::~Songcast library closed\n");
 }

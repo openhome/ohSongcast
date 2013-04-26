@@ -233,7 +233,7 @@ private:
     void* iFatalErrorPtr;
     MessageCallback iLogOutputCallback;
     void* iLogOutputPtr;
-	Mutex iMutex;
+	Mutex* iMutex;
 	TBool iClosing;
 	TIpAddress iAdapter;
 	std::vector<Subnet*> iSubnetList;
@@ -242,6 +242,7 @@ private:
 	IOhmSenderDriver* iDriver;
 	Net::DvDeviceStandard* iDevice;
 	ReceiverManager3* iReceiverManager;
+    OpenHome::Net::Library* iLibrary;
 };
 
 } // namespace Av
