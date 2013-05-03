@@ -47,6 +47,28 @@ namespace Av {
 	    mutable Mutex iMutex;
 	    Timer iTimerAudioPresent;
 	};
+
+    class OhmSenderServer : IOhmSenderSessionData
+    {
+    public:
+        OhmSenderServer(Environment& aEnv, TIpAddress aInterface, const Brx& aImage, const Brx& aMimeType);
+        virtual ~OhmSenderServer();
+
+        void SetInterface(TIpAddress aInterface);
+        void AppendImageMetadata(Bwx& aMetadata);
+        virtual const Brx& Image() const;
+        virtual const Brx& MimeType() const;
+
+    private:
+	    static const TUint kMaxMimeTypeBytes = 100;
+
+        Environment& iEnv;
+        TIpAddress iInterface;
+        Brh iImage;
+        Bws<kMaxMimeTypeBytes> iMimeType;
+        SocketTcpServer* iServer;
+    };
+
 } // namespace Av
 } // namespace OpenHome
 
@@ -162,6 +184,69 @@ void ProviderSender::InformAudioPresent()
 void ProviderSender::TimerAudioPresentExpired()
 {
     SetPropertyAudio(false);
+}
+
+// OhmSenderServer
+
+OhmSenderServer::OhmSenderServer(Environment& aEnv, TIpAddress aInterface, const Brx& aImage, const Brx& aMimeType)
+    : iEnv(aEnv)
+    , iInterface(0)
+    , iImage(aImage)
+    , iMimeType(aMimeType)
+    , iServer(0)
+{
+    SetInterface(aInterface);
+};
+
+OhmSenderServer::~OhmSenderServer()
+{
+    if (iServer)
+    {
+        delete iServer;
+        iServer = 0;
+    }
+}
+
+void OhmSenderServer::SetInterface(TIpAddress aInterface)
+{
+    if (aInterface != iInterface)
+    {
+        if (iServer)
+        {
+            delete iServer;
+            iServer = 0;
+        }
+
+        if (aInterface != 0)
+        {
+            iServer = new SocketTcpServer(iEnv, "OHMS", 0, aInterface);
+            iServer->Add("OHMS", new OhmSenderSession(iEnv, *this));
+        }
+
+        iInterface = aInterface;
+    }
+};
+
+void OhmSenderServer::AppendImageMetadata(Bwx& aMetadata)
+{
+    if (iImage.Bytes() > 0 && iInterface != 0)
+    {
+        aMetadata.Append("<upnp:albumArtURI>");
+        aMetadata.Append("http://");
+        Endpoint(iServer->Port(), iInterface).AppendEndpoint(aMetadata);
+        aMetadata.Append("/icon");
+        aMetadata.Append("</upnp:albumArtURI>");
+    }
+}
+
+const Brx& OhmSenderServer::Image() const
+{
+    return iImage;
+}
+
+const Brx& OhmSenderServer::MimeType() const
+{
+    return iMimeType;
 }
 
 // OhmSenderDriver
@@ -430,13 +515,10 @@ OhmSender::OhmSender(Environment& aEnv, Net::DvDevice& aDevice, IOhmSenderDriver
     , iChannel(aChannel)
     , iOhmInterface(aInterface)
 	, iOhzInterface(aInterface)
-	, iServerInterface(aInterface)
     , iTtl(aTtl)
 	, iLatency(aLatency)
     , iMulticast(aMulticast)
 	, iEnabled(false)
-	, iImage(aImage)
-	, iMimeType(aMimeType)
     , iSocketOhm(aEnv)
     , iSocketOhz(aEnv)
     , iRxBuffer(iSocketOhm)
@@ -480,9 +562,7 @@ OhmSender::OhmSender(Environment& aEnv, Net::DvDevice& aDevice, IOhmSenderDriver
     iThreadZone = new ThreadFunctor("MTXZ", MakeFunctor(*this, &OhmSender::RunZone), kThreadPriorityNetwork, kThreadStackBytesNetwork);
     iThreadZone->Start();    
 
-	iServer = new SocketTcpServer(aEnv, "OHMS", 0, iServerInterface);
-
-	iServer->Add("OHMS", new OhmSenderSession(aEnv, *this));
+    iServer = new OhmSenderServer(aEnv, aInterface, aImage, aMimeType);
 
     // scope for AutoMutex
     {
@@ -495,16 +575,6 @@ OhmSender::OhmSender(Environment& aEnv, Net::DvDevice& aDevice, IOhmSenderDriver
 	SetEnabled(aEnabled);
 	
 	UpdateMetadata();
-}
-
-const Brx& OhmSender::Image() const
-{
-	return (iImage);
-}
-
-const Brx& OhmSender::MimeType() const
-{
-	return (iMimeType);
 }
 
 const Brx& OhmSender::SenderUri() const
@@ -579,15 +649,8 @@ void OhmSender::SetInterface(TIpAddress aValue)
         iOhmInterface = aValue;
 	}
 
-	if (iServerInterface != aValue)
-	{
-        delete (iServer);
-        iServer = new SocketTcpServer(iEnv, "OHMS", 0, aValue);
-        iServer->Add("OHMS", new OhmSenderSession(iEnv, *this));
-        // recreate server before UpdateMetadata() as that function requires the server port
-        iServerInterface = aValue;
-        UpdateMetadata();
-	}
+    iServer->SetInterface(aValue);
+    UpdateMetadata();
 }
 
 
@@ -676,18 +739,22 @@ void OhmSender::SetEnabled(TBool aValue)
 void OhmSender::Start(TIpAddress aValue)
 {
     if (!iStarted) {
-        if (iMulticast) {
-            iSocketOhm.OpenMulticast(aValue, iTtl, iMulticastEndpoint);
-            iTargetEndpoint.Replace(iMulticastEndpoint);
-			iTargetInterface = aValue;
-            iThreadMulticast->Signal();
+        if (aValue != 0)
+        {
+            if (iMulticast) {
+                iSocketOhm.OpenMulticast(aValue, iTtl, iMulticastEndpoint);
+                iTargetEndpoint.Replace(iMulticastEndpoint);
+                iTargetInterface = aValue;
+                iThreadMulticast->Signal();
+            }
+            else {
+                iSocketOhm.OpenUnicast(aValue, iTtl);
+                iTargetInterface = aValue;
+                iThreadUnicast->Signal();
+            }
+
+            iStarted = true;
         }
-        else {
-            iSocketOhm.OpenUnicast(aValue, iTtl);
-			iTargetInterface = aValue;
-            iThreadUnicast->Signal();
-        }
-        iStarted = true;
         iOhmInterface = aValue;
         UpdateUri();
     }
@@ -722,13 +789,16 @@ void OhmSender::StopZone()
 
 void OhmSender::StartZone(TIpAddress aValue)
 {
-	if (!iZoneStarted)
-	{
-		iSocketOhz.Open(aValue, iTtl);
-		iThreadZone->Signal();
-		iZoneStarted = true;
-		iOhzInterface = aValue;
-	}
+    if (!iZoneStarted)
+    {
+        if (aValue != 0)
+        {
+            iSocketOhz.Open(aValue, iTtl);
+            iThreadZone->Signal();
+            iZoneStarted = true;
+        }
+        iOhzInterface = aValue;
+    }
 }
 
 void OhmSender::SetTrack(const Brx& aUri, const Brx& aMetadata, TUint64 aSamplesTotal, TUint64 aSampleStart)
@@ -1239,7 +1309,10 @@ void OhmSender::UpdateUri()
 			iUri.Replace("ohu://0.0.0.0:0");
 	}
 
-	SendZoneUri(3);
+    if (iZoneStarted)
+    {
+        SendZoneUri(3);
+    }
 }
 
 void OhmSender::UpdateMetadata()
@@ -1262,14 +1335,7 @@ void OhmSender::UpdateMetadata()
 	iSenderMetadata.Append(iSenderUri.AbsoluteUri());
     iSenderMetadata.Append("</res>");
     
-	if (iImage.Bytes() > 0)
-	{
-		iSenderMetadata.Append("<upnp:albumArtURI>");
-		iSenderMetadata.Append("http://");
-		Endpoint(iServer->Port(), iServerInterface).AppendEndpoint(iSenderMetadata);
-		iSenderMetadata.Append("/icon");
-		iSenderMetadata.Append("</upnp:albumArtURI>");
-	}
+    iServer->AppendImageMetadata(iSenderMetadata);
 		
 	iSenderMetadata.Append("<upnp:class>object.item.audioItem</upnp:class>");
     iSenderMetadata.Append("</item>");
@@ -1610,8 +1676,8 @@ void OhmSender::TimerPresetInfoExpired()
 
 // OhmSender must run an http server just to serve up the image that it is constructed with and that is reported in its metadata
 
-OhmSenderSession::OhmSenderSession(Environment& aEnv, const OhmSender& aSender)
-	: iSender(aSender)
+OhmSenderSession::OhmSenderSession(Environment& aEnv, const IOhmSenderSessionData& aData)
+	: iData(aData)
     , iSemaphore("OHMS", 1)
 {
     iReadBuffer = new Srs<kMaxRequestBytes>(*this);
@@ -1708,10 +1774,10 @@ void OhmSenderSession::Get(TBool aWriteEntity)
 
     iWriterResponse->WriteStatus(HttpStatus::kOk, Http::eHttp11);
 
-    Http::WriteHeaderContentLength(*iWriterResponse, iSender.Image().Bytes());
+    Http::WriteHeaderContentLength(*iWriterResponse, iData.Image().Bytes());
 
 	IWriterAscii& writer = iWriterResponse->WriteHeaderField(Http::kHeaderContentType);
-	writer.Write(iSender.MimeType());
+	writer.Write(iData.MimeType());
 	writer.Write(Brn("; charset=\"utf-8\""));
 	writer.WriteFlush();
 
@@ -1722,7 +1788,7 @@ void OhmSenderSession::Get(TBool aWriteEntity)
     iResponseStarted = true;
 
 	if (aWriteEntity) {
-		iWriterBuffer->Write(iSender.Image());
+		iWriterBuffer->Write(iData.Image());
 	}
 
     iWriterBuffer->WriteFlush();

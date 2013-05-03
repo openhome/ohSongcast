@@ -75,6 +75,7 @@ void OhmSocket::Close()
 		delete (iTxSocket);
 	    iTxSocket = 0;
 	}
+    iThis.Replace(Endpoint());
 }
     
 void OhmSocket::Read(Bwx& aBuffer)

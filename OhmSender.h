@@ -19,6 +19,7 @@ class Environment;
 namespace Av {
 
 class ProviderSender;
+class OhmSenderServer;
 
 class OhmSenderDriver : public IOhmSenderDriver
 {
@@ -79,7 +80,6 @@ class OhmSender
     static const TUint kTimerAliveAudioTimeoutMs = 3000;
     static const TUint kTimerExpiryTimeoutMs = 10000;
     static const TUint kMaxSlaveCount = 4;
-	static const TUint kMaxMimeTypeBytes = 100;
     static const TUint kMaxZoneFrameBytes = 1 * 1024;
     static const TUint kTimerZoneUriDelayMs = 100;
     static const TUint kTimerPresetInfoDelayMs = 100;
@@ -94,8 +94,6 @@ public:
     OhmSender(Environment& aEnv, Net::DvDevice& aDevice, IOhmSenderDriver& aDriver, const Brx& aName, TUint aChannel, TIpAddress aInterface, TUint aTtl, TUint aLatency, TBool aMulticast, TBool aEnabled, const Brx& aImage, const Brx& aMimeType, TUint aPreset);
     ~OhmSender();
 
-	const Brx& Image() const;
-	const Brx& MimeType() const;
 	const Brx& SenderUri() const;
 	const Brx& SenderMetadata() const; // might change after SetName() and SetMulticast()
 
@@ -153,13 +151,10 @@ private:
     TUint iChannel;
     TIpAddress iOhmInterface;
     TIpAddress iOhzInterface;
-    TIpAddress iServerInterface;
     TUint iTtl;
     TUint iLatency;
     TBool iMulticast;
     TBool iEnabled;
-	Brh iImage;
-	Bws<kMaxMimeTypeBytes> iMimeType;
     OhmSocket iSocketOhm;
     OhzSocket iSocketOhz;
     Srs<kMaxAudioFrameBytes> iRxBuffer;
@@ -199,11 +194,19 @@ private:
     Bws<Ohm::kMaxTrackMetatextBytes> iTrackMetatext;
     TUint iSequenceTrack;
     TUint iSequenceMetatext;
-    SocketTcpServer* iServer;
 	TBool iClientControllingTrackMetadata;
 	TUint iSendZoneUriCount;
 	TUint iSendPresetInfoCount;
 	TUint iPreset;
+    OhmSenderServer* iServer;
+};
+
+class IOhmSenderSessionData
+{
+public:
+    virtual const Brx& Image() const = 0;
+    virtual const Brx& MimeType() const = 0;
+    virtual ~IOhmSenderSessionData() {}
 };
 
 class OhmSenderSession : public SocketTcpSession
@@ -211,14 +214,14 @@ class OhmSenderSession : public SocketTcpSession
     static const TUint kMaxRequestBytes = 4*1024;
     static const TUint kMaxResponseBytes = 4*1024;
 public:
-    OhmSenderSession(Environment& aEnv, const OhmSender& aSender);
+    OhmSenderSession(Environment& aEnv, const IOhmSenderSessionData& aData);
     ~OhmSenderSession();
 private:
     void Run();
     void Error(const HttpStatus& aStatus);
     void Get(TBool aWriteEntity);
 private:
-	const OhmSender& iSender;
+	const IOhmSenderSessionData& iData;
     Srs<kMaxRequestBytes>* iReadBuffer;
     ReaderHttpRequest* iReaderRequest;
     Sws<kMaxResponseBytes>* iWriterBuffer;
