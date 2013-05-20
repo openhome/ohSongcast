@@ -1,7 +1,6 @@
 #include "ReceiverManager1.h"
 
 #include <OpenHome/Private/Ascii.h>
-#include <OpenHome/Private/Maths.h>
 #include <OpenHome/Private/Arch.h>
 #include <OpenHome/Private/Debug.h>
 

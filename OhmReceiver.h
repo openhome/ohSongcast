@@ -78,6 +78,7 @@ private:
     void Send(TUint aType);
 
 private:
+    Environment& iEnv;
 	IOhmReceiver* iReceiver;
 	IOhmMsgFactory* iFactory;
     OhmSocket iSocket;
@@ -119,6 +120,7 @@ private:
     void TimerLeaveExpired();
 
 private:
+    Environment& iEnv;
 	IOhmReceiver* iReceiver;
 	IOhmMsgFactory* iFactory;
     OhmSocket iSocket;
@@ -195,6 +197,7 @@ private:
 	virtual void Process(OhmMsgMetatext& aMsg);
 
 private:
+    Environment& iEnv;
 	TIpAddress iInterface;
 	TUint iTtl;
     IOhmReceiverDriver* iDriver;

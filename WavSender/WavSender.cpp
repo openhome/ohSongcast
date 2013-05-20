@@ -4,7 +4,6 @@
 #include <OpenHome/Net/Core/CpDevice.h>
 #include <OpenHome/Net/Core/CpDeviceUpnp.h>
 #include <OpenHome/Private/Ascii.h>
-#include <OpenHome/Private/Maths.h>
 #include <OpenHome/Private/Thread.h>
 #include <OpenHome/Private/OptionParser.h>
 #include <OpenHome/Private/Debug.h>

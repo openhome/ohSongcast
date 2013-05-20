@@ -1,9 +1,9 @@
 #include "OhmSender.h"
 #include <OpenHome/Net/Core/DvAvOpenhomeOrgSender1.h>
 #include <OpenHome/Private/Ascii.h>
-#include <OpenHome/Private/Maths.h>
 #include <OpenHome/Private/Arch.h>
 #include <OpenHome/Private/Debug.h>
+#include <OpenHome/Private/Env.h>
 
 #include <stdio.h>
 
@@ -950,7 +950,7 @@ void OhmSender::RunMulticast()
 							// then both sending again, then both seeing each other's audio again,
 							// then both backing off for the same amount of time ...
                         
-							TUint delay = Random(kTimerAliveAudioTimeoutMs, kTimerAliveAudioTimeoutMs >> 1);
+							TUint delay = iEnv.Random(kTimerAliveAudioTimeoutMs, kTimerAliveAudioTimeoutMs >> 1);
 
                             // scope for AutoMutex
                             {
