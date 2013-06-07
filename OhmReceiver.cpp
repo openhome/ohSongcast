@@ -3,6 +3,7 @@
 #include <OpenHome/Private/Arch.h>
 #include <OpenHome/Private/Debug.h>
 #include <OpenHome/Private/Env.h>
+#include "Debug.h"
 
 #include <stdio.h>
 

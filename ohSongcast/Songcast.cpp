@@ -4,6 +4,7 @@
 
 #include <OpenHome/Private/Debug.h>
 #include <OpenHome/Private/Ascii.h>
+#include "../Debug.h"
 
 #include <algorithm>
 

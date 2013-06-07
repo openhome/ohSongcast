@@ -5,6 +5,7 @@
 #include <OpenHome/Private/OptionParser.h>
 #include <OpenHome/Private/Debug.h>
 #include <OpenHome/Private/TestFramework.h>
+#include "../Debug.h"
 
 #include <vector>
 #include <stdio.h>

@@ -4,6 +4,7 @@
 #include <OpenHome/Private/Arch.h>
 #include <OpenHome/Private/Debug.h>
 #include <OpenHome/Private/Uri.h>
+#include "../Debug.h"
 
 // Assumes only one Receiver per group (UPnP device)
 
