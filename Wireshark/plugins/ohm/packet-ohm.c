@@ -31,9 +31,12 @@
 
 
 #define OHM_MIN_PACKET_SIZE 	    8
-#define PROTO_NAME 					"Songcast OHM"
-#define PROTO_SHORT_NAME 			"OHM"
-#define PROTO_ABBREV  				"ohm"
+#define PROTO_NAME                  "Songcast OHM"
+#define PROTO_SHORT_NAME            "OHM"
+#define PROTO_ABBREV                "ohm"
+
+#define SHORT_NAME_OHM              "OHM"
+#define SHORT_NAME_OHU              "OHU"
 
 #define OHM_SIGNATURE               0x4f686d20
 
@@ -46,7 +49,6 @@
 #define OHM_TYPE_SLAVE              6
 #define OHM_TYPE_RESEND             7
 
-#define OHM_PORT                    51972
 
 static const value_string ohm_type_vals[] = {
 	{ OHM_TYPE_JOIN,		  "Join" },
@@ -140,11 +142,6 @@ static int dissect_ohm(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 	 * First do some checks that this is an OHM packet.
 	 * If not, return 0 to give another dissector a change to dissect it
 	*/
-	
-	dst_addr = ep_address_to_str(&pinfo->dst);
-	if (!strncmp(dst_addr, "239.253", 7) && (pinfo->destport != OHM_PORT)) {
-		return 0;
-	}
 
 	if (tvb_length(tvb) < OHM_MIN_PACKET_SIZE)
 		return 0;
@@ -159,7 +156,8 @@ static int dissect_ohm(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree)
 	type = tvb_get_guint8(tvb, offset++);
 
 	/* Make entries in Protocol column and Info column on summary display */
-	col_set_str(pinfo->cinfo, COL_PROTOCOL, PROTO_SHORT_NAME);
+	dst_addr = ep_address_to_str(&pinfo->dst);
+	col_set_str(pinfo->cinfo, COL_PROTOCOL, strncmp(dst_addr, "239.253", 7) ? SHORT_NAME_OHU : SHORT_NAME_OHM);
 	   
 	col_clear(pinfo->cinfo, COL_INFO);
 	col_set_str(pinfo->cinfo, COL_INFO, val_to_str(type, ohm_type_vals, "Unknown (%u"));
