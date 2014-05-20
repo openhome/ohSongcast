@@ -530,7 +530,7 @@ Songcast::Songcast(TIpAddress aSubnet, TUint aChannel, TUint aTtl, TUint aLatenc
 
 	Environment& env = iLibrary->Env();
     iSender = new OhmSender(env, *iDevice, *iDriver, name, iChannel, iAdapter, iTtl, iLatency, iMulticast, iEnabled, aImage, aMimeType, iPreset);
-	iNetworkMonitor = new NetworkMonitor(env, *iDevice, name);
+	//iNetworkMonitor = new NetworkMonitor(env, *iDevice, name);
 	iDevice->SetEnabled();
 	iReceiverManager = new ReceiverManager3(*cpStack, *this, iSender->SenderUri(), iSender->SenderMetadata());
 }
@@ -910,42 +910,33 @@ Songcast::~Songcast()
     LOG(kMedia, "Songcast::~Songcast\n");
 
 	iMutex->Wait();
-
 	iClosing = true;
-
 	iMutex->Signal();
 
     LOG(kMedia, "Songcast::~Songcast registered closing\n");
 
 	delete (iReceiverManager);
-
     LOG(kMedia, "Songcast::~Songcast receiver manager destroyed\n");
 
-	delete (iNetworkMonitor);
-
-	LOG(kMedia, "Songcast::~Songcast network monitor destroyed\n");
+	//delete (iNetworkMonitor);
+	//LOG(kMedia, "Songcast::~Songcast network monitor destroyed\n");
 
 	delete (iSender);
-
     LOG(kMedia, "Songcast::~Songcast sender destroyed\n");
 
 	delete (iDevice);
-
     LOG(kMedia, "Songcast::~Songcast device destroyed\n");
 
 	delete (iDriver);
-
     LOG(kMedia, "Songcast::~Songcast driver destroyed\n");
 
 	std::vector<Subnet*>::iterator it = iSubnetList.begin();
-
 	while (it != iSubnetList.end()) {
 		Subnet* subnet = *it;
 		(*iSubnetCallback)(iSubnetPtr, eRemoved, (THandle)subnet);
 		subnet->RemoveRef();
 		it++;
 	}
-
     LOG(kMedia, "Songcast::~Songcast subnets destroyed\n");
 
     delete iMutex;

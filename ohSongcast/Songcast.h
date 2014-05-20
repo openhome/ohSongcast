@@ -5,7 +5,7 @@
 #include <OpenHome/Net/Core/OhNet.h>
 
 #include "../OhmSender.h"
-#include "../../ohNetmon/NetworkMonitor.h"
+#include "../../ohNetmon/OpenHome/NetworkMonitor.h"
 #include "ReceiverManager3.h"
 
 ////////////////////////////////////////////
@@ -238,7 +238,7 @@ private:
 	TIpAddress iAdapter;
 	std::vector<Subnet*> iSubnetList;
 	OhmSender* iSender;
-	Net::NetworkMonitor* iNetworkMonitor;
+	//Net::NetworkMonitor* iNetworkMonitor;
 	IOhmSenderDriver* iDriver;
 	Net::DvDeviceStandard* iDevice;
 	ReceiverManager3* iReceiverManager;
