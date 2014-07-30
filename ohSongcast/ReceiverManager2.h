@@ -39,6 +39,7 @@ class ReceiverManager2Job
 {
 public:
 	ReceiverManager2Job(IReceiverManager2Handler& aHandler);
+    virtual ~ReceiverManager2Job() {}
 	void Set(ReceiverManager2Receiver& aReceiver, IReceiverManager2HandlerFunction aFunction);
     virtual void Execute();
 
@@ -125,7 +126,7 @@ class ReceiverManager2 : public IReceiverManager1Handler, public IReceiverManage
 public:
 	ReceiverManager2(Net::CpStack& aCpStack, IReceiverManager2Handler& aHandler);
     void Refresh();
-    ~ReceiverManager2();
+    virtual ~ReceiverManager2();
 
 private:
 	// IReceiverManager1Handler

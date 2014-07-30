@@ -5,7 +5,7 @@
 #include <OpenHome/Net/Core/OhNet.h>
 
 #include "../OhmSender.h"
-#include "../../ohNetmon/OpenHome/NetworkMonitor.h"
+//#include "../../ohNetmon/OpenHome/NetworkMonitor.h"
 #include "ReceiverManager3.h"
 
 ////////////////////////////////////////////
@@ -198,7 +198,7 @@ public:
 	void SetMetatext(const TChar* aValue);
 	void RefreshReceivers();
 
-	~Songcast();
+	virtual ~Songcast();
 
 private:
 	void SubnetListChanged();

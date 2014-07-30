@@ -33,7 +33,7 @@ namespace Av {
 		virtual void ReceiverVolumeChanged(ReceiverManager3Receiver& aReceiver);
 		virtual void ReceiverMuteChanged(ReceiverManager3Receiver& aReceiver);
 		virtual void ReceiverVolumeLimitChanged(ReceiverManager3Receiver& aReceiver);
-		~ReceiverManager3Logger();
+		virtual ~ReceiverManager3Logger();
 	private:
 		ReceiverManager3* iReceiverManager;
 	};

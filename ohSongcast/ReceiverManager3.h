@@ -107,7 +107,7 @@ public:
 	ReceiverManager3(Net::CpStack& aCpStack, IReceiverManager3Handler& aHandler, const Brx& aUri, const Brx& aMetadata);
 	void SetMetadata(const Brx& aMetadata);
     void Refresh();
-    ~ReceiverManager3();
+    virtual ~ReceiverManager3();
 
 private:
 	// IReceiverManager2Handler
