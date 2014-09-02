@@ -10,6 +10,7 @@ The code can be built for Windows, Mac or Linux and requires:
 - MSVC (Windows)
 - GCC (Mac / Linux)
 - ohNet (git@github.com:openhome/ohNet.git)
+- ohNetGenerated (git@github.com:openhome/ohNetGenerated.git)
 - ohNetmon (git@github.com:openhome/ohTopology.git)
 - ohTopology (git@github.com:openhome/ohNetmon.git)
 
@@ -17,10 +18,12 @@ All code must be cloned to the same root directory and can then be built using:
 
 cd ohNet
 make ohNetCore proxies devices TestFramework
+cd ../ohNetGenerated
+make
 cd ../ohNetmon
 make
 cd ../ohTopology
 ./waf configure --ohnet=../ohNet --debug --dest-platform=[Windows-x86|Mac-x86|Linux-x86]
 ./waf build
 cd ../ohSongcast
-make
+make release=1
