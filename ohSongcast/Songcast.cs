@@ -319,7 +319,7 @@ namespace OpenHome.Songcast
                 iMutex.WaitOne();
                 uint address = iAddress;
                 iMutex.ReleaseMutex();
-                return (iAddress);
+                return (address);
             }
         }
 
