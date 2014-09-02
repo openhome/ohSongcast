@@ -2,7 +2,7 @@ objects_sender   = $(objdir)Ohm.$(objext) \
                    $(objdir)OhmMsg.$(objext) \
                    $(objdir)OhmSocket.$(objext) \
                    $(objdir)OhmSender.$(objext) \
-                   $(ohnetdir)DvAvOpenhomeOrgSender1.$(objext)
+                   $(ohnetgenerateddir)DvAvOpenhomeOrgSender1.$(objext)
 
 headers_sender   = Ohm.h \
                    OhmMsg.h \
@@ -16,7 +16,7 @@ objects_receiver = $(objdir)Ohm.$(objext) \
                    $(objdir)OhmReceiver.$(objext) \
 				   $(objdir)OhmProtocolMulticast.$(objext) \
 				   $(objdir)OhmProtocolUnicast.$(objext) \
-                   $(ohnetdir)DvAvOpenhomeOrgReceiver1.$(objext)
+                   $(ohnetgenerateddir)DvAvOpenhomeOrgReceiver1.$(objext)
 
 headers_receiver = Ohm.h \
                    OhmMsg.h \
@@ -44,9 +44,9 @@ $(objdir)OhmProtocolMulticast.$(objext) : OhmProtocolMulticast.cpp OhmReceiver.h
 $(objdir)OhmProtocolUnicast.$(objext) : OhmProtocolUnicast.cpp OhmReceiver.h
 	$(compiler)OhmProtocolUnicast.$(objext) -c $(cflags) $(includes) OhmProtocolUnicast.cpp
 
-objects_topology = $(ohnetdir)CpAvOpenhomeOrgProduct1.$(objext) \
-                   $(ohnetdir)CpAvOpenhomeOrgVolume1.$(objext) \
-                   $(ohnetdir)CpAvOpenhomeOrgReceiver1.$(objext) \
+objects_topology = $(ohnetgenerateddir)CpAvOpenhomeOrgProduct1.$(objext) \
+                   $(ohnetgenerateddir)CpAvOpenhomeOrgVolume1.$(objext) \
+                   $(ohnetgenerateddir)CpAvOpenhomeOrgReceiver1.$(objext) \
 				   $(objdir)ReceiverManager1.$(objext) \
                    $(objdir)ReceiverManager2.$(objext) \
                    $(objdir)ReceiverManager3.$(objext) \
@@ -75,7 +75,7 @@ $(objdir)Songcast.$(objext) : ohSongcast$(dirsep)Songcast.cpp $(headers_songcast
 
 
 objects_netmon   = $(ohnetmondir)NetworkMonitor.$(objext) \
-                   $(ohnetdir)DvAvOpenhomeOrgNetworkMonitor1.$(objext)
+                   $(ohnetgenerateddir)DvAvOpenhomeOrgNetworkMonitor1.$(objext)
 
 
 all_common_native : TestReceiverManager1 TestReceiverManager2 TestReceiverManager3 ZoneWatcher WavSender Receiver
