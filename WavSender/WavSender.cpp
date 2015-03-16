@@ -119,7 +119,7 @@ PcmSender::PcmSender(Environment& aEnv, OhmSender* aSender, OhmSenderDriver* aDr
 	, iChannels(aChannels)
 	, iBitDepth(aBitDepth)
 	, iTotalBytes(aSampleCount * aChannels * aBitDepth / 8)
-	, iTimer(aEnv, MakeFunctor(*this, &PcmSender::TimerExpired))
+	, iTimer(aEnv, MakeFunctor(*this, &PcmSender::TimerExpired), "PcmSender")
 	, iMutex("WAVP")
 	, iPaused(false)
 	, iSpeed(kSpeedNormal)

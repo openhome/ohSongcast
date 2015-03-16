@@ -19,9 +19,9 @@ OhmProtocolUnicast::OhmProtocolUnicast(Environment& aEnv, IOhmReceiver& aReceive
 	, iFactory(&aFactory)
     , iSocket(aEnv)
     , iReadBuffer(iSocket)
-    , iTimerJoin(aEnv, MakeFunctor(*this, &OhmProtocolUnicast::SendJoin))
-    , iTimerListen(aEnv, MakeFunctor(*this, &OhmProtocolUnicast::SendListen))
-    , iTimerLeave(aEnv, MakeFunctor(*this, &OhmProtocolUnicast::TimerLeaveExpired))
+    , iTimerJoin(aEnv, MakeFunctor(*this, &OhmProtocolUnicast::SendJoin), "OhmProtocolUnicastJoin")
+    , iTimerListen(aEnv, MakeFunctor(*this, &OhmProtocolUnicast::SendListen), "OhmProtocolUnicastListen")
+    , iTimerLeave(aEnv, MakeFunctor(*this, &OhmProtocolUnicast::TimerLeaveExpired), "OhmProtocolUnicastLeave")
 {
 }
 
