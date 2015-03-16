@@ -82,7 +82,7 @@ using namespace OpenHome::Av;
 ProviderSender::ProviderSender(Environment& aEnv, Net::DvDevice& aDevice)
     : DvProviderAvOpenhomeOrgSender1(aDevice)
     , iMutex("PSND")
-    , iTimerAudioPresent(aEnv, MakeFunctor(*this, &ProviderSender::TimerAudioPresentExpired))
+    , iTimerAudioPresent(aEnv, MakeFunctor(*this, &ProviderSender::TimerAudioPresentExpired), "ProviderSenderAudioPresent")
 {
 	EnablePropertyPresentationUrl();
 	EnablePropertyMetadata();
@@ -534,11 +534,11 @@ OhmSender::OhmSender(Environment& aEnv, Net::DvDevice& aDevice, IOhmSenderDriver
     , iActive(false)
     , iAliveJoined(false)
     , iAliveBlocked(false)
-    , iTimerAliveJoin(aEnv, MakeFunctor(*this, &OhmSender::TimerAliveJoinExpired))
-    , iTimerAliveAudio(aEnv, MakeFunctor(*this, &OhmSender::TimerAliveAudioExpired))
-    , iTimerExpiry(aEnv, MakeFunctor(*this, &OhmSender::TimerExpiryExpired))
-    , iTimerZoneUri(aEnv, MakeFunctor(*this, &OhmSender::TimerZoneUriExpired))
-    , iTimerPresetInfo(aEnv, MakeFunctor(*this, &OhmSender::TimerPresetInfoExpired))
+    , iTimerAliveJoin(aEnv, MakeFunctor(*this, &OhmSender::TimerAliveJoinExpired), "OhmSenderAliveJoin")
+    , iTimerAliveAudio(aEnv, MakeFunctor(*this, &OhmSender::TimerAliveAudioExpired), "OhmSenderAliveAudio")
+    , iTimerExpiry(aEnv, MakeFunctor(*this, &OhmSender::TimerExpiryExpired), "OhmSenderExpiry")
+    , iTimerZoneUri(aEnv, MakeFunctor(*this, &OhmSender::TimerZoneUriExpired), "OhmSenderZoneUri")
+    , iTimerPresetInfo(aEnv, MakeFunctor(*this, &OhmSender::TimerPresetInfoExpired), "OhmSenderPresetInfo")
     , iSequenceTrack(0)
     , iSequenceMetatext(0)
 	, iClientControllingTrackMetadata(false)
