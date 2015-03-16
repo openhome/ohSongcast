@@ -162,7 +162,6 @@ int CDECL main(int aArgc, char* aArgv[])
 
     std::vector<NetworkAdapter*>* subnetList = lib->CreateSubnetList();
     TIpAddress subnet = (*subnetList)[optionAdapter.Value()]->Subnet();
-    TIpAddress adapter = (*subnetList)[optionAdapter.Value()]->Address();
     Library::DestroySubnetList(subnetList);
 
     TUint channel = 0;
