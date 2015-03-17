@@ -23,7 +23,8 @@ void OhmHeader::Internalise(IReader& aReader)
 {
     ReaderBinary reader(aReader);
 
-    Brn ohm = reader.Read(4);
+    Bws<4> ohm;
+    reader.ReadReplace(4, ohm);
     
     if(ohm != kOhm) {
         THROW(OhmError);
@@ -162,7 +163,7 @@ void OhmHeaderAudio::Internalise(IReader& aReader, const OhmHeader& aHeader)
     TUint bytes = readerBinary.ReadUintBe(1);
     
     if(bytes > 0) {
-        iCodecName.Replace(aReader.Read(bytes));
+        readerBinary.ReadReplace(bytes, iCodecName);
     }
     else {
         iCodecName.Replace(Brx::Empty());
@@ -368,7 +369,8 @@ void OhzHeader::Internalise(IReader& aReader)
 {
     ReaderBinary reader(aReader);
 
-    Brn ohz = reader.Read(4);
+    Bws<4> ohz;
+    reader.ReadReplace(4, ohz);
 
     if(ohz != kOhz) {
         THROW(OhzError);

@@ -82,7 +82,7 @@ using namespace OpenHome::Av;
 ProviderSender::ProviderSender(Environment& aEnv, Net::DvDevice& aDevice)
     : DvProviderAvOpenhomeOrgSender1(aDevice)
     , iMutex("PSND")
-    , iTimerAudioPresent(aEnv, MakeFunctor(*this, &ProviderSender::TimerAudioPresentExpired))
+    , iTimerAudioPresent(aEnv, MakeFunctor(*this, &ProviderSender::TimerAudioPresentExpired), "ProviderSender")
 {
 	EnablePropertyPresentationUrl();
 	EnablePropertyMetadata();
@@ -534,11 +534,11 @@ OhmSender::OhmSender(Environment& aEnv, Net::DvDevice& aDevice, IOhmSenderDriver
     , iActive(false)
     , iAliveJoined(false)
     , iAliveBlocked(false)
-    , iTimerAliveJoin(aEnv, MakeFunctor(*this, &OhmSender::TimerAliveJoinExpired))
-    , iTimerAliveAudio(aEnv, MakeFunctor(*this, &OhmSender::TimerAliveAudioExpired))
-    , iTimerExpiry(aEnv, MakeFunctor(*this, &OhmSender::TimerExpiryExpired))
-    , iTimerZoneUri(aEnv, MakeFunctor(*this, &OhmSender::TimerZoneUriExpired))
-    , iTimerPresetInfo(aEnv, MakeFunctor(*this, &OhmSender::TimerPresetInfoExpired))
+    , iTimerAliveJoin(aEnv, MakeFunctor(*this, &OhmSender::TimerAliveJoinExpired), "OhmSenderAliveJoin")
+    , iTimerAliveAudio(aEnv, MakeFunctor(*this, &OhmSender::TimerAliveAudioExpired), "OhmSenderAliveAudio")
+    , iTimerExpiry(aEnv, MakeFunctor(*this, &OhmSender::TimerExpiryExpired), "OhmSenderExpiry")
+    , iTimerZoneUri(aEnv, MakeFunctor(*this, &OhmSender::TimerZoneUriExpired), "OhmSenderZoneUri")
+    , iTimerPresetInfo(aEnv, MakeFunctor(*this, &OhmSender::TimerPresetInfoExpired), "OhmSenderPresetInfo")
     , iSequenceTrack(0)
     , iSequenceMetatext(0)
 	, iClientControllingTrackMetadata(false)
@@ -1681,8 +1681,9 @@ OhmSenderSession::OhmSenderSession(Environment& aEnv, const IOhmSenderSessionDat
 	: iData(aData)
     , iSemaphore("OHMS", 1)
 {
-    iReadBuffer = new Srs<kMaxRequestBytes>(*this);
-    iReaderRequest = new ReaderHttpRequest(aEnv, *iReadBuffer);
+    iReadBuffer = new Srs<1024>(*this);
+    iReaderUntil = new ReaderUntilS<kMaxRequestBytes>(*iReadBuffer);
+    iReaderRequest = new ReaderHttpRequest(aEnv, *iReaderUntil);
     iWriterBuffer = new Sws<kMaxResponseBytes>(*this);
     iWriterResponse = new WriterHttpResponse(*iWriterBuffer);
     iReaderRequest->AddMethod(Http::kMethodGet);
@@ -1697,6 +1698,7 @@ OhmSenderSession::~OhmSenderSession()
     delete iWriterResponse;
     delete iWriterBuffer;
     delete iReaderRequest;
+    delete iReaderUntil;
     delete iReadBuffer;
 }
 

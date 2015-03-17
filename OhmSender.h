@@ -222,7 +222,8 @@ private:
     void Get(TBool aWriteEntity);
 private:
 	const IOhmSenderSessionData& iData;
-    Srs<kMaxRequestBytes>* iReadBuffer;
+    Srx* iReadBuffer;
+    ReaderUntil* iReaderUntil;
     ReaderHttpRequest* iReaderRequest;
     Sws<kMaxResponseBytes>* iWriterBuffer;
     WriterHttpResponse* iWriterResponse;
