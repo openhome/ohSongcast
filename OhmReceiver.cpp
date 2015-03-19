@@ -34,10 +34,10 @@ OhmReceiver::OhmReceiver(Environment& aEnv, TIpAddress aInterface, TUint aTtl, I
 	, iEndpointNull(0, Brn("0.0.0.0"))
     , iSocketZone(aEnv)
 	, iRxZone(iSocketZone)
-    , iTimerZoneQuery(aEnv, MakeFunctor(*this, &OhmReceiver::SendZoneQuery))
+    , iTimerZoneQuery(aEnv, MakeFunctor(*this, &OhmReceiver::SendZoneQuery), "OhmReceiverZoneQuery")
 	, iFactory(500, 10, 10)
 	, iRepairing(false)
-    , iTimerRepair(aEnv, MakeFunctor(*this, &OhmReceiver::TimerRepairExpired))
+    , iTimerRepair(aEnv, MakeFunctor(*this, &OhmReceiver::TimerRepairExpired), "OhmReceiverRepair")
 {
 	iProtocolMulticast = new OhmProtocolMulticast(aEnv, *this, iFactory);
 	iProtocolUnicast = new OhmProtocolUnicast(aEnv, *this, iFactory);

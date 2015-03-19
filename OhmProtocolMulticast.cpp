@@ -44,8 +44,8 @@ OhmProtocolMulticast::OhmProtocolMulticast(Environment& aEnv, IOhmReceiver& aRec
 	, iFactory(&aFactory)
     , iSocket(aEnv)
     , iReadBuffer(iSocket)
-    , iTimerJoin(aEnv, MakeFunctor(*this, &OhmProtocolMulticast::SendJoin))
-    , iTimerListen(aEnv, MakeFunctor(*this, &OhmProtocolMulticast::SendListen))
+    , iTimerJoin(aEnv, MakeFunctor(*this, &OhmProtocolMulticast::SendJoin), "OhmProtocolMulticastJoin")
+    , iTimerListen(aEnv, MakeFunctor(*this, &OhmProtocolMulticast::SendListen), "OhmProtocolMulticastListen")
 {
 }
 

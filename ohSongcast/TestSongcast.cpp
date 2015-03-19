@@ -157,11 +157,10 @@ int CDECL main(int aArgc, char* aArgv[])
     gRoom.Replace(optionRoom.Value());
 
     InitialisationParams* initParams = InitialisationParams::Create();
-	UpnpLibrary::Initialise(initParams);
-    std::vector<NetworkAdapter*>* subnetList = UpnpLibrary::CreateSubnetList();
+	Library* lib = new Library(initParams);
+    std::vector<NetworkAdapter*>* subnetList = lib->CreateSubnetList();
     TIpAddress subnet = (*subnetList)[optionAdapter.Value()]->Subnet();
-    UpnpLibrary::DestroySubnetList(subnetList);
-    UpnpLibrary::Close();
+    Library::DestroySubnetList(subnetList);
 
     TUint channel = 0;
     TUint ttl = 4;
@@ -174,6 +173,7 @@ int CDECL main(int aArgc, char* aArgv[])
 
 	if (Songcast == 0) {
 		printf("Songcast error\n");
+        delete lib;
 		return(1);
 	}
 
@@ -248,6 +248,7 @@ int CDECL main(int aArgc, char* aArgv[])
     }
 
 	SongcastDestroy(Songcast);
+    delete lib;
 
 	printf("\n");
 	
