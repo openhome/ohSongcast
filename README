@@ -23,7 +23,7 @@ make
 cd ../ohNetmon
 make
 cd ../ohTopology
-./waf configure --ohnet=../ohNet --debug --dest-platform=[Windows-x86|Mac-x86|Linux-x86]
+./waf configure
 ./waf build
 cd ../ohSongcast
 make release=1
