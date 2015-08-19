@@ -239,7 +239,7 @@ void OhmSenderDriverWindows::SetEndpointEnabled(TBool aValue)
 
 	IPolicyConfigVista *pPolicyConfig;
 	
-    hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
+    hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_INPROC_SERVER, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
 
 	if (SUCCEEDED(hr))
 	{
@@ -247,16 +247,28 @@ void OhmSenderDriverWindows::SetEndpointEnabled(TBool aValue)
 		pPolicyConfig->Release();
 	}
 
-	// ... and the following works if we are on Windows 7
+	// ... and the following works if we are on Windows 7 or Windows 8
 
 	IPolicyConfig *pPolicyConfig2;
 	
-    hr = CoCreateInstance(__uuidof(CPolicyConfigClient), NULL, CLSCTX_ALL, __uuidof(IPolicyConfig), (LPVOID *)&pPolicyConfig2);
+    hr = CoCreateInstance(__uuidof(CPolicyConfigClient), NULL, CLSCTX_INPROC_SERVER, __uuidof(IPolicyConfig), (LPVOID *)&pPolicyConfig2);
 
 	if (SUCCEEDED(hr))
 	{
 		pPolicyConfig2->SetEndpointVisibility(iEndpointId, aValue ? 1 : 0);
 		pPolicyConfig2->Release();
+	}
+
+	// ... and the following works if we are on Windows 10
+
+	IPolicyConfig *pPolicyConfig3;
+	
+    hr = CoCreateInstance(__uuidof(CPolicyConfigClient), NULL, CLSCTX_INPROC_SERVER, __uuidof(IPolicyConfigWindows10), (LPVOID *)&pPolicyConfig3);
+
+	if (SUCCEEDED(hr))
+	{
+		pPolicyConfig3->SetEndpointVisibility(iEndpointId, aValue ? 1 : 0);
+		pPolicyConfig3->Release();
 	}
 }
 

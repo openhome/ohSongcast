@@ -50,7 +50,7 @@ objects_topology = $(ohnetgenerateddir)CpAvOpenhomeOrgProduct1.$(objext) \
 				   $(objdir)ReceiverManager1.$(objext) \
                    $(objdir)ReceiverManager2.$(objext) \
                    $(objdir)ReceiverManager3.$(objext) \
-                   $(ohtopologydir)libohTopology.$(libext)
+                   $(ohtopologydir)$(libprefix)ohTopology.$(libext)
 
 headers_topology = ohSongcast$(dirsep)ReceiverManager1.h \
                    ohSongcast$(dirsep)ReceiverManager2.h \

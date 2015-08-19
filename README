@@ -10,11 +10,11 @@ The code can be built for Windows, Mac or Linux and requires:
 - MSVC (Windows)
 - GCC (Linux)
 - Clang (Mac)
-- ohNet (git@github.com:openhome/ohNet.git)
-- ohdevtools (git@github.com:openhome/ohdevtools.git)
-- ohNetGenerated (git@github.com:openhome/ohNetGenerated.git)
-- ohNetmon (git@github.com:openhome/ohTopology.git)
-- ohTopology (git@github.com:openhome/ohNetmon.git)
+- ohNet (https://github.com/openhome/ohNet.git)
+- ohdevtools (https://github.com/openhome/ohdevtools.git)
+- ohNetGenerated (https://github.com/openhome/ohNetGenerated.git)
+- ohNetmon (https://github.com/openhome/ohNetmon.git)
+- ohTopology (https://github.com/openhome/ohTopology.git)
 
 All code must be cloned to the same root directory and can then be built using:
 
@@ -25,11 +25,11 @@ cd ../ohNetGenerated
 make
 cd ../ohNetmon
 ./go fetch --all
-./waf configure
+./waf configure --ohnet=../ohNet
 ./waf build
 cd ../ohTopology
 ./go fetch --all
-./waf configure
+./waf configure --ohnet=../ohNet
 ./waf build
 cd ../ohSongcast
 make release=1
