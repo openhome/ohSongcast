@@ -1,6 +1,6 @@
 ohSongcast can be used to provide a virtual soundcard which sends a device's
 audio output to another device which implements the OpenHome Receiver service
-(http://www.openhome.org/wiki/Av:Developer:ReceiverService).
+(http://wiki.openhome.org/wiki/Av:Developer:ReceiverService).
 
 Full versions exist for Windows (7 onwards) and Mac OSX (Lion onwards).
 Much of the code builds for other platforms but without integration their audio subsystems.
