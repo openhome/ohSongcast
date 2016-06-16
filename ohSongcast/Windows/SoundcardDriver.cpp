@@ -325,13 +325,13 @@ TBool OhmSenderDriverWindows::FindDriver(const char* aDomain)
                         prop.Id = KSPROPERTY_OHSOUNDCARD_VERSION;
                         prop.Flags = KSPROPERTY_TYPE_GET;
 
-                        TByte buffer[4];
+                        TByte buffer2[4];
 
                         DWORD bytes;
 
-                        if (DeviceIoControl(iHandle, IOCTL_KS_PROPERTY, &prop, sizeof(KSPROPERTY), buffer, sizeof(buffer), &bytes, 0))
+                        if (DeviceIoControl(iHandle, IOCTL_KS_PROPERTY, &prop, sizeof(KSPROPERTY), buffer2, sizeof(buffer2), &bytes, 0))
                         {
-                            TUint version = *(TUint*)buffer;
+                            TUint version = *(TUint*)buffer2;
 
                             if (version == 1) {
                                 delete [] detail;
