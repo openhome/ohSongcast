@@ -19,7 +19,7 @@ The code can be built for Windows, Mac or Linux and requires:
 All code must be cloned to the same root directory and can then be built using:
 
 cd ohNet
-make ohNetCore proxies devices TestFramework
+make ohNetCore proxies devices TestFramework ohNet.net.dll
 cd ../ohNetGenerated
 ./go fetch --all
 make
@@ -33,3 +33,21 @@ cd ../ohTopology
 ./waf build
 cd ../ohSongcast
 make release=1
+
+and for a debug build:
+
+cd ohNet
+make ohNetCore proxies devices TestFramework ohNet.net.dll debug=1
+cd ../ohNetGenerated
+./go fetch --all	### note the missing '--debug' argument is intentional
+make debug=1
+cd ../ohNetmon
+./go fetch --all --debug
+./waf configure --ohnet=../ohNet --debug
+./waf build
+cd ../ohTopology
+./go fetch --all --debug
+./waf configure --ohnet=../ohNet --debug
+./waf build
+cd ../ohSongcast
+make debug=1
