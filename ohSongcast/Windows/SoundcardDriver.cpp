@@ -60,6 +60,164 @@ THandle STDCALL SongcastCreate(const char* aDomain, uint32_t aSubnet, uint32_t a
 	return (0);
 }
 
+
+// Policy factory
+
+class PolicyFactory
+{
+public:
+	static IPolicyConfig* CreatePolicy7or8()
+	{
+		IPolicyConfig *pPolicyConfig;
+		HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigClient), NULL, CLSCTX_INPROC_SERVER, __uuidof(IPolicyConfig), (LPVOID *)&pPolicyConfig);
+		return (SUCCEEDED(hr)) ? pPolicyConfig : NULL;
+	}
+
+	static IPolicyConfig* CreatePolicy10()
+	{
+		IPolicyConfig *pPolicyConfig;
+		HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigClient), NULL, CLSCTX_INPROC_SERVER, __uuidof(IPolicyConfigWindows10), (LPVOID *)&pPolicyConfig);
+		return (SUCCEEDED(hr)) ? pPolicyConfig : NULL;
+	}
+
+	static IPolicyConfigVista* CreatePolicyVista()
+	{
+		IPolicyConfigVista *pPolicyConfig;
+		HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_INPROC_SERVER, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
+		return (SUCCEEDED(hr)) ? pPolicyConfig : NULL;
+	}
+};
+
+
+// AudioEndpoint - encapsulates calling of COM APIs
+
+AudioEndpoint::AudioEndpoint()
+{
+	Set(L"\0");
+}
+
+AudioEndpoint::AudioEndpoint(LPCWSTR aId)
+{
+	Set(aId);
+}
+
+AudioEndpoint::AudioEndpoint(IMMDeviceEnumerator *aDeviceEnumerator)
+{
+	Set(L"\0");
+
+	IMMDevice *pDevice;
+	HRESULT hr = aDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pDevice);
+	if (SUCCEEDED(hr))
+	{
+		LPWSTR id;
+		hr = pDevice->GetId(&id);
+		if (SUCCEEDED(hr))
+		{
+			Set(id);
+			CoTaskMemFree(id);
+		}
+		pDevice->Release();
+	}
+}
+
+TBool AudioEndpoint::operator==(const AudioEndpoint &aOther) const
+{
+	return wcscmp(iId, aOther.iId) == 0;
+}
+
+TBool AudioEndpoint::operator!=(const AudioEndpoint &aOther) const
+{
+	return !(*this == aOther);
+}
+
+TBool AudioEndpoint::IsValid() const
+{
+	AudioEndpoint invalid;
+	return (*this != invalid);
+}
+
+void AudioEndpoint::Set(LPCWSTR aId)
+{
+	if (aId != NULL) {
+		wcscpy(iId, aId);
+	}
+	else {
+		wcscpy(iId, L"\0");
+	}
+}
+
+void AudioEndpoint::Set(const AudioEndpoint& aEndpoint)
+{
+	wcscpy(iId, aEndpoint.iId);
+}
+
+void AudioEndpoint::SetAsDefault()
+{
+	if (!IsValid())
+		return;
+
+	// The following works if we are on vista ...
+
+	IPolicyConfigVista *pPolicyConfig = PolicyFactory::CreatePolicyVista();
+	if (pPolicyConfig != NULL)
+	{
+		pPolicyConfig->SetDefaultEndpoint(iId, eConsole);
+		pPolicyConfig->Release();
+	}
+
+	// ... and the following works if we are on Windows 7 or Windows 8
+
+	IPolicyConfig *pPolicyConfig2 = PolicyFactory::CreatePolicy7or8();
+	if (pPolicyConfig2 != NULL)
+	{
+		pPolicyConfig2->SetDefaultEndpoint(iId, eConsole);
+		pPolicyConfig2->Release();
+	}
+
+	// ... and the following works if we are on Windows 10
+
+	IPolicyConfig *pPolicyConfig3 = PolicyFactory::CreatePolicy10();
+	if (pPolicyConfig3 != NULL)
+	{
+		pPolicyConfig3->SetDefaultEndpoint(iId, eConsole);
+		pPolicyConfig3->Release();
+	}
+}
+
+void AudioEndpoint::SetEnabled(TBool aEnabled)
+{
+	if (!IsValid())
+		return;
+
+	// The following works if we are on vista ...
+
+	IPolicyConfigVista *pPolicyConfig = PolicyFactory::CreatePolicyVista();
+	if (pPolicyConfig != NULL)
+	{
+		pPolicyConfig->SetEndpointVisibility(iId, aEnabled ? 1 : 0);
+		pPolicyConfig->Release();
+	}
+
+	// ... and the following works if we are on Windows 7 or Windows 8
+
+	IPolicyConfig *pPolicyConfig2 = PolicyFactory::CreatePolicy7or8();
+	if (pPolicyConfig2 != NULL)
+	{
+		pPolicyConfig2->SetEndpointVisibility(iId, aEnabled ? 1 : 0);
+		pPolicyConfig2->Release();
+	}
+
+	// ... and the following works if we are on Windows 10
+
+	IPolicyConfig *pPolicyConfig3 = PolicyFactory::CreatePolicy10();
+	if (pPolicyConfig3 != NULL)
+	{
+		pPolicyConfig3->SetEndpointVisibility(iId, aEnabled ? 1 : 0);
+		pPolicyConfig3->Release();
+	}
+}
+
+
 // OhmSenderDriverWindows
 
 static const TUint KSPROPERTY_OHSOUNDCARD_VERSION = 0;
@@ -71,7 +229,9 @@ static const TUint KSPROPERTY_OHSOUNDCARD_LATENCY = 5;
 static const TUint KSPROPERTY_OHSOUNDCARD_RESEND = 6;
 
 OhmSenderDriverWindows::OhmSenderDriverWindows(const char* aDomain, const char* aManufacturer, TBool aEnabled)
-	: iEnabled(aEnabled)
+	: iSongcastEndpoint()
+	, iPreviousEndpoint()
+	, iEnabled(aEnabled)
 	, iRefCount(1)
 	, iSongcast(NULL)
 	, iDeviceEnumerator(NULL)
@@ -183,7 +343,7 @@ TBool OhmSenderDriverWindows::FindEndpoint(const char* aManufacturer)
 
 									if (!wcscmp(friendlyName.pwszVal, model))
 									{
-										wcscpy(iEndpointId, wstrID);
+										iSongcastEndpoint.Set(wstrID);
 										PropVariantClear(&friendlyName);
 										pStore->Release();
 										pDevice->Release();
@@ -216,60 +376,6 @@ TBool OhmSenderDriverWindows::FindEndpoint(const char* aManufacturer)
 	}
 
 	return (false);
-}
-
-void OhmSenderDriverWindows::SetDefaultAudioPlaybackDevice()
-{	
-	IPolicyConfigVista *pPolicyConfig;
-	
-    HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
-
-	if (SUCCEEDED(hr))
-	{
-		hr = pPolicyConfig->SetDefaultEndpoint(iEndpointId, eConsole);
-		pPolicyConfig->Release();
-	}
-}
-
-void OhmSenderDriverWindows::SetEndpointEnabled(TBool aValue)
-{	
-	HRESULT hr;
-	
-	// The following works if we are on vista ...
-
-	IPolicyConfigVista *pPolicyConfig;
-	
-    hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_INPROC_SERVER, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
-
-	if (SUCCEEDED(hr))
-	{
-		pPolicyConfig->SetEndpointVisibility(iEndpointId, aValue ? 1 : 0);
-		pPolicyConfig->Release();
-	}
-
-	// ... and the following works if we are on Windows 7 or Windows 8
-
-	IPolicyConfig *pPolicyConfig2;
-	
-    hr = CoCreateInstance(__uuidof(CPolicyConfigClient), NULL, CLSCTX_INPROC_SERVER, __uuidof(IPolicyConfig), (LPVOID *)&pPolicyConfig2);
-
-	if (SUCCEEDED(hr))
-	{
-		pPolicyConfig2->SetEndpointVisibility(iEndpointId, aValue ? 1 : 0);
-		pPolicyConfig2->Release();
-	}
-
-	// ... and the following works if we are on Windows 10
-
-	IPolicyConfig *pPolicyConfig3;
-	
-    hr = CoCreateInstance(__uuidof(CPolicyConfigClient), NULL, CLSCTX_INPROC_SERVER, __uuidof(IPolicyConfigWindows10), (LPVOID *)&pPolicyConfig3);
-
-	if (SUCCEEDED(hr))
-	{
-		pPolicyConfig3->SetEndpointVisibility(iEndpointId, aValue ? 1 : 0);
-		pPolicyConfig3->Release();
-	}
 }
 
 TBool OhmSenderDriverWindows::FindDriver(const char* aDomain)
@@ -377,11 +483,30 @@ void OhmSenderDriverWindows::SetEnabled(TBool aValue)
 
     DeviceIoControl(iHandle, IOCTL_KS_PROPERTY, &prop, sizeof(KSPROPERTY), &value, sizeof(value), &bytes, 0);
 
-	SetEndpointEnabled(aValue);
-
 	if (aValue)
 	{
-		SetDefaultAudioPlaybackDevice();
+		// change the current audio output device to be the songcast device
+		AudioEndpoint current(iDeviceEnumerator);
+
+		// change the current audio device only if it is not already set
+		if (current != iSongcastEndpoint)
+		{
+			iPreviousEndpoint.Set(current);
+			iSongcastEndpoint.SetAsDefault();
+		}
+	}
+	else
+	{
+		// change the current audio output device to be what it was previously
+		AudioEndpoint current(iDeviceEnumerator);
+
+		if (current == iSongcastEndpoint)
+		{
+			if (iPreviousEndpoint.IsValid())
+			{
+				iPreviousEndpoint.SetAsDefault();
+			}
+		}
 	}
 }
 
@@ -504,8 +629,8 @@ HRESULT STDCALL OhmSenderDriverWindows::QueryInterface(REFIID aId, VOID** aInter
 HRESULT STDCALL OhmSenderDriverWindows::OnDefaultDeviceChanged(EDataFlow aFlow, ERole aRole, LPCWSTR aDeviceId)
 {
 	if (aFlow == eRender && aRole == eMultimedia) {
-		TBool enabled = ((aDeviceId != 0) && (wcscmp(iEndpointId, aDeviceId) == 0));
-		iSongcast->SetEnabled(enabled);
+		AudioEndpoint endpoint(aDeviceId);
+		iSongcast->SetEnabled(endpoint == iSongcastEndpoint);
 	}
 
     return S_OK;
@@ -523,7 +648,9 @@ HRESULT STDCALL OhmSenderDriverWindows::OnDeviceRemoved(LPCWSTR /*aDeviceId*/)
 
 HRESULT STDCALL OhmSenderDriverWindows::OnDeviceStateChanged(LPCWSTR aDeviceId, DWORD aNewState)
 {
-	if ((wcscmp(iEndpointId, aDeviceId) == 0)) {
+	AudioEndpoint endpoint(aDeviceId);
+
+	if (endpoint == iSongcastEndpoint) {
 		switch (aNewState) {
 		case DEVICE_STATE_ACTIVE:
 			iSongcast->SetEnabled(true);

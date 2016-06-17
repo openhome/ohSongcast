@@ -16,6 +16,26 @@ namespace Av {
 
 class Songcast;
 
+class AudioEndpoint
+{
+public:
+	AudioEndpoint();
+	explicit AudioEndpoint(LPCWSTR aId);
+	AudioEndpoint(IMMDeviceEnumerator *aDeviceEnumerator);
+
+	TBool operator==(const AudioEndpoint &aOther) const;
+	TBool operator!=(const AudioEndpoint &aOther) const;
+	TBool IsValid() const;
+
+	void Set(LPCWSTR aId);
+	void Set(const AudioEndpoint& aEndpoint);
+	void SetAsDefault();
+	void SetEnabled(TBool aEnabled);
+
+private:
+	WCHAR iId[100];
+};
+
 class OhmSenderDriverWindows : public IOhmSenderDriver, public IMMNotificationClient
 {
 public:
@@ -25,8 +45,6 @@ public:
 private:    
 	TBool FindDriver(const char* aDomain);
 	TBool FindEndpoint(const char* aManufacturer);
-	void SetDefaultAudioPlaybackDevice();
-	void SetEndpointEnabled(TBool aValue);
 
 	// IOhmSenderDriver
 	virtual void SetEnabled(TBool aValue);
@@ -50,7 +68,8 @@ private:
 
 private:
 	HANDLE iHandle;
-	WCHAR iEndpointId[100];
+	AudioEndpoint iSongcastEndpoint;
+	AudioEndpoint iPreviousEndpoint;
 	TBool iEnabled;
 	ULONG iRefCount;
 	Songcast* iSongcast;
