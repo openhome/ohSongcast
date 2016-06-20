@@ -485,6 +485,8 @@ void OhmSenderDriverWindows::SetEnabled(TBool aValue)
 
 	if (aValue)
 	{
+		iSongcastEndpoint.SetEnabled(true);
+
 		// change the current audio output device to be the songcast device
 		AudioEndpoint current(iDeviceEnumerator);
 
@@ -507,6 +509,8 @@ void OhmSenderDriverWindows::SetEnabled(TBool aValue)
 				iPreviousEndpoint.SetAsDefault();
 			}
 		}
+
+		iSongcastEndpoint.SetEnabled(false);
 	}
 }
 

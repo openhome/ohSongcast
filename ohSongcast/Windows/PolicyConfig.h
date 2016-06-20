@@ -11,7 +11,7 @@
 #include <Mmdeviceapi.h>
  
 interface DECLSPEC_UUID("f8679f50-850a-41cf-9c72-430f290290c8") IPolicyConfig;
-interface DECLSPEC_UUID("CA286FC3-91FD-42C3-8E9B-CAAFA66242E3") IPolicyConfigWindows10;
+interface DECLSPEC_UUID("00000000-0000-0000-C000-000000000046") IPolicyConfigWindows10;
 interface DECLSPEC_UUID("568b9108-44bf-40b4-9006-86afe5b5a620") IPolicyConfigVista;
 
 class DECLSPEC_UUID("870af99c-171d-4f9e-af0d-e63df40c2bc9") CPolicyConfigClient;
