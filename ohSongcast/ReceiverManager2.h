@@ -150,7 +150,6 @@ private:
 	void Run();
 
 private:
-	IReceiverManager2Handler& iHandler;
 	Fifo<ReceiverManager2Job*> iFree;
 	Fifo<ReceiverManager2Job*> iReady;
     ReceiverManager1* iReceiverManager;

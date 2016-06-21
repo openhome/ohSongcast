@@ -411,8 +411,7 @@ ReceiverManager2Receiver::~ReceiverManager2Receiver()
 // ReceiverManager
 
 ReceiverManager2::ReceiverManager2(Net::CpStack& aCpStack, IReceiverManager2Handler& aHandler)
-	: iHandler(aHandler)
-	, iFree(kMaxJobCount)
+	: iFree(kMaxJobCount)
 	, iReady(kMaxJobCount)
 {
 	for (TUint i = 0; i < kMaxJobCount; i++) {
