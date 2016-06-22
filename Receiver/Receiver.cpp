@@ -199,7 +199,7 @@ int CDECL main(int aArgc, char* aArgv[])
 	OhmReceiver* receiver = new OhmReceiver(lib->Env(), adapter, ttl, *driver);
 
     CpStack* cpStack = lib->StartCp(subnet);
-    cpStack = cpStack; // avoid unused variable warning
+    (void)cpStack; // avoid unused variable warning
 
 	printf("q = quit\n");
 	
