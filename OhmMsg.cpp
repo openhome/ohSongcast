@@ -7,7 +7,6 @@ using namespace OpenHome::Av;
 
 OhmMsg::OhmMsg(OhmMsgFactory& aFactory, TUint aMsgType)
 	: iFactory(&aFactory)
-	, iMsgType(aMsgType)
 	, iRefCount(0)
 	, iResendCount(0)
 	, iTxTimestamped(false)

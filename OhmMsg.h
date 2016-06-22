@@ -48,7 +48,6 @@ protected:
 	
 private:
 	OhmMsgFactory* iFactory;
-	TUint iMsgType;
 	TUint iRefCount;
 	TUint iResendCount;
 	TBool iTxTimestamped;
