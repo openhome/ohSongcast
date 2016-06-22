@@ -38,7 +38,7 @@ private:
     static void DriverFound(void* aPtr, io_iterator_t aIterator);
     void DriverFound();
 
-    static OSStatus DefaultDeviceChanged(AudioHardwarePropertyID aId, void* aPtr);
+    static OSStatus DefaultDeviceChanged(AudioObjectID aAudioObjectId, UInt32 aNumAddresses, const AudioObjectPropertyAddress *aAddresses, void* aPtr);
     void DefaultDeviceChanged();
 
     AudioDeviceID iDeviceSongcast;
@@ -114,7 +114,8 @@ public:
         {
             CFStringRef name;
             UInt32 propBytes = sizeof(CFStringRef);
-            err = AudioDeviceGetProperty(deviceIds[i], 0, false, kAudioObjectPropertyName, &propBytes, &name);
+            AudioObjectPropertyAddress address = { kAudioObjectPropertyName, kAudioDevicePropertyScopeOutput, 0 };
+            err = AudioObjectGetPropertyData(deviceIds[i], &address, 0, NULL, &propBytes, &name);
 
             if (err == 0 && CFStringCompare(name, deviceName, 0) == kCFCompareEqualTo)
             {
@@ -137,7 +138,8 @@ public:
     {
         UInt32 propBytes = sizeof(AudioDeviceID);
         AudioDeviceID device;
-        OSStatus err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &propBytes, &device);
+        AudioObjectPropertyAddress address = { kAudioHardwarePropertyDefaultOutputDevice, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMaster };
+        OSStatus err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &address, 0, NULL, &propBytes, &device);
         return (err == 0) ? device : kAudioDeviceUnknown;
     }
 
@@ -145,7 +147,8 @@ public:
     static void SetCurrentDevice(AudioDeviceID aId)
     {
         UInt32 propBytes = sizeof(AudioDeviceID);
-        AudioHardwareSetProperty(kAudioHardwarePropertyDefaultOutputDevice, propBytes, &aId);
+        AudioObjectPropertyAddress address = { kAudioHardwarePropertyDefaultOutputDevice, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMaster };
+        AudioObjectSetPropertyData(kAudioObjectSystemObject, &address, 0, NULL, propBytes, &aId);
     }
 
 
@@ -166,7 +169,9 @@ public:
             if (deviceIds[i] != aSongcast)
             {
                 UInt32 propBytes = 0;
-                OSStatus err = AudioDeviceGetPropertyInfo(deviceIds[i], 0, false, kAudioDevicePropertyStreams, &propBytes, 0);
+                AudioObjectPropertyAddress address = { kAudioDevicePropertyStreams, kAudioDevicePropertyScopeOutput, 0 };
+                OSStatus err = AudioObjectGetPropertyDataSize(deviceIds[i], &address, 0, NULL, &propBytes);
+
                 if (err == 0 && propBytes > 0)
                 {
                     return deviceIds[i];
@@ -183,7 +188,8 @@ private:
     {
         UInt32 propBytes = aCount * sizeof(AudioDeviceID);
 
-        OSStatus ret = AudioHardwareGetProperty(kAudioHardwarePropertyDevices, &propBytes, aArray);
+        AudioObjectPropertyAddress address = { kAudioHardwarePropertyDevices, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMaster };
+        OSStatus ret = AudioObjectGetPropertyData(kAudioObjectSystemObject, &address, 0, NULL, &propBytes, aArray);
 
         if (ret == 0) {
             aCount = propBytes / sizeof(AudioDeviceID);
@@ -233,7 +239,8 @@ OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriver
     }
 
     // register for notification of default device changes
-    AudioHardwareAddPropertyListener(kAudioHardwarePropertyDefaultOutputDevice, DefaultDeviceChanged, this);
+    AudioObjectPropertyAddress address = { kAudioHardwarePropertyDefaultOutputDevice, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMaster };
+    AudioObjectAddPropertyListener(kAudioObjectSystemObject, &address, DefaultDeviceChanged, this);
 
     // find the service for the driver
     iService = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching(iDriverClassName.CString()));
@@ -258,7 +265,8 @@ OhmSenderDriverMac::OhmSenderDriverMac(const Brx& aClassName, const Brx& aDriver
 OhmSenderDriverMac::~OhmSenderDriverMac()
 {
     // stop notifications
-    AudioHardwareRemovePropertyListener(kAudioHardwarePropertyDefaultOutputDevice, DefaultDeviceChanged);
+    AudioObjectPropertyAddress address = { kAudioHardwarePropertyDefaultOutputDevice, kAudioObjectPropertyScopeGlobal, kAudioObjectPropertyElementMaster };
+    AudioObjectRemovePropertyListener(kAudioObjectSystemObject, &address, DefaultDeviceChanged, this);
 
     if (iNotificationPort)
     {
@@ -304,11 +312,15 @@ void OhmSenderDriverMac::DriverFound()
     }
 }
 
-OSStatus OhmSenderDriverMac::DefaultDeviceChanged(AudioHardwarePropertyID aId, void* aPtr)
+OSStatus OhmSenderDriverMac::DefaultDeviceChanged(AudioObjectID aAudioObjectId, UInt32 aNumAddresses, const AudioObjectPropertyAddress *aAddresses, void* aPtr)
 {
-    if (aId == kAudioHardwarePropertyDefaultOutputDevice)
+    for (UInt32 i = 0; i < aNumAddresses; i++)
     {
-        ((OhmSenderDriverMac*)aPtr)->DefaultDeviceChanged();
+        if (aAddresses[i].mSelector == kAudioHardwarePropertyDefaultOutputDevice)
+        {
+            ((OhmSenderDriverMac*)aPtr)->DefaultDeviceChanged();
+            return 0;
+        }
     }
     return 0;
 }

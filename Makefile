@@ -15,11 +15,11 @@ MACHINE = $(shell uname -s)
 ifeq ($(MACHINE), Darwin)
 
 ifeq ($(mac-64),1)
-    platform_cflags = -DPLATFORM_MACOSX_GNU -arch x86_64 -mmacosx-version-min=10.4
+    platform_cflags = -DPLATFORM_MACOSX_GNU -arch x86_64 -mmacosx-version-min=10.7
     platform_linkflags = -arch x86_64 -framework IOKit -framework CoreFoundation -framework CoreAudio -framework SystemConfiguration
     osdir = Mac-x64
 else
-    platform_cflags = -DPLATFORM_MACOSX_GNU -m32 -mmacosx-version-min=10.4
+    platform_cflags = -DPLATFORM_MACOSX_GNU -m32 -mmacosx-version-min=10.7
     platform_linkflags = -m32 -framework IOKit -framework CoreFoundation -framework CoreAudio -framework SystemConfiguration
     osdir = Mac-x86
 endif
@@ -38,7 +38,7 @@ endif
 # Macros used by Common.mak
 
 ar = ${CROSS_COMPILE}ar rc $(objdir)
-cflags = -fexceptions -Wall -Werror -pipe -D_GNU_SOURCE -D_REENTRANT -DDEFINE_LITTLE_ENDIAN -DDEFINE_TRACE $(debug_specific_flags) -fvisibility=hidden -DDllImport="__attribute__ ((visibility(\"default\")))" -DDllExport="__attribute__ ((visibility(\"default\")))" -DDllExportClass="__attribute__ ((visibility(\"default\")))" $(platform_cflags)
+cflags = -fexceptions -Wall -Werror -pipe -std=c++11 -stdlib=libc++ -D_GNU_SOURCE -D_REENTRANT -DDEFINE_LITTLE_ENDIAN -DDEFINE_TRACE $(debug_specific_flags) -fvisibility=hidden -DDllImport="__attribute__ ((visibility(\"default\")))" -DDllExport="__attribute__ ((visibility(\"default\")))" -DDllExportClass="__attribute__ ((visibility(\"default\")))" $(platform_cflags)
 ohnetdir = ../ohNet/Build/Obj/$(osdir)/$(build_dir)/
 ohnetgenerateddir = ../ohNetGenerated/Build/Obj/$(osdir)/$(build_dir)/
 ohtopologydir = ../ohTopology/build/
@@ -50,7 +50,7 @@ objext = o
 libprefix = lib
 libext = a
 exeext = elf
-compiler = ${CROSS_COMPILE}gcc -fPIC -o $(objdir)
+compiler = ${CROSS_COMPILE}g++ -fPIC -o $(objdir)
 link = ${CROSS_COMPILE}g++ -pthread $(platform_linkflags)
 linkoutput = -o 
 dllprefix = lib
