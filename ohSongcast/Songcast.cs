@@ -420,8 +420,6 @@ namespace OpenHome.Songcast
             iLogOutputCallback = new DelegateMessageCallback(LogOutputCallback);
             iReceiverList = new List<Receiver>();
             iSubnetList = new List<Subnet>();
-            iInitParams = new InitParams();
-            iLibrary = Library.Create(iInitParams);
 
             iHandle = SongcastCreate(aDomain, aSubnet, aChannel, aTtl, aLatency, aMulticast, aEnabled, aPreset, iReceiverCallback, IntPtr.Zero, iSubnetCallback, IntPtr.Zero, iConfigurationChangedCallback, IntPtr.Zero, iFatalErrorCallback, IntPtr.Zero, iLogOutputCallback, IntPtr.Zero, aManufacturer, aManufacturerUrl, aModelUrl, aImage, aImage.Length, aMimeType);
 
@@ -703,8 +701,6 @@ namespace OpenHome.Songcast
             SongcastDestroy(iHandle);
         }
 
-        private InitParams iInitParams;
-        private Library iLibrary;
         private IReceiverHandler iReceiverHandler;
         private ISubnetHandler iSubnetHandler;
         private IConfigurationChangedHandler iConfigurationChangedHandler;
