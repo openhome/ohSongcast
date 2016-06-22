@@ -5,7 +5,7 @@ using namespace OpenHome::Av;
 
 // OhmMsg
 
-OhmMsg::OhmMsg(OhmMsgFactory& aFactory, TUint aMsgType)
+OhmMsg::OhmMsg(OhmMsgFactory& aFactory)
 	: iFactory(&aFactory)
 	, iRefCount(0)
 	, iResendCount(0)
@@ -95,7 +95,7 @@ void OhmMsg::Create()
 // OhmMsgAudio
 
 OhmMsgAudio::OhmMsgAudio(OhmMsgFactory& aFactory)
-	: OhmMsg(aFactory, OhmHeader::kMsgTypeAudio)
+	: OhmMsg(aFactory)
 {
 }
 
@@ -346,7 +346,7 @@ void OhmMsgAudio::Externalise(IWriter& aWriter)
 // OhmMsgTrack
 
 OhmMsgTrack::OhmMsgTrack(OhmMsgFactory& aFactory)
-	: OhmMsg(aFactory, OhmHeader::kMsgTypeTrack)
+	: OhmMsg(aFactory)
 {
 }
 
@@ -413,7 +413,7 @@ void OhmMsgTrack::Externalise(IWriter& aWriter)
 // OhmMsgMetatext
 
 OhmMsgMetatext::OhmMsgMetatext(OhmMsgFactory& aFactory)
-	: OhmMsg(aFactory, OhmHeader::kMsgTypeMetatext)
+	: OhmMsg(aFactory)
 {
 }
 

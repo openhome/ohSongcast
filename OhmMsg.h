@@ -43,7 +43,7 @@ public:
 	virtual void Externalise(IWriter& aWriter) = 0;
 
 protected:
-	OhmMsg(OhmMsgFactory& aFactory, TUint aMsgType);
+	OhmMsg(OhmMsgFactory& aFactory);
 	void Create();
 	
 private:
