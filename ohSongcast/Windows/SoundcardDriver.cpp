@@ -156,32 +156,35 @@ void AudioEndpoint::SetAsDefault()
 	if (!IsValid())
 		return;
 
-	// The following works if we are on vista ...
+	// The following works if we are on Windows 7 or Windows 8
 
-	IPolicyConfigVista *pPolicyConfig = PolicyFactory::CreatePolicyVista();
-	if (pPolicyConfig != NULL)
+	IPolicyConfig *pPolicyConfig7or8 = PolicyFactory::CreatePolicy7or8();
+	if (pPolicyConfig7or8 != NULL)
 	{
-		pPolicyConfig->SetDefaultEndpoint(iId, eConsole);
-		pPolicyConfig->Release();
-	}
+		pPolicyConfig7or8->SetDefaultEndpoint(iId, eConsole);
+		pPolicyConfig7or8->Release();
+        return;
+    }
 
-	// ... and the following works if we are on Windows 7 or Windows 8
+	// The following works if we are on Windows 10
 
-	IPolicyConfig *pPolicyConfig2 = PolicyFactory::CreatePolicy7or8();
-	if (pPolicyConfig2 != NULL)
+	IPolicyConfig *pPolicyConfig10 = PolicyFactory::CreatePolicy10();
+	if (pPolicyConfig10 != NULL)
 	{
-		pPolicyConfig2->SetDefaultEndpoint(iId, eConsole);
-		pPolicyConfig2->Release();
-	}
+		pPolicyConfig10->SetDefaultEndpoint(iId, eConsole);
+		pPolicyConfig10->Release();
+        return;
+    }
 
-	// ... and the following works if we are on Windows 10
+    // The following works if we are on vista
 
-	IPolicyConfig *pPolicyConfig3 = PolicyFactory::CreatePolicy10();
-	if (pPolicyConfig3 != NULL)
-	{
-		pPolicyConfig3->SetDefaultEndpoint(iId, eConsole);
-		pPolicyConfig3->Release();
-	}
+    IPolicyConfigVista *pPolicyConfigVista = PolicyFactory::CreatePolicyVista();
+    if (pPolicyConfigVista != NULL)
+    {
+        pPolicyConfigVista->SetDefaultEndpoint(iId, eConsole);
+        pPolicyConfigVista->Release();
+        return;
+    }
 }
 
 void AudioEndpoint::SetEnabled(TBool aEnabled)
@@ -189,32 +192,35 @@ void AudioEndpoint::SetEnabled(TBool aEnabled)
 	if (!IsValid())
 		return;
 
-	// The following works if we are on vista ...
+	// The following works if we are on Windows 7 or Windows 8
 
-	IPolicyConfigVista *pPolicyConfig = PolicyFactory::CreatePolicyVista();
-	if (pPolicyConfig != NULL)
+	IPolicyConfig *pPolicyConfig7or8 = PolicyFactory::CreatePolicy7or8();
+	if (pPolicyConfig7or8 != NULL)
 	{
-		pPolicyConfig->SetEndpointVisibility(iId, aEnabled ? 1 : 0);
-		pPolicyConfig->Release();
+		pPolicyConfig7or8->SetEndpointVisibility(iId, aEnabled ? 1 : 0);
+		pPolicyConfig7or8->Release();
+        return;
 	}
 
-	// ... and the following works if we are on Windows 7 or Windows 8
+	// The following works if we are on Windows 10
 
-	IPolicyConfig *pPolicyConfig2 = PolicyFactory::CreatePolicy7or8();
-	if (pPolicyConfig2 != NULL)
+	IPolicyConfig *pPolicyConfig10 = PolicyFactory::CreatePolicy10();
+	if (pPolicyConfig10 != NULL)
 	{
-		pPolicyConfig2->SetEndpointVisibility(iId, aEnabled ? 1 : 0);
-		pPolicyConfig2->Release();
-	}
+        pPolicyConfig10->SetEndpointVisibility(iId, aEnabled ? 1 : 0);
+		pPolicyConfig10->Release();
+        return;
+    }
 
-	// ... and the following works if we are on Windows 10
+    // The following works if we are on vista
 
-	IPolicyConfig *pPolicyConfig3 = PolicyFactory::CreatePolicy10();
-	if (pPolicyConfig3 != NULL)
-	{
-		pPolicyConfig3->SetEndpointVisibility(iId, aEnabled ? 1 : 0);
-		pPolicyConfig3->Release();
-	}
+    IPolicyConfigVista *pPolicyConfigVista = PolicyFactory::CreatePolicyVista();
+    if (pPolicyConfigVista != NULL)
+    {
+        pPolicyConfigVista->SetEndpointVisibility(iId, aEnabled ? 1 : 0);
+        pPolicyConfigVista->Release();
+        return;
+    }
 }
 
 
