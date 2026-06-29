@@ -15,7 +15,7 @@ class Ohm
 {
 public:
     static const TUint kPort = 51970;
-    static const TUint kMaxUriBytes = 30;
+    static const TUint kMaxUriBytes = 64; // ohm:// (6) + Endpoint::kMaxEndpointBytes (48) in ohNet 1.40
     static const TUint kMaxTrackUriBytes = 1000;
     static const TUint kMaxTrackMetadataBytes = 5000;
     static const TUint kMaxTrackMetatextBytes = 1000;
