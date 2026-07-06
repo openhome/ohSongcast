@@ -4,6 +4,7 @@
 #include <OpenHome/Private/Arch.h>
 #include <OpenHome/Private/Debug.h>
 #include <OpenHome/Private/Env.h>
+#include <OpenHome/Private/TIpAddressUtils.h>
 #include "Debug.h"
 
 #include <stdio.h>
@@ -191,7 +192,7 @@ void ProviderSender::TimerAudioPresentExpired()
 
 OhmSenderServer::OhmSenderServer(Environment& aEnv, TIpAddress aInterface, const Brx& aImage, const Brx& aMimeType)
     : iEnv(aEnv)
-    , iInterface(0)
+    , iInterface({})
     , iImage(aImage)
     , iMimeType(aMimeType)
     , iServer(0)
@@ -210,7 +211,7 @@ OhmSenderServer::~OhmSenderServer()
 
 void OhmSenderServer::SetInterface(TIpAddress aInterface)
 {
-    if (aInterface != iInterface)
+    if (!TIpAddressUtils::Equals(aInterface, iInterface))
     {
         if (iServer)
         {
@@ -218,7 +219,7 @@ void OhmSenderServer::SetInterface(TIpAddress aInterface)
             iServer = 0;
         }
 
-        if (aInterface != 0)
+        if (!TIpAddressUtils::IsZero(aInterface))
         {
             iServer = new SocketTcpServer(iEnv, "OHMS", 0, aInterface);
             iServer->Add("OHMS", new OhmSenderSession(iEnv, *this));
@@ -230,7 +231,7 @@ void OhmSenderServer::SetInterface(TIpAddress aInterface)
 
 void OhmSenderServer::AppendImageMetadata(Bwx& aMetadata)
 {
-    if (iImage.Bytes() > 0 && iInterface != 0)
+    if (iImage.Bytes() > 0 && !TIpAddressUtils::IsZero(iInterface))
     {
         aMetadata.Append("<upnp:albumArtURI>");
         aMetadata.Append("http://");
@@ -636,13 +637,13 @@ void OhmSender::SetInterface(TIpAddress aValue)
     // 4. The calls in step 2 call UpdateUri which ultimately sets the iTimerZoneUri to fire.
     // 5. The timer thread fires which then tries to call iSocketOhz.Send which then asserts because the socket is closed.
     // So, moving the Stop/StartZone to the top of this method avoids the problem but it doesn't seem robust
-	if (iOhzInterface != aValue)
+	if (!TIpAddressUtils::Equals(iOhzInterface, aValue))
 	{
 		StopZone();
 		StartZone(aValue);
 	}
 
-	if (iOhmInterface != aValue) {
+	if (!TIpAddressUtils::Equals(iOhmInterface, aValue)) {
 		if (iEnabled) {
 			Stop();
 			Start(aValue);
@@ -740,7 +741,7 @@ void OhmSender::SetEnabled(TBool aValue)
 void OhmSender::Start(TIpAddress aValue)
 {
     if (!iStarted) {
-        if (aValue != 0)
+        if (!TIpAddressUtils::IsZero(aValue))
         {
             if (iMulticast) {
                 iSocketOhm.OpenMulticast(aValue, iTtl, iMulticastEndpoint);
@@ -792,7 +793,7 @@ void OhmSender::StartZone(TIpAddress aValue)
 {
     if (!iZoneStarted)
     {
-        if (aValue != 0)
+        if (!TIpAddressUtils::IsZero(aValue))
         {
             iSocketOhz.Open(aValue, iTtl);
             iThreadZone->Signal();
@@ -943,7 +944,7 @@ void OhmSender::RunMulticast()
 
 						Endpoint sender = iSocketOhm.Sender();
 
-						if (sender.Address() != iOhmInterface) {
+						if (!TIpAddressUtils::Equals(sender.Address(), iOhmInterface)) {
 	                        LOG(kMedia, "OhmSender::RunMulticast audio received\n");
 
 							// The following randomisation prevents two senders from both sending,
@@ -1287,8 +1288,11 @@ void OhmSender::TimerExpiryExpired()
 void OhmSender::UpdateChannel()
 {
     TUint address = (iChannel & 0xffff) | 0xeffd0000; // 239.253.x.x
-    
-    iMulticastEndpoint.SetAddress(Arch::BigEndian4(address));
+
+    TIpAddress multicastAddr = {};
+    multicastAddr.iFamily = kFamilyV4;
+    multicastAddr.iV4 = Arch::BigEndian4(address);
+    iMulticastEndpoint.SetAddress(multicastAddr);
     iMulticastEndpoint.SetPort(Ohm::kPort);
 }
 
@@ -1418,7 +1422,7 @@ void OhmSender::SendSlaveList()
     WriterBinary binary(writer);
     
     for (TUint i = 0; i < iSlaveCount; i++) {
-        binary.WriteUint32Be(Arch::BigEndian4(iSlaveList[i].Address()));
+        binary.WriteUint32Be(Arch::BigEndian4(iSlaveList[i].Address().iV4));
         binary.WriteUint16Be(iSlaveList[i].Port());
     }
     
