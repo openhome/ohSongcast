@@ -3,6 +3,7 @@
 #include <OpenHome/Private/Arch.h>
 #include <OpenHome/Private/Debug.h>
 #include <OpenHome/Private/Env.h>
+#include <OpenHome/Private/TIpAddressUtils.h>
 
 #ifdef _WIN32
 # pragma warning(disable:4355) // use of 'this' in ctor lists safe in this case
@@ -56,7 +57,10 @@ void OhmProtocolUnicast::HandleSlave(const OhmHeader& aHeader)
 	ReaderBinary reader(iReadBuffer);
 
     for (TUint i = 0; i < iSlaveCount; i++) {
-        TIpAddress address = reader.ReadUintLe(4); // utterly confused due to ohNet's ridiculous decision to pass IpAddresses around memory in BE form
+        TUint rawAddr = reader.ReadUintLe(4); // utterly confused due to ohNet's ridiculous decision to pass IpAddresses around memory in BE form
+        TIpAddress address = {};
+        address.iFamily = kFamilyV4;
+        address.iV4 = rawAddr;
         TUint port = reader.ReadUintBe(2);
         iSlaveList[i].SetAddress(address);
         iSlaveList[i].SetPort(port);
